@@ -329,7 +329,10 @@ function (assert_command_does_not_execute_with_success COMMAND_VAR)
 
 endfunction (assert_command_does_not_execute_with_success)
 
-function (_target_is_linked_to TARGET_NAME LIBRARY RESULT_VARIABLE)
+function (_target_is_linked_to TARGET_NAME
+                               LIBRARY
+                               RESULT_VARIABLE
+                               LIBRARIES_VARIABLE)
 
     get_property (TARGET_LIBS
                   TARGET ${TARGET_NAME}
@@ -349,6 +352,16 @@ function (_target_is_linked_to TARGET_NAME LIBRARY RESULT_VARIABLE)
 
 endfunction (_target_is_linked_to)
 
+function (_print_all_libraries_in_list LIBRARIES_VARIABLE)
+
+	foreach (_lib ${${LIBRARIES_VARIABLE}})
+
+		message (STATUS "Found library: " ${_lib})
+
+	endforeach (${_lib})
+
+endfunction (_print_all_libraries_in_list)
+
 # assert_target_is_linked_to
 #
 # Throws a non-fatal error if the target specified by
@@ -358,12 +371,14 @@ endfunction (_target_is_linked_to)
 # contains anything matching LIBRARY.
 function (assert_target_is_linked_to TARGET_NAME LIBRARY)
 
-    _target_is_linked_to (${TARGET_NAME} ${LIBRARY} RESULT)
+    _target_is_linked_to (${TARGET_NAME} ${LIBRARY} RESULT LIBRARIES)
 
     if (NOT RESULT)
 
         message (SEND_ERROR
                  "Expected ${LIBRARY} to be a link-library to ${TARGET_NAME}")
+
+        _print_all_libraries_in_list (LIBRARIES)
 
     endif (NOT RESULT)
 
@@ -378,13 +393,15 @@ endfunction (assert_target_is_linked_to)
 # contains anything matching LIBRARY.
 function (assert_target_is_not_linked_to TARGET_NAME LIBRARY)
 
-    _target_is_linked_to (${TARGET_NAME} ${LIBRARY} RESULT)
+    _target_is_linked_to (${TARGET_NAME} ${LIBRARY} RESULT LIBRARIES)
 
     if (RESULT)
 
         message (SEND_ERROR
                  "Expected ${LIBRARY} not to be a link-library "
                  "to ${TARGET_NAME}")
+
+        _print_all_libraries_in_list (LIBRARIES)
 
     endif (RESULT)
 
