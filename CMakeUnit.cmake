@@ -333,7 +333,7 @@ function (_target_is_linked_to TARGET_NAME LIBRARY RESULT_VARIABLE)
 
     get_property (TARGET_LIBS
                   TARGET ${TARGET_NAME}
-                  PROPERTY LINK_LIBRARIES)
+                  PROPERTY INTERFACE_LINK_LIBRARIES)
 
     set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
