@@ -116,25 +116,25 @@ function (_append_configure_step TEST_NAME
                                  TEST_WORKING_DIRECTORY_NAME
                                  TEST_FILE)
 
-	set (TEST_FILE_PATH
-	     ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_FILE})
+    set (TEST_FILE_PATH
+         ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_FILE})
 
-	if (EXISTS ${TEST_FILE_PATH})
+    if (EXISTS ${TEST_FILE_PATH})
 
-	    set (TEST_DIRECTORY_CONFIGURE_SCRIPT
-	         ${TEST_DIRECTORY_NAME}/CMakeLists.txt)
-	    set (TEST_DIRECTORY_CONFIGURE_SCRIPT_CONTENTS
-	         "project (TestProject CXX C)\n"
-	         "cmake_minimum_required (VERSION 2.8 FATAL_ERROR)\n"
-	         "include (${CMAKE_CURRENT_SOURCE_DIR}/${TEST_FILE})\n")
+        set (TEST_DIRECTORY_CONFIGURE_SCRIPT
+             ${TEST_DIRECTORY_NAME}/CMakeLists.txt)
+        set (TEST_DIRECTORY_CONFIGURE_SCRIPT_CONTENTS
+             "project (TestProject CXX C)\n"
+             "cmake_minimum_required (VERSION 2.8 FATAL_ERROR)\n"
+             "include (${CMAKE_CURRENT_SOURCE_DIR}/${TEST_FILE})\n")
 
-	    file (WRITE ${TEST_DIRECTORY_CONFIGURE_SCRIPT}
-	          ${TEST_DIRECTORY_CONFIGURE_SCRIPT_CONTENTS})
+        file (WRITE ${TEST_DIRECTORY_CONFIGURE_SCRIPT}
+              ${TEST_DIRECTORY_CONFIGURE_SCRIPT_CONTENTS})
 
-	    set (CONFIGURE_COMMAND ${CMAKE} .. -C${CACHE_FILE})
-	    _add_driver_step (${DRIVER_SCRIPT} CONFIGURE CONFIGURE_COMMAND)
+        set (CONFIGURE_COMMAND ${CMAKE} .. -C${CACHE_FILE})
+        _add_driver_step (${DRIVER_SCRIPT} CONFIGURE CONFIGURE_COMMAND)
 
-	endif (EXISTS ${TEST_FILE_PATH})
+    endif (EXISTS ${TEST_FILE_PATH})
 
 endfunction (_append_configure_step)
 
