@@ -339,6 +339,7 @@ function (_target_is_linked_to TARGET_NAME
                   PROPERTY INTERFACE_LINK_LIBRARIES)
 
     set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
+    set (${LIBRARIES_VARIABLE} ${TARGET_LIBS})
 
     foreach (_lib ${TARGET_LIBS})
 
@@ -354,11 +355,11 @@ endfunction (_target_is_linked_to)
 
 function (_print_all_libraries_in_list LIBRARIES_VARIABLE)
 
-	foreach (_lib ${${LIBRARIES_VARIABLE}})
+    foreach (_lib ${${LIBRARIES_VARIABLE}})
 
-		message (STATUS "Found library: " ${_lib})
+        message (STATUS "Found library: " ${_lib})
 
-	endforeach (${_lib})
+    endforeach (${_lib})
 
 endfunction (_print_all_libraries_in_list)
 
