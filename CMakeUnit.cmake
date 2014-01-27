@@ -22,13 +22,13 @@
 
 function (_target_exists TARGET_NAME RESULT_VARIABLE)
 
-	set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
+    set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
-	if (TARGET ${TARGET_NAME})
+    if (TARGET ${TARGET_NAME})
 
-		set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+        set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-	endif (TARGET ${TARGET_NAME})
+    endif (TARGET ${TARGET_NAME})
 
 endfunction (_target_exists)
 
@@ -38,14 +38,14 @@ endfunction (_target_exists)
 # by TARGET_NAME is not a target known by CMake.
 function (assert_target_exists TARGET_NAME)
 
-	_target_exists (${TARGET_NAME} RESULT)
+    _target_exists (${TARGET_NAME} RESULT)
 
-	if (NOT RESULT)
+    if (NOT RESULT)
 
-		message (SEND_ERROR
-				 "Expected ${TARGET_NAME} to be a target")
+        message (SEND_ERROR
+                 "Expected ${TARGET_NAME} to be a target")
 
-	endif (NOT RESULT)
+    endif (NOT RESULT)
 
 endfunction (assert_target_exists)
 
@@ -56,28 +56,28 @@ endfunction (assert_target_exists)
 # by TARGET_NAME is a target known by CMake.
 function (assert_target_does_not_exist TARGET_NAME)
 
-	_target_exists (${TARGET_NAME} RESULT)
+    _target_exists (${TARGET_NAME} RESULT)
 
-	if (NOT RESULT)
+    if (NOT RESULT)
 
-		message (SEND_ERROR
-				 "Expected ${TARGET_NAME} to be a target")
+        message (SEND_ERROR
+                 "Expected ${TARGET_NAME} to be a target")
 
-	endif (NOT RESULT)
+    endif (NOT RESULT)
 
 endfunction (assert_target_does_not_exist)
 
 function (_string_contains MAIN_STRING SUBSTRING RESULT_VARIABLE)
 
-	set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
+    set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
-	string (FIND ${MAIN_STRING} ${SUBSTRING} POSITION)
+    string (FIND ${MAIN_STRING} ${SUBSTRING} POSITION)
 
-	if (NOT POSITION EQUAL -1)
+    if (NOT POSITION EQUAL -1)
 
-		set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+        set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-	endif (NOT POSITION EQUAL -1)
+    endif (NOT POSITION EQUAL -1)
 
 endfunction (_string_contains)
 
@@ -87,14 +87,14 @@ endfunction (_string_contains)
 # is not a substring of MAIN_STRING.
 function (assert_string_contains MAIN_STRING SUBSTRING)
 
-	_string_contains (${MAIN_STRING} ${SUBSTRING} RESULT)
+    _string_contains (${MAIN_STRING} ${SUBSTRING} RESULT)
 
-	if (NOT RESULT)
+    if (NOT RESULT)
 
-		message (SEND_ERROR
-		         "Substring ${SUBSTRING} not found in ${MAIN_STRING}")
+        message (SEND_ERROR
+                 "Substring ${SUBSTRING} not found in ${MAIN_STRING}")
 
-	endif (NOT RESULT)
+    endif (NOT RESULT)
 
 endfunction (assert_string_contains)
 
@@ -104,14 +104,14 @@ endfunction (assert_string_contains)
 # is a substring of MAIN_STRING.
 function (assert_string_does_not_contain MAIN_STRING SUBSTRING)
 
-	_string_contains (${MAIN_STRING} ${SUBSTRING} RESULT)
+    _string_contains (${MAIN_STRING} ${SUBSTRING} RESULT)
 
-	if (RESULT)
+    if (RESULT)
 
-		message (SEND_ERROR
-		         "Substring ${SUBSTRING} not found in ${MAIN_STRING}")
+        message (SEND_ERROR
+                 "Substring ${SUBSTRING} not found in ${MAIN_STRING}")
 
-	endif (RESULT)
+    endif (RESULT)
 
 endfunction (assert_string_does_not_contain)
 
@@ -119,27 +119,27 @@ function (_variable_is VARIABLE TYPE COMPARATOR VALUE RESULT_VARIABLE)
 
     set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
-	if ("${TYPE}" MATCHES "STRING")
+    if ("${TYPE}" MATCHES "STRING")
 
-		if (${VARIABLE} STR${COMPARATOR} ${VALUE})
+        if (${VARIABLE} STR${COMPARATOR} ${VALUE})
 
-			set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+            set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
         endif (${VARIABLE} STR${COMPARATOR} ${VALUE})
 
     elseif ("${TYPE}" MATCHES "INTEGER" OR
             "${TYPE}" MATCHES "BOOL")
 
-    	if (${VARIABLE} ${COMPARATOR} ${VALUE})
+        if (${VARIABLE} ${COMPARATOR} ${VALUE})
 
-    		set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+            set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-    	endif (${VARIABLE} ${COMPARATOR} ${VALUE})
+        endif (${VARIABLE} ${COMPARATOR} ${VALUE})
 
     else ("${TYPE}" MATCHES "STRING")
 
-    	message (FATAL_ERROR
-    			 "Asked to match unknown type ${TYPE}")
+        message (FATAL_ERROR
+                 "Asked to match unknown type ${TYPE}")
 
     endif ("${TYPE}" MATCHES "STRING")
 
@@ -161,15 +161,15 @@ endfunction (_variable_is)
 # operation fails between VARIABLE and VALUE
 function (assert_variable_is VARIABLE TYPE COMPARATOR VALUE)
 
-	_variable_is (${VARIABLE} ${TYPE} ${COMPARATOR} ${VALUE} RESULT)
+    _variable_is (${VARIABLE} ${TYPE} ${COMPARATOR} ${VALUE} RESULT)
 
-	if (NOT RESULT)
+    if (NOT RESULT)
 
-		message (SEND_ERROR
-		         "Expected type ${TYPE} with value ${VALUE}"
-		         " but was ${VARIABLE}")
+        message (SEND_ERROR
+                 "Expected type ${TYPE} with value ${VALUE}"
+                 " but was ${VARIABLE}")
 
-	endif (NOT RESULT)
+    endif (NOT RESULT)
 
 endfunction (assert_variable_is)
 
@@ -189,15 +189,15 @@ endfunction (assert_variable_is)
 # operation succeeds between VARIABLE and VALUE
 function (assert_variable_is_not VARIABLE TYPE COMPARATOR VALUE)
 
-	_variable_is (${VARIABLE} ${TYPE} ${COMPARATOR} ${VALUE} RESULT)
+    _variable_is (${VARIABLE} ${TYPE} ${COMPARATOR} ${VALUE} RESULT)
 
-	if (RESULT)
+    if (RESULT)
 
-		message (SEND_ERROR
-		         "Expected type ${TYPE} with value ${VALUE}"
-		         " but was ${VARIABLE}")
+        message (SEND_ERROR
+                 "Expected type ${TYPE} with value ${VALUE}"
+                 " but was ${VARIABLE}")
 
-	endif (RESULT)
+    endif (RESULT)
 
 endfunction (assert_variable_is_not)
 
@@ -208,12 +208,12 @@ endfunction (assert_variable_is_not)
 # error if VARIABLE does not match REGEX.
 function (assert_variable_matches_regex VARIABLE REGEX)
 
-	if (NOT ${VARIABLE} MATCHES ${REGEX})
+    if (NOT ${VARIABLE} MATCHES ${REGEX})
 
-		message (SEND_ERROR
-		         "Expected ${VARIABLE} to match ${REGEX}")
+        message (SEND_ERROR
+                 "Expected ${VARIABLE} to match ${REGEX}")
 
-	endif (NOT ${VARIABLE} MATCHES ${REGEX})
+    endif (NOT ${VARIABLE} MATCHES ${REGEX})
 
 endfunction (assert_variable_matches_regex)
 
@@ -224,12 +224,12 @@ endfunction (assert_variable_matches_regex)
 # error if VARIABLE does matches REGEX.
 function (assert_variable_does_not_match_regex VARIABLE REGEX)
 
-	if (${VARIABLE} MATCHES ${REGEX})
+    if (${VARIABLE} MATCHES ${REGEX})
 
-		message (SEND_ERROR
-		         "Expected ${VARIABLE} to not match ${REGEX}")
+        message (SEND_ERROR
+                 "Expected ${VARIABLE} to not match ${REGEX}")
 
-	endif (${VARIABLE} MATCHES ${REGEX})
+    endif (${VARIABLE} MATCHES ${REGEX})
 
 endfunction (assert_variable_does_not_match_regex)
 
@@ -240,12 +240,12 @@ endfunction (assert_variable_does_not_match_regex)
 # its value must be passed to this function.
 function (assert_variable_is_defined VARIABLE)
 
-	if (NOT DEFINED ${VARIABLE})
+    if (NOT DEFINED ${VARIABLE})
 
-		message (SEND_ERROR
-		         "${VARIABLE} is not defined")
+        message (SEND_ERROR
+                 "${VARIABLE} is not defined")
 
-	endif (NOT DEFINED ${VARIABLE})
+    endif (NOT DEFINED ${VARIABLE})
 
 endfunction (assert_variable_is_defined)
 
@@ -256,12 +256,12 @@ endfunction (assert_variable_is_defined)
 # its value must be passed to this function.
 function (assert_variable_is_not_defined VARIABLE)
 
-	if (DEFINED ${VARIABLE})
+    if (DEFINED ${VARIABLE})
 
-		message (SEND_ERROR
-		         "${VARIABLE} is defined")
+        message (SEND_ERROR
+                 "${VARIABLE} is defined")
 
-	endif (DEFINED ${VARIABLE})
+    endif (DEFINED ${VARIABLE})
 
 endfunction (assert_variable_is_not_defined)
 
@@ -270,20 +270,20 @@ function (_command_executes_with_success COMMAND_VAR
                                          ERROR_VARIABLE
                                          CODE_VARIABLE)
 
-	set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
+    set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
-	execute_process (COMMAND ${${COMMAND_VAR}}
-		             RESULT_VARIABLE RESULT
-		             ERROR_VARIABLE ERROR)
+    execute_process (COMMAND ${${COMMAND_VAR}}
+                     RESULT_VARIABLE RESULT
+                     ERROR_VARIABLE ERROR)
 
-	if (RESULT EQUAL 0)
+    if (RESULT EQUAL 0)
 
-		set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+        set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-	endif (RESULT EQUAL 0)
+    endif (RESULT EQUAL 0)
 
-	set (${ERROR_VARIABLE} ${ERROR} PARENT_SCOPE)
-	set (${CODE_VARIABLE} ${RESULT} PARENT_SCOPE)
+    set (${ERROR_VARIABLE} ${ERROR} PARENT_SCOPE)
+    set (${CODE_VARIABLE} ${RESULT} PARENT_SCOPE)
 
 endfunction (_command_executes_with_success)
 
@@ -296,15 +296,15 @@ endfunction (_command_executes_with_success)
 # as opposed to the command and argument list itself.
 function (assert_command_executes_with_success COMMAND_VAR)
 
-	_command_executes_with_success (${COMMAND_VAR} RESULT ERROR CODE)
+    _command_executes_with_success (${COMMAND_VAR} RESULT ERROR CODE)
 
-	if (NOT RESULT)
+    if (NOT RESULT)
 
-		message (SEND_ERROR
-		         "The command ${${COMMAND_VAR}} failed with result "
-		         " ${CODE} : ${ERROR}\n")
+        message (SEND_ERROR
+                 "The command ${${COMMAND_VAR}} failed with result "
+                 " ${CODE} : ${ERROR}\n")
 
-	endif (NOT RESULT)
+    endif (NOT RESULT)
 
 endfunction (assert_command_executes_with_success)
 
@@ -317,35 +317,35 @@ endfunction (assert_command_executes_with_success)
 # as opposed to the command and argument list itself.
 function (assert_command_does_not_execute_with_success COMMAND_VAR)
 
-	_command_executes_with_success (${COMMAND_VAR} RESULT ERROR CODE)
+    _command_executes_with_success (${COMMAND_VAR} RESULT ERROR CODE)
 
-	if (RESULT)
+    if (RESULT)
 
-		message (SEND_ERROR
-		         "The command ${${COMMAND_VAR}} succeeded with result "
-		         " ${RESULT}\n")
+        message (SEND_ERROR
+                 "The command ${${COMMAND_VAR}} succeeded with result "
+                 " ${RESULT}\n")
 
-	endif (RESULT)
+    endif (RESULT)
 
 endfunction (assert_command_does_not_execute_with_success)
 
 function (_target_is_linked_to TARGET_NAME LIBRARY RESULT_VARIABLE)
 
-	get_property (TARGET_LIBS
-	              TARGET ${TARGET_NAME}
-	              PROPERTY LINK_LIBRARIES)
+    get_property (TARGET_LIBS
+                  TARGET ${TARGET_NAME}
+                  PROPERTY LINK_LIBRARIES)
 
     set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
-	foreach (_lib ${TARGET_LIBS})
+    foreach (_lib ${TARGET_LIBS})
 
-		if (_lib MATCHES "(^.*${LIBRARY}.*$)")
+        if (_lib MATCHES "(^.*${LIBRARY}.*$)")
 
-			set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+            set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-		endif (_lib MATCHES "(^.*${LIBRARY}.*$)")
+        endif (_lib MATCHES "(^.*${LIBRARY}.*$)")
 
-	endforeach ()
+    endforeach ()
 
 endfunction (_target_is_linked_to)
 
@@ -358,14 +358,14 @@ endfunction (_target_is_linked_to)
 # contains anything matching LIBRARY.
 function (assert_target_is_linked_to TARGET_NAME LIBRARY)
 
-	_target_is_linked_to (${TARGET_NAME} ${LIBRARY} RESULT)
+    _target_is_linked_to (${TARGET_NAME} ${LIBRARY} RESULT)
 
-	if (NOT RESULT)
+    if (NOT RESULT)
 
-		message (SEND_ERROR
-		         "Expected ${LIBRARY} to be a link-library to ${TARGET_NAME}")
+        message (SEND_ERROR
+                 "Expected ${LIBRARY} to be a link-library to ${TARGET_NAME}")
 
-	endif (NOT RESULT)
+    endif (NOT RESULT)
 
 endfunction (assert_target_is_linked_to)
 
@@ -378,15 +378,15 @@ endfunction (assert_target_is_linked_to)
 # contains anything matching LIBRARY.
 function (assert_target_is_not_linked_to TARGET_NAME LIBRARY)
 
-	_target_is_linked_to (${TARGET_NAME} ${LIBRARY} RESULT)
+    _target_is_linked_to (${TARGET_NAME} ${LIBRARY} RESULT)
 
-	if (RESULT)
+    if (RESULT)
 
-		message (SEND_ERROR
-		         "Expected ${LIBRARY} not to be a link-library "
-		         "to ${TARGET_NAME}")
+        message (SEND_ERROR
+                 "Expected ${LIBRARY} not to be a link-library "
+                 "to ${TARGET_NAME}")
 
-	endif (RESULT)
+    endif (RESULT)
 
 endfunction (assert_target_is_not_linked_to)
 
@@ -398,17 +398,17 @@ function (_item_has_property_with_value ITEM_TYPE
                                         VALUE
                                         RESULT_VARIABLE)
 
-	get_property (_property_value
-	              ${ITEM_TYPE} ${ITEM}
-	              PROPERTY ${PROPERTY})
+    get_property (_property_value
+                  ${ITEM_TYPE} ${ITEM}
+                  PROPERTY ${PROPERTY})
 
-	_variable_is (_property_value
-	              ${PROPERTY_TYPE}
-	              ${COMPARATOR}
-	              ${VALUE}
-	              RESULT)
+    _variable_is (_property_value
+                  ${PROPERTY_TYPE}
+                  ${COMPARATOR}
+                  ${VALUE}
+                  RESULT)
 
-	set (${RESULT_VARIABLE} ${RESULT} PARENT_SCOPE)
+    set (${RESULT_VARIABLE} ${RESULT} PARENT_SCOPE)
 
 endfunction (_item_has_property_with_value)
 
@@ -424,21 +424,21 @@ function (assert_has_property_with_value ITEM_TYPE
                                          COMPARATOR
                                          VALUE)
 
-	_item_has_property_with_value (${ITEM_TYPE}
-	                               ${ITEM}
-	                               ${PROPERTY}
-	                               ${PROPERTY_TYPE}
-	                               ${COMPARATOR}
-	                               ${VALUE}
-	                               RESULT)
+    _item_has_property_with_value (${ITEM_TYPE}
+                                   ${ITEM}
+                                   ${PROPERTY}
+                                   ${PROPERTY_TYPE}
+                                   ${COMPARATOR}
+                                   ${VALUE}
+                                   RESULT)
 
-	if (NOT RESULT)
+    if (NOT RESULT)
 
-		message (SEND_ERROR
-			     "Expected ${ITEM_TYPE} ${ITEM} to have property ${PROPERTY} "
-			     " of type ${PROPERTY_TYPE} with value ${VALUE}")
+        message (SEND_ERROR
+                 "Expected ${ITEM_TYPE} ${ITEM} to have property ${PROPERTY} "
+                 " of type ${PROPERTY_TYPE} with value ${VALUE}")
 
-	endif (NOT RESULT)
+    endif (NOT RESULT)
 
 endfunction (assert_has_property_with_value)
 
@@ -448,27 +448,27 @@ endfunction (assert_has_property_with_value)
 # has a PROPERTY of PROPERTY_TYPE which satisfies COMPARATOR with
 # the VALUE specified.
 function (assert_does_not_have_property_with_value ITEM_TYPE
-			                                       ITEM
-			                                       PROPERTY
-			                                       PROPERTY_TYPE
-			                                       COMPARATOR
-			                                       VALUE)
+                                                   ITEM
+                                                   PROPERTY
+                                                   PROPERTY_TYPE
+                                                   COMPARATOR
+                                                   VALUE)
 
 
-	_item_has_property_with_value (${ITEM_TYPE}
-	                               ${ITEM}
-	                               ${PROPERTY}
-	                               ${PROPERTY_TYPE}
-	                               ${COMPARATOR}
-	                               ${VALUE}
-	                               RESULT)
+    _item_has_property_with_value (${ITEM_TYPE}
+                                   ${ITEM}
+                                   ${PROPERTY}
+                                   ${PROPERTY_TYPE}
+                                   ${COMPARATOR}
+                                   ${VALUE}
+                                   RESULT)
 
-	if (RESULT)
+    if (RESULT)
 
-		message (SEND_ERROR
-			     "Expected ${ITEM_TYPE} ${ITEM} not to have property"
-			     " ${PROPERTY} of type ${PROPERTY_TYPE} with value ${VALUE}")
+        message (SEND_ERROR
+                 "Expected ${ITEM_TYPE} ${ITEM} not to have property"
+                 " ${PROPERTY} of type ${PROPERTY_TYPE} with value ${VALUE}")
 
-	endif (RESULT)
+    endif (RESULT)
 
 endfunction (assert_does_not_have_property_with_value)
