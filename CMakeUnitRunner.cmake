@@ -78,7 +78,7 @@ function (_bootstrap_test_driver_script TEST_NAME DRIVER_SCRIPT CACHE_FILE)
          "                     OUTPUT_VARIABLE OUTPUT\n"
          "                     ERROR_VARIABLE ERROR)\n"
          "    if (RESULT EQUAL 0)\n"
-         "        message (\${OUTPUT} ${ERROR})\n"
+         "        message (\"Success: \${OUTPUT} \${ERROR}\")\n"
          "    else (RESULT EQUAL 0)\n"
          "        message (FATAL_ERROR \n"
          "                 \"The command \${\${COMMAND_VAR}}} failed with \"\n"
