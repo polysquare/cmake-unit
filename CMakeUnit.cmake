@@ -491,6 +491,100 @@ function (assert_does_not_have_property_with_value ITEM_TYPE
 
 endfunction (assert_does_not_have_property_with_value)
 
+function (_item_has_property_containing_value ITEM_TYPE
+                                              ITEM
+                                              PROPERTY
+                                              PROPERTY_TYPE
+                                              COMPARATOR
+                                              VALUE
+                                              RESULT_VARIABLE)
+
+    set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
+
+    get_property (_property_values
+                  ${ITEM_TYPE} ${ITEM}
+                  PROPERTY ${PROPERTY})
+
+    foreach (PROPERTY_VALUE ${_property_values})
+
+        set (_child_value ${PROPERTY_VALUE})
+        _variable_is (_child_value
+                      ${PROPERTY_TYPE}
+                      ${COMPARATOR}
+                      ${VALUE}
+                      RESULT)
+
+        if (RESULT)
+
+            set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+
+        endif (RESULT)
+
+    endforeach ()
+
+endfunction (_item_has_property_containing_value)
+
+# assert_has_property_containing_value
+#
+# Throws a non-fatal error if the ITEM with ITEM_TYPE specified does not
+# have a PROPERTY of PROPERTY_TYPE of which one of the items in the property
+# value's list satisfies COMPARATOR
+function (assert_has_property_containing_value ITEM_TYPE
+                                               ITEM
+                                               PROPERTY
+                                               PROPERTY_TYPE
+                                               COMPARATOR
+                                               VALUE)
+
+    _item_has_property_containing_value (${ITEM_TYPE}
+                                         ${ITEM}
+                                         ${PROPERTY}
+                                         ${PROPERTY_TYPE}
+                                         ${COMPARATOR}
+                                         ${VALUE}
+                                         RESULT)
+
+    if (NOT RESULT)
+
+        message (SEND_ERROR
+                 "Expected ${ITEM_TYPE} ${ITEM} to have property ${PROPERTY} "
+                 " of type ${PROPERTY_TYPE} containing value ${VALUE}")
+
+    endif (NOT RESULT)
+
+endfunction (assert_has_property_containing_value)
+
+# assert_does_not_have_property_containing_value
+#
+# Throws a non-fatal error if the ITEM with ITEM_TYPE specified does not
+# have a PROPERTY of PROPERTY_TYPE of which one of the items in the property
+# value's list satisfies COMPARATOR
+function (assert_does_not_have_property_containing_value ITEM_TYPE
+                                                         ITEM
+                                                         PROPERTY
+                                                         PROPERTY_TYPE
+                                                         COMPARATOR
+                                                         VALUE)
+
+    _item_has_property_containing_value (${ITEM_TYPE}
+                                         ${ITEM}
+                                         ${PROPERTY}
+                                         ${PROPERTY_TYPE}
+                                         ${COMPARATOR}
+                                         ${VALUE}
+                                         RESULT)
+
+    if (RESULT)
+
+        message (SEND_ERROR
+                 "Expected ${ITEM_TYPE} ${ITEM} not to have property "
+                 "${PROPERTY} of type ${PROPERTY_TYPE} containing "
+                 "value ${VALUE}")
+
+    endif (RESULT)
+
+endfunction (assert_does_not_have_property_containing_value)
+
 function (_file_exists FILE RESULT_VARIABLE)
 
     set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
