@@ -534,3 +534,48 @@ function (assert_file_does_not_exist FILE)
     endif (RESULT)
 
 endfunction (assert_file_does_not_exist)
+
+function (_file_contains_substring FILE SUBSTRING RESULT_VARIABLE)
+
+    file (READ ${FILE} CONTENTS)
+
+    _string_contains (${CONTENTS} ${SUBSTRING} RESULT)
+
+    # PARENT_SCOPE only propogates up one level so we need to
+    # propogate the result here too
+    set (${RESULT_VARIABLE} ${RESULT} PARENT_SCOPE)
+
+endfunction (_file_contains_substring)
+
+# assert_file_contains:
+#
+# Throws a non-fatal error if the file specified by FILE
+# does not contain the substring SUBSTRING
+function (assert_file_contains FILE SUBSTRING)
+
+    _file_contains_substring (${FILE} ${SUBSTRING} RESULT)
+
+    if (NOT RESULT)
+
+        message (SEND_ERROR "The file ${FILE} does not contain the string "
+                 " ${SUBSTRING}")
+
+    endif (NOT RESULT)
+
+endfunction (assert_file_contains)
+
+# assert_file_does_not_contain:
+#
+# Throws a non-fatal error if the file specified by FILE
+# contains the substring SUBSTRING
+function (assert_file_does_not_contain FILE SUBSTRING)
+
+    _file_contains_substring (${FILE} ${SUBSTRING} RESULT)
+
+    if (RESULT)
+
+        message (SEND_ERROR "The file ${FILE} contains the string ${SUBSTRING}")
+
+    endif (RESULT)
+
+endfunction (assert_file_does_not_contain)
