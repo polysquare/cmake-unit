@@ -72,18 +72,34 @@ function (_bootstrap_test_driver_script TEST_NAME DRIVER_SCRIPT CACHE_FILE)
     file (MAKE_DIRECTORY ${TEST_DIRECTORY_NAME})
     file (MAKE_DIRECTORY ${TEST_WORKING_DIRECTORY_NAME})
     set (TEST_DRIVER_SCRIPT_CONTENTS
-         "function (add_driver_command COMMAND_VAR)\n"
+         "function (add_driver_command COMMAND_VAR OUTPUT_FILE ERROR_FILE)\n"
+         "    include (CMakeParseArguments)\n"
+         "    set (DRIVER_SCRIPT_SINGLEVAR_ARGS\n"
+         "         OUTPUT_FILE\;ERROR_FILE)\n"
+         "    cmake_parse_arguments (DRIVER_SCRIPT\n"
+         "                           \"\"\n"
+         "                           \"\${DRIVER_SCRIPT_SINGLEVAR_ARGS}\"\n"
+         "                           \"\"\n"
+         "                           \${ARGN})\n"
          "    execute_process (COMMAND \${\${COMMAND_VAR}}\n"
          "                     RESULT_VARIABLE RESULT\n"
          "                     OUTPUT_VARIABLE OUTPUT\n"
          "                     ERROR_VARIABLE ERROR)\n"
          "    if (RESULT EQUAL 0)\n"
-         "        message (\"Success: \${OUTPUT} \${ERROR}\")\n"
+         "        message (\"\\n\${OUTPUT}\\n\${ERROR}\")\n"
          "    else (RESULT EQUAL 0)\n"
          "        message (FATAL_ERROR \n"
          "                 \"The command \${\${COMMAND_VAR}}} failed with \"\n"
-         "                 \"\${RESULT} : \${ERROR}\")\n"
+         "                 \"\${RESULT}\\n\${ERROR}\\n\${OUTPUT}\")\n"
          "    endif (RESULT EQUAL 0)\n"
+         "    file (WRITE\n"
+         "          \${OUTPUT_FILE}\n"
+         "          \"Output:\\n\"\n"
+         "          \${OUTPUT})\n"
+         "    file (WRITE\n"
+         "          \${ERROR_FILE}\n"
+         "          \"Errors:\\n\"\n"
+         "          \${ERROR})\n"
          "endfunction (add_driver_command)\n")
     file (WRITE ${DRIVER_SCRIPT} ${TEST_DRIVER_SCRIPT_CONTENTS})
 
@@ -96,7 +112,9 @@ function (_add_driver_step DRIVER_SCRIPT STEP COMMAND_VAR)
 
     file (APPEND ${DRIVER_SCRIPT}
           "set (${STEP} ${${COMMAND_VAR}})\n"
-          "add_driver_command (${STEP})\n")
+          "add_driver_command (${STEP}\n"
+          "                    \${CMAKE_CURRENT_BINARY_DIR}/${STEP}.output\n"
+          "                    \${CMAKE_CURRENT_BINARY_DIR}/${STEP}.error)\n")
 
 endfunction (_add_driver_step DRIVER_SCRIPT STEP COMMAND_VAR)
 
@@ -131,7 +149,8 @@ function (_append_configure_step TEST_NAME
         file (WRITE ${TEST_DIRECTORY_CONFIGURE_SCRIPT}
               ${TEST_DIRECTORY_CONFIGURE_SCRIPT_CONTENTS})
 
-        set (CONFIGURE_COMMAND ${CMAKE} .. -C${CACHE_FILE})
+        set (CONFIGURE_COMMAND
+             ${CMAKE} .. -C${CACHE_FILE} -DCMAKE_VERBOSE_MAKEFILE=ON)
         _add_driver_step (${DRIVER_SCRIPT} CONFIGURE CONFIGURE_COMMAND)
 
     endif (EXISTS ${TEST_FILE_PATH})
