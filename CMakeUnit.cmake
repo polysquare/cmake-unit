@@ -490,3 +490,47 @@ function (assert_does_not_have_property_with_value ITEM_TYPE
     endif (RESULT)
 
 endfunction (assert_does_not_have_property_with_value)
+
+function (_file_exists FILE RESULT_VARIABLE)
+
+    set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+
+    if (EXISTS ${FILE})
+
+        set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
+
+    endif (EXISTS ${FILE})
+
+endfunction (_file_exists)
+
+# assert_file_exists:
+#
+# Throws a non-fatal error if the file specified by FILE
+# does not exist on the filesystem
+function (assert_file_exists FILE)
+
+    _file_exists (${FILE} RESULT)
+
+    if (NOT RESULT)
+
+        message (SEND_ERROR "The file ${FILE} does not exist")
+
+    endif (NOT RESULT)
+
+endfunction (assert_file_exists)
+
+# assert_file_does_not_exist:
+#
+# Throws a non-fatal error if the file specified by FILE
+# exists the filesystem
+function (assert_file_does_not_exist FILE)
+
+    _file_exists (${FILE} RESULT)
+
+    if (RESULT)
+
+        message (SEND_ERROR "The file ${FILE} does exists")
+
+    endif (RESULT)
+
+endfunction (assert_file_does_not_exist)
