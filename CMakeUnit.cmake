@@ -58,12 +58,12 @@ function (assert_target_does_not_exist TARGET_NAME)
 
     _target_exists (${TARGET_NAME} RESULT)
 
-    if (NOT RESULT)
+    if (RESULT)
 
         message (SEND_ERROR
-                 "Expected ${TARGET_NAME} to be a target")
+                 "Expected ${TARGET_NAME} not to be a target")
 
-    endif (NOT RESULT)
+    endif (RESULT)
 
 endfunction (assert_target_does_not_exist)
 
