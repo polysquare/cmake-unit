@@ -1,4 +1,4 @@
-CMake Unit
+ CMake Unit
 ==========
 
 A unit testing framework for CMake.

@@ -1,0 +1,11 @@
+language: cpp
+before_install:
+  - git submodule update --init --recursive
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq `cat DEPENDENCIES`
+script:
+  - mkdir -p tests/build
+  - pushd tests/build
+  - cmake ..
+  - ctest --output-on-failure
+  - popd
