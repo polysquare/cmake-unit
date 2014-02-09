@@ -1,4 +1,4 @@
-# /tests/CMakeUnit.cmake
+# /CMakeUnit.cmake
 # A Simple CMake Unit Testing Framework - assertions
 # library.
 #
@@ -19,6 +19,28 @@
 # first class functions in CMake .
 #
 # See LICENCE.md for Copyright information
+
+function (assert_true VARIABLE)
+
+    if (NOT VARIABLE)
+
+        message (SEND_ERROR
+                 "Expected ${VARIABLE} to be true")
+
+    endif (NOT VARIABLE)
+
+endfunction ()
+
+function (assert_false VARIABLE)
+
+    if (VARIABLE)
+
+        message (SEND_ERROR
+                 "Expected ${VARIABLE} to be false")
+
+    endif (VARIABLE)
+
+endfunction ()
 
 function (_target_exists TARGET_NAME RESULT_VARIABLE)
 
@@ -589,11 +611,11 @@ function (_file_exists FILE RESULT_VARIABLE)
 
     set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-    if (EXISTS ${FILE})
+    if (NOT EXISTS ${FILE})
 
         set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
-    endif (EXISTS ${FILE})
+    endif (NOT EXISTS ${FILE})
 
 endfunction (_file_exists)
 
@@ -623,7 +645,7 @@ function (assert_file_does_not_exist FILE)
 
     if (RESULT)
 
-        message (SEND_ERROR "The file ${FILE} does exists")
+        message (SEND_ERROR "The file ${FILE} does exist")
 
     endif (RESULT)
 
