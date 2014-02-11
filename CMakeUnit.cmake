@@ -438,6 +438,14 @@ function (_item_has_property_with_value ITEM_TYPE
                                         VALUE
                                         RESULT_VARIABLE)
 
+    # GLOBAL scope is special, in that case we don't really
+    # have an item, so we need to get rid of it.
+    if (ITEM_TYPE STREQUAL "GLOBAL")
+
+        set (ITEM)
+
+    endif (ITEM_TYPE STREQUAL "GLOBAL")
+
     get_property (_property_value
                   ${ITEM_TYPE} ${ITEM}
                   PROPERTY ${PROPERTY})
@@ -522,6 +530,14 @@ function (_item_has_property_containing_value ITEM_TYPE
                                               RESULT_VARIABLE)
 
     set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
+
+    # GLOBAL scope is special, in that case we don't really
+    # have an item, so we need to get rid of it.
+    if (ITEM_TYPE STREQUAL "GLOBAL")
+
+        set (ITEM)
+
+    endif (ITEM_TYPE STREQUAL "GLOBAL")
 
     get_property (_property_values
                   ${ITEM_TYPE} ${ITEM}
