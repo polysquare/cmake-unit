@@ -73,14 +73,6 @@ function (_bootstrap_test_driver_script TEST_NAME DRIVER_SCRIPT CACHE_FILE)
     file (MAKE_DIRECTORY ${TEST_WORKING_DIRECTORY_NAME})
     set (TEST_DRIVER_SCRIPT_CONTENTS
          "function (add_driver_command COMMAND_VAR OUTPUT_FILE ERROR_FILE)\n"
-         "    include (CMakeParseArguments)\n"
-         "    set (DRIVER_SCRIPT_SINGLEVAR_ARGS\n"
-         "         OUTPUT_FILE\;ERROR_FILE)\n"
-         "    cmake_parse_arguments (DRIVER_SCRIPT\n"
-         "                           \"\"\n"
-         "                           \"\${DRIVER_SCRIPT_SINGLEVAR_ARGS}\"\n"
-         "                           \"\"\n"
-         "                           \${ARGN})\n"
          "    execute_process (COMMAND \${\${COMMAND_VAR}}\n"
          "                     RESULT_VARIABLE RESULT\n"
          "                     OUTPUT_VARIABLE OUTPUT\n"
@@ -160,7 +152,10 @@ endfunction (_append_configure_step)
 function (_append_build_step DRIVER_SCRIPT
                              TEST_WORKING_DIRECTORY_NAME)
 
-    set (BUILD_COMMAND ${CMAKE} --build ${TEST_WORKING_DIRECTORY_NAME})
+    set (BUILD_COMMAND ${CMAKE}
+                       --build
+                       ${TEST_WORKING_DIRECTORY_NAME}
+                       --clean-first)
     _add_driver_step (${DRIVER_SCRIPT} BUILD BUILD_COMMAND)
 
 endfunction (_append_build_step)
