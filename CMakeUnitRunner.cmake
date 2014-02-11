@@ -160,7 +160,10 @@ endfunction (_append_configure_step)
 function (_append_build_step DRIVER_SCRIPT
                              TEST_WORKING_DIRECTORY_NAME)
 
-    set (BUILD_COMMAND ${CMAKE} --build ${TEST_WORKING_DIRECTORY_NAME})
+    set (BUILD_COMMAND ${CMAKE}
+                       --build
+                       ${TEST_WORKING_DIRECTORY_NAME}
+                       --clean-first)
     _add_driver_step (${DRIVER_SCRIPT} BUILD BUILD_COMMAND)
 
 endfunction (_append_build_step)
