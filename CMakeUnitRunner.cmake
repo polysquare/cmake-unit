@@ -100,10 +100,24 @@ function (_bootstrap_test_driver_script TEST_NAME DRIVER_SCRIPT CACHE_FILE)
 
 endfunction (_bootstrap_test_driver_script)
 
-function (_add_driver_step DRIVER_SCRIPT STEP COMMAND_VAR)
+function (_add_driver_step DRIVER_SCRIPT STEP)
+
+    set (DRIVER_STEP_MULTIVAR_ARGS COMMAND)
+
+    cmake_parse_arguments (ADD_DRIVER_STEP
+                           ""
+                           ""
+                           "${DRIVER_STEP_MULTIVAR_ARGS}"
+                           ${ARGN})
+
+    if (NOT ADD_DRIVER_STEP_COMMAND)
+
+        message (FATAL_ERROR "A COMMAND must be provided to add_driver_step")
+
+    endif (NOT ADD_DRIVER_STEP_COMMAND)
 
     file (APPEND ${DRIVER_SCRIPT}
-          "set (${STEP} ${${COMMAND_VAR}})\n"
+          "set (${STEP} ${ADD_DRIVER_STEP_COMMAND})\n"
           "add_driver_command (${STEP}\n"
           "                    \${CMAKE_CURRENT_BINARY_DIR}/${STEP}.output\n"
           "                    \${CMAKE_CURRENT_BINARY_DIR}/${STEP}.error)\n")
@@ -143,7 +157,8 @@ function (_append_configure_step TEST_NAME
 
         set (CONFIGURE_COMMAND
              ${CMAKE} .. -C${CACHE_FILE} -DCMAKE_VERBOSE_MAKEFILE=ON)
-        _add_driver_step (${DRIVER_SCRIPT} CONFIGURE CONFIGURE_COMMAND)
+        _add_driver_step (${DRIVER_SCRIPT} CONFIGURE
+                          COMMAND ${CONFIGURE_COMMAND})
 
 
     else (EXISTS ${TEST_FILE_PATH})
@@ -162,7 +177,8 @@ function (_append_build_step DRIVER_SCRIPT
                        --build
                        ${TEST_WORKING_DIRECTORY_NAME}
                        --clean-first)
-    _add_driver_step (${DRIVER_SCRIPT} BUILD BUILD_COMMAND)
+    _add_driver_step (${DRIVER_SCRIPT} BUILD
+                      COMMAND ${BUILD_COMMAND})
 
 endfunction (_append_build_step)
 
@@ -179,7 +195,8 @@ function (_append_verify_step DRIVER_SCRIPT
              ${CMAKE}
              -C${CACHE_FILE}
              -P ${TEST_VERIFY_SCRIPT_FILE})
-        _add_driver_step (${DRIVER_SCRIPT} VERIFY VERIFY_COMMAND)
+        _add_driver_step (${DRIVER_SCRIPT} VERIFY
+                          COMMAND ${VERIFY_COMMAND})
 
     else (EXISTS ${TEST_VERIFY_SCRIPT_FILE})
 
