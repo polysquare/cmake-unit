@@ -145,6 +145,12 @@ function (_append_configure_step TEST_NAME
              ${CMAKE} .. -C${CACHE_FILE} -DCMAKE_VERBOSE_MAKEFILE=ON)
         _add_driver_step (${DRIVER_SCRIPT} CONFIGURE CONFIGURE_COMMAND)
 
+
+    else (EXISTS ${TEST_FILE_PATH})
+
+        message (SEND_ERROR "The file ${TEST_FILE_PATH} must exist"
+                            " in order for the configure step to run")
+
     endif (EXISTS ${TEST_FILE_PATH})
 
 endfunction (_append_configure_step)
