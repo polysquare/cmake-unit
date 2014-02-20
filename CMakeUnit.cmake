@@ -711,3 +711,64 @@ function (assert_file_does_not_contain FILE SUBSTRING)
     endif (RESULT)
 
 endfunction (assert_file_does_not_contain)
+
+function (_file_has_line_matching FILE PATTERN RESULT_VARIABLE)
+
+    set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
+
+    file (READ ${FILE} CONTENTS)
+
+    # Split the string into individual lines
+    string (REGEX REPLACE ";" "\\\;" CONTENTS "${CONTENTS}")
+    string (REGEX REPLACE "\n" ";" CONTENTS "${CONTENTS}")
+
+    # Now loop over each line and check if there's a match against PATTERN
+    foreach (LINE ${CONTENTS})
+
+        if (LINE MATCHES ${PATTERN})
+
+            set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+            break ()
+
+        endif (LINE MATCHES ${PATTERN})
+
+    endforeach ()
+
+endfunction (_file_has_line_matching)
+
+# assert_file_has_line_matching
+#
+# Throws a non-fatal error if the file specified by FILE
+# does not have a line that matches PATTERN
+function (assert_file_has_line_matching FILE PATTERN)
+
+    _file_has_line_matching (${FILE} ${PATTERN} RESULT)
+
+    if (NOT RESULT)
+
+        message (SEND_ERROR "The file ${FILE} does not have "
+                 "a line matching ${PATTERN}")
+
+    endif (NOT RESULT)
+
+endfunction ()
+
+# assert_file_does_not_have_line_matching
+#
+# Throws a non-fatal error if the file specified by FILE
+# has a line that matches PATTERN
+function (assert_file_does_not_have_line_matching FILE PATTERN)
+
+    _file_has_line_matching (${FILE} ${PATTERN} RESULT)
+
+    if (RESULT)
+
+        message (SEND_ERROR "The file ${FILE} has "
+                 "a line matching ${PATTERN}")
+
+    endif (RESULT)
+
+endfunction ()
+
+
+    
