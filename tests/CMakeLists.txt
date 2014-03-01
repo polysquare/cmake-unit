@@ -3,6 +3,15 @@
 #
 # See LICENCE.md for Copyright information
 
+if (POLICY CMP0025)
+
+    cmake_policy (SET CMP0025 NEW)
+
+endif (POLICY CMP0025)
+
+project (CMakeUnitTests)
+cmake_minimum_required (VERSION 2.8)
+
 # We assume that it is one-above us
 set (CMAKE_UNIT_RELATIVE_CMAKE_DIRECTORY
      ${CMAKE_CURRENT_SOURCE_DIR}/..)
