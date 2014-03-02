@@ -521,6 +521,82 @@ function (assert_does_not_have_property_with_value ITEM_TYPE
 
 endfunction (assert_does_not_have_property_with_value)
 
+function (_list_contains_value LIST_VARIABLE
+                               TYPE
+                               COMPARATOR
+                               VALUE
+                               RESULT_VARIABLE)
+
+    set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
+
+    foreach (LIST_VALUE ${${LIST_VARIABLE}})
+
+        set (_child_value ${LIST_VALUE})
+        _variable_is (_child_value
+                      ${TYPE}
+                      ${COMPARATOR}
+                      ${VALUE}
+                      RESULT)
+
+        if (RESULT)
+
+            set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+
+        endif (RESULT)
+
+    endforeach ()
+
+endfunction (_list_contains_value)
+
+# assert_list_contains_value
+#
+# Throws a non-fatal error if the list specified by LIST_VARIABLE
+# does not contain a value which satisfies COMPARATOR with
+# VALUE
+function (assert_list_contains_value LIST_VARIABLE
+                                     TYPE
+                                     COMPARATOR
+                                     VALUE)
+
+    _list_contains_value (${LIST_VARIABLE}
+                          ${TYPE}
+                          ${COMPARATOR}
+                          ${VALUE}
+                          RESULT)
+
+    if (NOT RESULT)
+
+        message (SEND_ERROR "List ${LIST_VARIABLE} does not contain a value "
+                            "${COMPARATOR} ${VALUE}")
+
+    endif (NOT RESULT)
+
+endfunction (assert_list_contains_value)
+
+# assert_list_contains_value
+#
+# Throws a non-fatal error if the list specified by LIST_VARIABLE
+# contains a value which satisfies COMPARATOR with VALUE
+function (assert_list_does_not_contain_value LIST_VARIABLE
+                                             TYPE
+                                             COMPARATOR
+                                             VALUE)
+
+    _list_contains_value (${LIST_VARIABLE}
+                          ${TYPE}
+                          ${COMPARATOR}
+                          ${VALUE}
+                          RESULT)
+
+    if (RESULT)
+
+        message (SEND_ERROR "List ${LIST_VARIABLE} contains a value "
+                            "${COMPARATOR} ${VALUE}")
+
+    endif (RESULT)
+
+endfunction (assert_list_does_not_contain_value)
+
 function (_item_has_property_containing_value ITEM_TYPE
                                               ITEM
                                               PROPERTY
@@ -543,22 +619,17 @@ function (_item_has_property_containing_value ITEM_TYPE
                   ${ITEM_TYPE} ${ITEM}
                   PROPERTY ${PROPERTY})
 
-    foreach (PROPERTY_VALUE ${_property_values})
+    _list_contains_value (_property_values
+                          ${PROPERTY_TYPE}
+                          ${COMPARATOR}
+                          ${VALUE}
+                          RESULT)
 
-        set (_child_value ${PROPERTY_VALUE})
-        _variable_is (_child_value
-                      ${PROPERTY_TYPE}
-                      ${COMPARATOR}
-                      ${VALUE}
-                      RESULT)
+    if (RESULT)
 
-        if (RESULT)
+        set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-            set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
-
-        endif (RESULT)
-
-    endforeach ()
+    endif (RESULT)
 
 endfunction (_item_has_property_containing_value)
 
