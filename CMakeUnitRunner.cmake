@@ -73,6 +73,7 @@ function (_bootstrap_test_driver_script TEST_NAME DRIVER_SCRIPT CACHE_FILE)
     file (MAKE_DIRECTORY ${TEST_WORKING_DIRECTORY_NAME})
     set (TEST_DRIVER_SCRIPT_CONTENTS
          "function (add_driver_command COMMAND_VAR OUTPUT_FILE ERROR_FILE)\n"
+         "    message (\"Running \" \${\${COMMAND_VAR}})\n"
          "    execute_process (COMMAND \${\${COMMAND_VAR}}\n"
          "                     RESULT_VARIABLE RESULT\n"
          "                     OUTPUT_VARIABLE OUTPUT\n"
@@ -158,8 +159,12 @@ function (_append_configure_step TEST_NAME
         file (WRITE ${TEST_DIRECTORY_CONFIGURE_SCRIPT}
               ${TEST_DIRECTORY_CONFIGURE_SCRIPT_CONTENTS})
 
+        string (REPLACE " " "\\ " GENERATOR ${CMAKE_GENERATOR})
         set (CONFIGURE_COMMAND
-             ${CMAKE} .. -C${CACHE_FILE} -DCMAKE_VERBOSE_MAKEFILE=ON)
+             ${CMAKE} ..
+             -C${CACHE_FILE}
+             -DCMAKE_VERBOSE_MAKEFILE=ON
+             -G "${GENERATOR}")
         _add_driver_step (${DRIVER_SCRIPT} CONFIGURE
                           COMMAND ${CONFIGURE_COMMAND})
 
