@@ -29,6 +29,8 @@
 # the option INITIAL_CACHE_CONTENTS along with the name of a variable
 # which contains a string containing the contents of a file that could be
 # passed to -C to set an initial cache for the tests.
+include (CMakeParseArguments)
+
 macro (bootstrap_cmake_unit)
 
     include (CMakeParseArguments)
@@ -179,12 +181,15 @@ function (_append_configure_step TEST_NAME
 endfunction (_append_configure_step)
 
 function (_append_build_step DRIVER_SCRIPT
-                             TEST_WORKING_DIRECTORY_NAME)
+                             TEST_WORKING_DIRECTORY_NAME
+                             TARGET)
 
     set (BUILD_COMMAND ${CMAKE}
                        --build
                        ${TEST_WORKING_DIRECTORY_NAME}
-                       --clean-first)
+                       --clean-first
+                       --target
+                       ${TARGET})
     _add_driver_step (${DRIVER_SCRIPT} BUILD
                       COMMAND ${BUILD_COMMAND})
 
@@ -243,6 +248,23 @@ endfunction (add_cmake_test)
 # VERIFY to ensure that the project built correctly.
 function (add_cmake_build_test TEST_NAME VERIFY)
 
+    set (ADD_CMAKE_BUILD_TEST_OPTION_ARGS)
+    set (ADD_CMAKE_BUILD_TEST_SINGLEVAR_ARGS
+         TARGET)
+    set (ADD_CMAKE_BUILD_TEST_MULTIVAR_ARGS)
+
+    cmake_parse_arguments (ADD_CMAKE_BUILD_TEST
+                           "${ADD_CMAKE_BUILD_TEST_OPTION_ARGS}"
+                           "${ADD_CMAKE_BUILD_TEST_SINGLEVAR_ARGS}"
+                           "${ADD_CMAKE_BUILD_TEST_MULTIVAR_ARGS}"
+                           ${ARGN})
+
+    if (NOT ADD_CMAKE_BUILD_TEST_TARGET)
+
+        set (ADD_CMAKE_BUILD_TEST_TARGET all)
+
+    endif (NOT ADD_CMAKE_BUILD_TEST_TARGET)
+
     _define_variables_for_test (${TEST_NAME})
     _bootstrap_test_driver_script(${TEST_NAME}
                                   ${TEST_DRIVER_SCRIPT}
@@ -253,7 +275,9 @@ function (add_cmake_build_test TEST_NAME VERIFY)
                             ${TEST_DIRECTORY_NAME}
                             ${TEST_WORKING_DIRECTORY_NAME}
                             ${TEST_FILE})
-    _append_build_step (${TEST_DRIVER_SCRIPT} ${TEST_WORKING_DIRECTORY_NAME})
+    _append_build_step (${TEST_DRIVER_SCRIPT}
+                        ${TEST_WORKING_DIRECTORY_NAME}
+                        ${ADD_CMAKE_BUILD_TEST_TARGET})
     _append_verify_step (${TEST_DRIVER_SCRIPT}
                          ${TEST_INITIAL_CACHE_FILE}
                          ${VERIFY})
