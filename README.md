@@ -3,6 +3,10 @@ CMake Unit
 
 A unit testing framework for CMake.
 
+Status
+======
+[![Build Status](https://travis-ci.org/polysquare/cmake-unit.svg?branch=master)](https://travis-ci.org/polysquare/cmake-unit)
+
 Why?
 ====
 
