@@ -74,19 +74,22 @@ function (_bootstrap_test_driver_script TEST_NAME DRIVER_SCRIPT CACHE_FILE)
     file (MAKE_DIRECTORY ${TEST_DIRECTORY_NAME})
     file (MAKE_DIRECTORY ${TEST_WORKING_DIRECTORY_NAME})
     set (TEST_DRIVER_SCRIPT_CONTENTS
-         "function (add_driver_command COMMAND_VAR OUTPUT_FILE ERROR_FILE)\n"
+         "function (add_driver_command COMMAND_VAR\n"
+         "                             OUTPUT_FILE\n"
+         "                             ERROR_FILE\n"
+         "                             ALLOW_FAIL)\n"
          "    message (\"Running \" \${\${COMMAND_VAR}})\n"
          "    execute_process (COMMAND \${\${COMMAND_VAR}}\n"
          "                     RESULT_VARIABLE RESULT\n"
          "                     OUTPUT_VARIABLE OUTPUT\n"
          "                     ERROR_VARIABLE ERROR)\n"
-         "    if (RESULT EQUAL 0)\n"
+         "    if (RESULT EQUAL 0 OR ALLOW_FAIL)\n"
          "        message (\"\\n\${OUTPUT}\\n\${ERROR}\")\n"
-         "    else (RESULT EQUAL 0)\n"
+         "    else (RESULT EQUAL 0 OR ALLOW_FAIL)\n"
          "        message (FATAL_ERROR \n"
          "                 \"The command \${\${COMMAND_VAR}}} failed with \"\n"
          "                 \"\${RESULT}\\n\${ERROR}\\n\${OUTPUT}\")\n"
-         "    endif (RESULT EQUAL 0)\n"
+         "    endif (RESULT EQUAL 0 OR ALLOW_FAIL)\n"
          "    file (WRITE\n"
          "          \${OUTPUT_FILE}\n"
          "          \"Output:\\n\"\n"
@@ -105,10 +108,11 @@ endfunction (_bootstrap_test_driver_script)
 
 function (_add_driver_step DRIVER_SCRIPT STEP)
 
+    set (DRIVER_STEP_OPTION_ARGS ALLOW_FAIL)
     set (DRIVER_STEP_MULTIVAR_ARGS COMMAND)
 
     cmake_parse_arguments (ADD_DRIVER_STEP
-                           ""
+                           "${DRIVER_STEP_OPTION_ARGS}"
                            ""
                            "${DRIVER_STEP_MULTIVAR_ARGS}"
                            ${ARGN})
@@ -119,11 +123,22 @@ function (_add_driver_step DRIVER_SCRIPT STEP)
 
     endif (NOT ADD_DRIVER_STEP_COMMAND)
 
+    if (ADD_DRIVER_STEP_ALLOW_FAIL)
+
+        set (ALLOW_FAIL ON)
+
+    else (ADD_DRIVER_STEP_ALLOW_FAIL)
+
+        set (ALLOW_FAIL OFF)
+
+    endif (ADD_DRIVER_STEP_ALLOW_FAIL)
+
     file (APPEND ${DRIVER_SCRIPT}
           "set (${STEP} ${ADD_DRIVER_STEP_COMMAND})\n"
           "add_driver_command (${STEP}\n"
           "                    \${CMAKE_CURRENT_BINARY_DIR}/${STEP}.output\n"
-          "                    \${CMAKE_CURRENT_BINARY_DIR}/${STEP}.error)\n")
+          "                    \${CMAKE_CURRENT_BINARY_DIR}/${STEP}.error\n"
+          "                    ${ALLOW_FAIL})\n")
 
 endfunction (_add_driver_step DRIVER_SCRIPT STEP COMMAND_VAR)
 
@@ -184,6 +199,20 @@ function (_append_build_step DRIVER_SCRIPT
                              TEST_WORKING_DIRECTORY_NAME
                              TARGET)
 
+    set (BUILD_STEP_OPTION_ARGS ALLOW_FAIL)
+
+    cmake_parse_arguments (BUILD_STEP
+                           "${BUILD_STEP_OPTION_ARGS}"
+                           ""
+                           ""
+                           ${ARGN})
+
+    if (BUILD_STEP_ALLOW_FAIL)
+
+        set (ALLOW_FAIL_OPTION ALLOW_FAIL)
+
+    endif (BUILD_STEP_ALLOW_FAIL)
+
     set (BUILD_COMMAND ${CMAKE}
                        --build
                        ${TEST_WORKING_DIRECTORY_NAME}
@@ -191,7 +220,8 @@ function (_append_build_step DRIVER_SCRIPT
                        --target
                        ${TARGET})
     _add_driver_step (${DRIVER_SCRIPT} BUILD
-                      COMMAND ${BUILD_COMMAND})
+                      COMMAND ${BUILD_COMMAND}
+                      ${ALLOW_FAIL_OPTION})
 
 endfunction (_append_build_step)
 
@@ -248,7 +278,7 @@ endfunction (add_cmake_test)
 # VERIFY to ensure that the project built correctly.
 function (add_cmake_build_test TEST_NAME VERIFY)
 
-    set (ADD_CMAKE_BUILD_TEST_OPTION_ARGS)
+    set (ADD_CMAKE_BUILD_TEST_OPTION_ARGS ALLOW_BUILD_FAIL)
     set (ADD_CMAKE_BUILD_TEST_SINGLEVAR_ARGS
          TARGET)
     set (ADD_CMAKE_BUILD_TEST_MULTIVAR_ARGS)
@@ -265,6 +295,12 @@ function (add_cmake_build_test TEST_NAME VERIFY)
 
     endif (NOT ADD_CMAKE_BUILD_TEST_TARGET)
 
+    if (ADD_CMAKE_BUILD_TEST_ALLOW_BUILD_FAIL)
+
+        set (ALLOW_BUILD_FAIL_OPTION ALLOW_FAIL)
+
+    endif (ADD_CMAKE_BUILD_TEST_ALLOW_BUILD_FAIL)
+
     _define_variables_for_test (${TEST_NAME})
     _bootstrap_test_driver_script(${TEST_NAME}
                                   ${TEST_DRIVER_SCRIPT}
@@ -277,7 +313,8 @@ function (add_cmake_build_test TEST_NAME VERIFY)
                             ${TEST_FILE})
     _append_build_step (${TEST_DRIVER_SCRIPT}
                         ${TEST_WORKING_DIRECTORY_NAME}
-                        ${ADD_CMAKE_BUILD_TEST_TARGET})
+                        ${ADD_CMAKE_BUILD_TEST_TARGET}
+                        ${ALLOW_BUILD_FAIL_OPTION})
     _append_verify_step (${TEST_DRIVER_SCRIPT}
                          ${TEST_INITIAL_CACHE_FILE}
                          ${VERIFY})
