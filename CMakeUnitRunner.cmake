@@ -158,6 +158,14 @@ function (_append_configure_step TEST_NAME
                                  TEST_WORKING_DIRECTORY_NAME
                                  TEST_FILE)
 
+    set (CONFIGURE_STEP_OPTION_ARGS ALLOW_FAIL)
+
+    cmake_parse_arguments (CONFIGURE_STEP
+                           "${CONFIGURE_STEP_OPTION_ARGS}"
+                           ""
+                           ""
+                           ${ARGN})
+
     set (TEST_FILE_PATH
          ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_FILE})
 
@@ -176,6 +184,12 @@ function (_append_configure_step TEST_NAME
         file (WRITE ${TEST_DIRECTORY_CONFIGURE_SCRIPT}
               ${TEST_DIRECTORY_CONFIGURE_SCRIPT_CONTENTS})
 
+        if (CONFIGURE_STEP_ALLOW_FAIL)
+
+            set (ALLOW_FAIL_OPTION ALLOW_FAIL)
+
+        endif (CONFIGURE_STEP_ALLOW_FAIL)
+
         string (REPLACE " " "\\ " GENERATOR ${CMAKE_GENERATOR})
         set (CONFIGURE_COMMAND
              ${CMAKE} ..
@@ -183,7 +197,8 @@ function (_append_configure_step TEST_NAME
              -DCMAKE_VERBOSE_MAKEFILE=ON
              -G "${GENERATOR}")
         _add_driver_step (${DRIVER_SCRIPT} CONFIGURE
-                          COMMAND ${CONFIGURE_COMMAND})
+                          COMMAND ${CONFIGURE_COMMAND}
+                          ${ALLOW_FAIL_OPTION})
 
 
     else (EXISTS ${TEST_FILE_PATH})
@@ -213,10 +228,16 @@ function (_append_build_step DRIVER_SCRIPT
 
     endif (BUILD_STEP_ALLOW_FAIL)
 
+    if (NOT BUILD_STEP_NO_CLEAN)
+
+        set (CLEAN_FIRST_OPTION --clean-first)
+
+    endif (NOT BUILD_STEP_NO_CLEAN)
+
     set (BUILD_COMMAND ${CMAKE}
                        --build
                        ${TEST_WORKING_DIRECTORY_NAME}
-                       --clean-first
+                       ${CLEAN_FIRST_OPTION}
                        --target
                        ${TARGET})
     _add_driver_step (${DRIVER_SCRIPT} BUILD
@@ -278,7 +299,10 @@ endfunction (add_cmake_test)
 # VERIFY to ensure that the project built correctly.
 function (add_cmake_build_test TEST_NAME VERIFY)
 
-    set (ADD_CMAKE_BUILD_TEST_OPTION_ARGS ALLOW_BUILD_FAIL)
+    set (ADD_CMAKE_BUILD_TEST_OPTION_ARGS
+         ALLOW_BUILD_FAIL
+         ALLOW_CONFIGURE_FAIL
+         NO_CLEAN)
     set (ADD_CMAKE_BUILD_TEST_SINGLEVAR_ARGS
          TARGET)
     set (ADD_CMAKE_BUILD_TEST_MULTIVAR_ARGS)
@@ -301,6 +325,18 @@ function (add_cmake_build_test TEST_NAME VERIFY)
 
     endif (ADD_CMAKE_BUILD_TEST_ALLOW_BUILD_FAIL)
 
+    if (ADD_CMAKE_BUILD_TEST_ALLOW_CONFIGURE_FAIL)
+
+        set (ALLOW_CONFIGURE_FAIL_OPTION ALLOW_FAIL)
+
+    endif (ADD_CMAKE_BUILD_TEST_ALLOW_CONFIGURE_FAIL)
+
+    if (ADD_CMAKE_BUILD_TEST_NO_CLEAN)
+
+        set (NO_CLEAN_OPTION NO_CLEAN)
+
+    endif (ADD_CMAKE_BUILD_TEST_NO_CLEAN)
+
     _define_variables_for_test (${TEST_NAME})
     _bootstrap_test_driver_script(${TEST_NAME}
                                   ${TEST_DRIVER_SCRIPT}
@@ -310,11 +346,18 @@ function (add_cmake_build_test TEST_NAME VERIFY)
                             ${TEST_INITIAL_CACHE_FILE}
                             ${TEST_DIRECTORY_NAME}
                             ${TEST_WORKING_DIRECTORY_NAME}
-                            ${TEST_FILE})
-    _append_build_step (${TEST_DRIVER_SCRIPT}
-                        ${TEST_WORKING_DIRECTORY_NAME}
-                        ${ADD_CMAKE_BUILD_TEST_TARGET}
-                        ${ALLOW_BUILD_FAIL_OPTION})
+                            ${TEST_FILE}
+                            ${ALLOW_CONFIGURE_FAIL_OPTION})
+
+    if (NOT ADD_CMAKE_BUILD_TEST_ALLOW_CONFIGURE_FAIL)
+
+        _append_build_step (${TEST_DRIVER_SCRIPT}
+                            ${TEST_WORKING_DIRECTORY_NAME}
+                            ${ADD_CMAKE_BUILD_TEST_TARGET}
+                            ${ALLOW_BUILD_FAIL_OPTION}
+                            ${NO_CLEAN_OPTION})
+
+    endif (NOT ADD_CMAKE_BUILD_TEST_ALLOW_CONFIGURE_FAIL)
     _append_verify_step (${TEST_DRIVER_SCRIPT}
                          ${TEST_INITIAL_CACHE_FILE}
                          ${VERIFY})
