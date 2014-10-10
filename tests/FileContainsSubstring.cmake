@@ -1,7 +1,7 @@
 # /tests/FileContainsSubstring.cmake
 # Check the _file_contains_substring matcher.
 
-include (${CMAKE_UNIT_DIRECTORY}/CMakeUnit.cmake)
+include (CMakeUnit)
 
 set (SUBSTRING "substring")
 set (MAIN_STRING "main_${SUBSTRING}_string")

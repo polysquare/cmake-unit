@@ -1,7 +1,7 @@
 # /tests/TargetExists.cmake
 # Check the _target_exists matcher.
 
-include (${CMAKE_UNIT_DIRECTORY}/CMakeUnit.cmake)
+include (CMakeUnit)
 
 file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/Library.cpp "")
 add_library (library SHARED
