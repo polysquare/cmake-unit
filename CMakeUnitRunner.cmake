@@ -214,7 +214,7 @@ function (_append_build_step DRIVER_SCRIPT
                              TEST_WORKING_DIRECTORY_NAME
                              TARGET)
 
-    set (BUILD_STEP_OPTION_ARGS ALLOW_FAIL)
+    set (BUILD_STEP_OPTION_ARGS ALLOW_FAIL NO_CLEAN)
 
     cmake_parse_arguments (BUILD_STEP
                            "${BUILD_STEP_OPTION_ARGS}"
