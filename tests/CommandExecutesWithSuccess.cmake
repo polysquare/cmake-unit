@@ -4,7 +4,7 @@
 find_program (FALSE_PROGRAM false)
 find_program (TRUE_PROGRAM true)
 
-include (${CMAKE_UNIT_DIRECTORY}/CMakeUnit.cmake)
+include (CMakeUnit)
 
 _command_executes_with_success (TRUE_PROGRAM
                                 RESULT_TRUE

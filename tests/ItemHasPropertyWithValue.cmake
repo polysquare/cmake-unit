@@ -1,7 +1,7 @@
 # /tests/ItemHasPropertyWithValue.cmake
 # Check the _item_has_property_with_value matcher.
 
-include (${CMAKE_UNIT_DIRECTORY}/CMakeUnit.cmake)
+include (CMakeUnit)
 
 set (TARGET_PROPERTY_VALUE "value")
 add_custom_target (target)

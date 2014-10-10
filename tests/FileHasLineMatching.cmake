@@ -1,7 +1,7 @@
 # /tests/FileHasLineMatching.cmake
 # Check the _file_has_line_matching matcher.
 
-include (${CMAKE_UNIT_DIRECTORY}/CMakeUnit.cmake)
+include (CMakeUnit)
 
 set (SUBSTRING "substring")
 set (FOO_SUBSTRING "foo")

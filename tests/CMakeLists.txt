@@ -19,14 +19,16 @@ get_filename_component (CMAKE_UNIT_DIRECTORY
                         ${CMAKE_UNIT_RELATIVE_CMAKE_DIRECTORY}
                         ABSOLUTE)
 
-set (CMAKE_UNIT_INITIAL_CACHE_CONTENTS
-     "set (CMAKE_UNIT_DIRECTORY\n"
-     "     ${CMAKE_UNIT_DIRECTORY}\n"
-     "     CACHE STRING \"\" FORCE)\n")
-
 set (CMAKE_MODULE_PATH
      ${CMAKE_UNIT_DIRECTORY}
      ${CMAKE_MODULE_PATH})
+
+foreach (PATH ${CMAKE_MODULE_PATH})
+     set (CMAKE_UNIT_INITIAL_CACHE_CONTENTS
+          "${CMAKE_UNIT_INITIAL_CACHE_CONTENTS}\n"
+          "set (CMAKE_MODULE_PATH ${PATH} \${CMAKE_MODULE_PATH}\n"
+          "     CACHE STRING \"\" FORCE)\n")
+endforeach ()
 
 include (CMakeUnitRunner)
 

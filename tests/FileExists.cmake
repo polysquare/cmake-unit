@@ -1,7 +1,7 @@
 # /tests/FileExists.cmake
 # Check the _file_exists matcher.
 
-include (${CMAKE_UNIT_DIRECTORY}/CMakeUnit.cmake)
+include (CMakeUnit)
 
 file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/File "")
 

@@ -1,7 +1,7 @@
 # /tests/VariableIs.cmake
 # Check the _variable_is matcher.
 
-include (${CMAKE_UNIT_DIRECTORY}/CMakeUnit.cmake)
+include (CMakeUnit)
 
 set (STRING_VARIABLE "value")
 

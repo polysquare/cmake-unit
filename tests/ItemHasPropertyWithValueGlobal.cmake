@@ -3,7 +3,7 @@
 #
 # See LICENCE.md for Copyright information.
 
-include (${CMAKE_UNIT_DIRECTORY}/CMakeUnit.cmake)
+include (CMakeUnit)
 
 set (GLOBAL_PROPERTY_VALUE "value")
 set_property (GLOBAL

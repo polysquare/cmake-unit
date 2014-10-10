@@ -1,7 +1,7 @@
 # /tests/VariableIs.cmake
 # Check the _target_is_linked_to matcher.
 
-include (${CMAKE_UNIT_DIRECTORY}/CMakeUnit.cmake)
+include (CMakeUnit)
 
 file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/Library.cpp "")
 file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/Source.cpp "")
