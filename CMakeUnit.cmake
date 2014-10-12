@@ -143,11 +143,11 @@ function (_variable_is VARIABLE TYPE COMPARATOR VALUE RESULT_VARIABLE)
 
     if ("${TYPE}" MATCHES "STRING")
 
-        if (${VARIABLE} STR${COMPARATOR} ${VALUE})
+        if ("${VARIABLE}" STR${COMPARATOR} "${VALUE}")
 
             set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-        endif (${VARIABLE} STR${COMPARATOR} ${VALUE})
+        endif ("${VARIABLE}" STR${COMPARATOR} "${VALUE}")
 
     elseif ("${TYPE}" MATCHES "INTEGER" OR
             "${TYPE}" MATCHES "BOOL")
@@ -183,7 +183,7 @@ endfunction (_variable_is)
 # operation fails between VARIABLE and VALUE
 function (assert_variable_is VARIABLE TYPE COMPARATOR VALUE)
 
-    _variable_is (${VARIABLE} ${TYPE} ${COMPARATOR} ${VALUE} RESULT)
+    _variable_is (${VARIABLE} ${TYPE} ${COMPARATOR} "${VALUE}" RESULT)
 
     if (NOT RESULT)
 
@@ -211,7 +211,7 @@ endfunction (assert_variable_is)
 # operation succeeds between VARIABLE and VALUE
 function (assert_variable_is_not VARIABLE TYPE COMPARATOR VALUE)
 
-    _variable_is (${VARIABLE} ${TYPE} ${COMPARATOR} ${VALUE} RESULT)
+    _variable_is (${VARIABLE} ${TYPE} ${COMPARATOR} "${VALUE}" RESULT)
 
     if (RESULT)
 
@@ -453,7 +453,7 @@ function (_item_has_property_with_value ITEM_TYPE
     _variable_is (_property_value
                   ${PROPERTY_TYPE}
                   ${COMPARATOR}
-                  ${VALUE}
+                  "${VALUE}"
                   RESULT)
 
     set (${RESULT_VARIABLE} ${RESULT} PARENT_SCOPE)
@@ -477,7 +477,7 @@ function (assert_has_property_with_value ITEM_TYPE
                                    ${PROPERTY}
                                    ${PROPERTY_TYPE}
                                    ${COMPARATOR}
-                                   ${VALUE}
+                                   "${VALUE}"
                                    RESULT)
 
     if (NOT RESULT)
@@ -535,7 +535,7 @@ function (_list_contains_value LIST_VARIABLE
         _variable_is (_child_value
                       ${TYPE}
                       ${COMPARATOR}
-                      ${VALUE}
+                      "${VALUE}"
                       RESULT)
 
         if (RESULT)
@@ -622,7 +622,7 @@ function (_item_has_property_containing_value ITEM_TYPE
     _list_contains_value (_property_values
                           ${PROPERTY_TYPE}
                           ${COMPARATOR}
-                          ${VALUE}
+                          "${VALUE}"
                           RESULT)
 
     if (RESULT)
