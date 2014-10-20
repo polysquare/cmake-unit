@@ -13,10 +13,8 @@ add_executable (executable
 
 target_link_libraries (executable library)
 
-_target_is_linked_to (executable library RESULT LIBRARIES)
-_target_is_linked_to (executable not_linked_to_this NOT_RESULT LIBRARIES)
+_target_is_linked_to (executable library RESULT)
+_target_is_linked_to (executable not_linked_to_this NOT_RESULT)
 
-# INTERFACE_LINK_LIBRARIES is not set on lower cmake versions which means
-# that we can't run this test in continuous-integration. Disable it for now.
-# assert_true (${RESULT})
+assert_true (${RESULT})
 assert_false (${NOT_RESULT})
