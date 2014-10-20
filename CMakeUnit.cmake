@@ -20,6 +20,8 @@
 #
 # See LICENCE.md for Copyright information
 
+include (CMakeParseArguments)
+
 function (assert_true VARIABLE)
 
     if (NOT VARIABLE)
@@ -351,19 +353,17 @@ function (assert_command_does_not_execute_with_success COMMAND_VAR)
 
 endfunction (assert_command_does_not_execute_with_success)
 
-function (_target_is_linked_to TARGET_NAME
-                               LIBRARY
-                               RESULT_VARIABLE
-                               LIBRARIES_VARIABLE)
+function (_lib_found_in_libraries LIBRARY RESULT_VARIABLE)
 
-    get_property (TARGET_LIBS
-                  TARGET ${TARGET_NAME}
-                  PROPERTY INTERFACE_LINK_LIBRARIES)
+    set (LIB_FOUND_IN_LIBRARIES_MULTIVAR_ARGS LIBRARIES)
 
-    set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
-    set (${LIBRARIES_VARIABLE} ${TARGET_LIBS})
+    cmake_parse_arguments (LIB_FOUND
+                           ""
+                           ""
+                           "${LIB_FOUND_IN_LIBRARIES_MULTIVAR_ARGS}"
+                           ${ARGN})
 
-    foreach (_lib ${TARGET_LIBS})
+    foreach (_lib ${LIB_FOUND_LIBRARIES})
 
         if (_lib MATCHES "(^.*${LIBRARY}.*$)")
 
@@ -373,17 +373,61 @@ function (_target_is_linked_to TARGET_NAME
 
     endforeach ()
 
-endfunction (_target_is_linked_to)
+endfunction (_lib_found_in_libraries)
 
-function (_print_all_libraries_in_list LIBRARIES_VARIABLE)
+function (_print_all_target_libraries TARGET)
 
-    foreach (_lib ${${LIBRARIES_VARIABLE}})
+    get_property (INTERFACE_LIBRARIES
+                  TARGET ${TARGET}
+                  PROPERTY INTERFACE_LINK_LIBRARIES)
+    get_property (LINK_LIBRARIES
+                  TARGET ${TARGET}
+                  PROPERTY LINK_LIBRARIES)
 
-        message (STATUS "Found library: " ${_lib})
+    foreach (_lib ${INTERFACE_LIBRARIES})
+
+        message (STATUS "Part of link interface: " ${_lib})
 
     endforeach (${_lib})
 
-endfunction (_print_all_libraries_in_list)
+    foreach (_lib ${LINK_LIBRARIES})
+
+        message (STATUS "Link library: " ${_lib})
+
+    endforeach (${_lib})
+
+endfunction (_print_all_target_libraries)
+
+function (_target_is_linked_to TARGET_NAME
+                               LIBRARY
+                               RESULT_VARIABLE)
+
+    get_property (INTERFACE_LIBS
+                  TARGET ${TARGET_NAME}
+                  PROPERTY INTERFACE_LINK_LIBRARIES)
+    get_property (LINK_LIBS
+                  TARGET ${TARGET_NAME}
+                  PROPERTY LINK_LIBRARIES)
+
+    _lib_found_in_libraries (${LIBRARY} FOUND_IN_INTERFACE
+                             LIBRARIES ${INTERFACE_LIBS})
+    _lib_found_in_libraries (${LIBRARY} FOUND_IN_LINK
+                             LIBRARIES ${LINK_LIBS})
+
+    message (STATUS "All target libraries for ${TARGET_NAME}")
+    _print_all_target_libraries (${TARGET_NAME})
+
+    if (FOUND_IN_INTERFACE OR FOUND_IN_LINK)
+
+        set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+
+    else (FOUND_IN_INTERFACE OR FOUND_IN_LINK)
+
+        set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
+
+    endif (FOUND_IN_INTERFACE OR FOUND_IN_LINK)
+
+endfunction (_target_is_linked_to)
 
 # assert_target_is_linked_to
 #
@@ -401,7 +445,7 @@ function (assert_target_is_linked_to TARGET_NAME LIBRARY)
         message (SEND_ERROR
                  "Expected ${LIBRARY} to be a link-library to ${TARGET_NAME}")
 
-        _print_all_libraries_in_list (LIBRARIES)
+        _print_all_target_libraries (${TARGET_NAME})
 
     endif (NOT RESULT)
 
@@ -424,7 +468,7 @@ function (assert_target_is_not_linked_to TARGET_NAME LIBRARY)
                  "Expected ${LIBRARY} not to be a link-library "
                  "to ${TARGET_NAME}")
 
-        _print_all_libraries_in_list (LIBRARIES)
+        _print_all_target_libraries (${TARGET_NAME})
 
     endif (RESULT)
 
@@ -840,6 +884,3 @@ function (assert_file_does_not_have_line_matching FILE PATTERN)
     endif (RESULT)
 
 endfunction ()
-
-
-    
