@@ -414,9 +414,6 @@ function (_target_is_linked_to TARGET_NAME
     _lib_found_in_libraries (${LIBRARY} FOUND_IN_LINK
                              LIBRARIES ${LINK_LIBS})
 
-    message (STATUS "All target libraries for ${TARGET_NAME}")
-    _print_all_target_libraries (${TARGET_NAME})
-
     if (FOUND_IN_INTERFACE OR FOUND_IN_LINK)
 
         set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
