@@ -26,36 +26,53 @@
 # bootstrap_cmake_unit:
 #
 # Defines some global variables for the CMakeUnit framework. Pass
-# the option INITIAL_CACHE_CONTENTS along with the name of a variable
-# which contains a string containing the contents of a file that could be
-# passed to -C to set an initial cache for the tests.
+# VARIABLES to forward those variables to tests.
 include (CMakeParseArguments)
+include (CTest)
 
-macro (bootstrap_cmake_unit)
+enable_testing ()
 
-    include (CMakeParseArguments)
-    include (CTest)
-    enable_testing ()
+function (bootstrap_cmake_unit)
 
-    # Find CMake binary
-    find_program (CMAKE cmake)
+    set (FORWARD_MULTIVAR_ARGS VARIABLES)
 
-    if (NOT CMAKE)
-
-        message (FATAL_ERROR "Failed to find cmake binary on this system")
-
-    endif (NOT CMAKE)
-
-    cmake_parse_arguments (CMAKE_UNIT_BOOT
+    cmake_parse_arguments (FORWARD
                            ""
-                           "INITIAL_CACHE_CONTENTS"
                            ""
+                           "${FORWARD_MULTIVAR_ARGS}"
                            ${ARGN})
 
-    set (_CMAKE_UNIT_INITIAL_CACHE_CONTENTS
-         ${${CMAKE_UNIT_BOOT_INITIAL_CACHE_CONTENTS}})
+    foreach (VAR ${FORWARD_VARIABLES})
 
-endmacro (bootstrap_cmake_unit)
+        get_property (TYPE
+                      CACHE ${VAR}
+                      PROPERTY TYPE)
+
+        if (NOT TYPE STREQUAL "STRING" OR
+            NOT TYPE STREQUAL "BOOL" OR
+            NOT TYPE STREQUAL "PATH" OR
+            NOT TYPE STREQUAL "FILEPATH")
+
+            # If the variable is not part of the "public" cache, then
+            # we can still forward it, but we need to set a type of "STRING"
+            set (TYPE STRING)
+
+        endif (NOT TYPE STREQUAL "STRING" OR
+               NOT TYPE STREQUAL "BOOL" OR
+               NOT TYPE STREQUAL "PATH" OR
+               NOT TYPE STREQUAL "FILEPATH")
+
+        # This needs to be squeezed all on to one line so that we don't get
+        # semicolonization from having multiple strings in the set () command
+        set (ICC "${ICC}set (${VAR} \"${${VAR}}\" CACHE ${TYPE} \"\" FORCE)\n")
+
+    endforeach ()
+
+    # Escape semicolons
+    string (REPLACE ";" "/;" ICC "${ICC}")
+    set (_CMAKE_UNIT_INITIAL_CACHE_CONTENTS "${ICC}" PARENT_SCOPE)
+
+endfunction (bootstrap_cmake_unit)
 
 macro (_define_variables_for_test TEST_NAME)
 
@@ -102,7 +119,7 @@ function (_bootstrap_test_driver_script TEST_NAME DRIVER_SCRIPT CACHE_FILE)
     file (WRITE ${DRIVER_SCRIPT} ${TEST_DRIVER_SCRIPT_CONTENTS})
 
     file (WRITE ${CACHE_FILE}
-          ${_CMAKE_UNIT_INITIAL_CACHE_CONTENTS})
+          "${_CMAKE_UNIT_INITIAL_CACHE_CONTENTS}")
 
 endfunction (_bootstrap_test_driver_script)
 
@@ -146,7 +163,7 @@ function (_define_test_for_driver TEST_NAME DRIVER_SCRIPT)
 
     add_test (NAME ${TEST_NAME}
               COMMAND
-              ${CMAKE} -P ${DRIVER_SCRIPT}
+              ${CMAKE_COMMAND} -P ${DRIVER_SCRIPT}
               WORKING_DIRECTORY ${TEST_WORKING_DIRECTORY_NAME})
 
 endfunction (_define_test_for_driver)
@@ -192,7 +209,7 @@ function (_append_configure_step TEST_NAME
 
         string (REPLACE " " "\\ " GENERATOR ${CMAKE_GENERATOR})
         set (CONFIGURE_COMMAND
-             ${CMAKE} ..
+             ${CMAKE_COMMAND} ..
              -C${CACHE_FILE}
              -DCMAKE_VERBOSE_MAKEFILE=ON
              -G "${GENERATOR}")
@@ -234,7 +251,7 @@ function (_append_build_step DRIVER_SCRIPT
 
     endif (NOT BUILD_STEP_NO_CLEAN)
 
-    set (BUILD_COMMAND ${CMAKE}
+    set (BUILD_COMMAND ${CMAKE_COMMAND}
                        --build
                        ${TEST_WORKING_DIRECTORY_NAME}
                        ${CLEAN_FIRST_OPTION}
@@ -256,7 +273,7 @@ function (_append_verify_step DRIVER_SCRIPT
     if (EXISTS ${TEST_VERIFY_SCRIPT_FILE})
 
         set (VERIFY_COMMAND
-             ${CMAKE}
+             ${CMAKE_COMMAND}
              -C${CACHE_FILE}
              -P ${TEST_VERIFY_SCRIPT_FILE})
         _add_driver_step (${DRIVER_SCRIPT} VERIFY

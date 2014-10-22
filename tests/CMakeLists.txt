@@ -23,17 +23,10 @@ set (CMAKE_MODULE_PATH
      ${CMAKE_UNIT_DIRECTORY}
      ${CMAKE_MODULE_PATH})
 
-foreach (PATH ${CMAKE_MODULE_PATH})
-     set (CMAKE_UNIT_INITIAL_CACHE_CONTENTS
-          "${CMAKE_UNIT_INITIAL_CACHE_CONTENTS}\n"
-          "set (CMAKE_MODULE_PATH ${PATH} \${CMAKE_MODULE_PATH}\n"
-          "     CACHE STRING \"\" FORCE)\n")
-endforeach ()
-
 include (CMakeUnitRunner)
 
-bootstrap_cmake_unit (INITIAL_CACHE_CONTENTS
-                      CMAKE_UNIT_INITIAL_CACHE_CONTENTS)
+bootstrap_cmake_unit (VARIABLES CMAKE_MODULE_PATH)
+
 add_cmake_test (TargetExists)
 add_cmake_test (StringContains)
 add_cmake_test (VariableIs)
