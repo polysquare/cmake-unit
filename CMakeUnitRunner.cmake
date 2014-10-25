@@ -80,9 +80,9 @@ macro (_define_variables_for_test TEST_NAME)
     set (TEST_DIRECTORY_NAME ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME})
     set (TEST_WORKING_DIRECTORY_NAME ${TEST_DIRECTORY_NAME}/build)
     set (TEST_DRIVER_SCRIPT
-         ${TEST_WORKING_DIRECTORY_NAME}/${TEST_NAME}Driver.cmake)
+         ${TEST_DIRECTORY_NAME}/${TEST_NAME}Driver.cmake)
     set (TEST_INITIAL_CACHE_FILE
-         ${TEST_WORKING_DIRECTORY_NAME}/initial_cache.cmake)
+         ${TEST_DIRECTORY_NAME}/initial_cache.cmake)
 
 endmacro (_define_variables_for_test)
 
@@ -97,6 +97,8 @@ function (_bootstrap_test_driver_script TEST_NAME DRIVER_SCRIPT CACHE_FILE)
          "                             ALLOW_FAIL)\n"
          "    message (\"Running \" \${\${COMMAND_VAR}})\n"
          "    execute_process (COMMAND \${\${COMMAND_VAR}}\n"
+         "                     WORKING_DIRECTORY\n"
+         "                     ${TEST_WORKING_DIRECTORY_NAME}\n"
          "                     RESULT_VARIABLE RESULT\n"
          "                     OUTPUT_VARIABLE OUTPUT\n"
          "                     ERROR_VARIABLE ERROR)\n"
@@ -153,8 +155,8 @@ function (_add_driver_step DRIVER_SCRIPT STEP)
     file (APPEND ${DRIVER_SCRIPT}
           "set (${STEP} ${ADD_DRIVER_STEP_COMMAND})\n"
           "add_driver_command (${STEP}\n"
-          "                    \${CMAKE_CURRENT_BINARY_DIR}/${STEP}.output\n"
-          "                    \${CMAKE_CURRENT_BINARY_DIR}/${STEP}.error\n"
+          "                    ${TEST_WORKING_DIRECTORY_NAME}/${STEP}.output\n"
+          "                    ${TEST_WORKING_DIRECTORY_NAME}/${STEP}.error\n"
           "                    ${ALLOW_FAIL})\n")
 
 endfunction (_add_driver_step DRIVER_SCRIPT STEP COMMAND_VAR)
@@ -164,9 +166,18 @@ function (_define_test_for_driver TEST_NAME DRIVER_SCRIPT)
     add_test (NAME ${TEST_NAME}
               COMMAND
               ${CMAKE_COMMAND} -P ${DRIVER_SCRIPT}
-              WORKING_DIRECTORY ${TEST_WORKING_DIRECTORY_NAME})
+              WORKING_DIRECTORY ${TEST_DIRECTORY_NAME})
 
 endfunction (_define_test_for_driver)
+
+function (_append_clean_step DRIVER_SCRIPT
+                             TEST_WORKING_DIRECTORY_NAME)
+
+    file (APPEND ${DRIVER_SCRIPT}
+          "file (REMOVE_RECURSE ${TEST_WORKING_DIRECTORY_NAME})\n"
+          "file (MAKE_DIRECTORY ${TEST_WORKING_DIRECTORY_NAME})\n")
+
+endfunction (_append_clean_step)
 
 function (_append_configure_step TEST_NAME
                                  DRIVER_SCRIPT
@@ -231,7 +242,7 @@ function (_append_build_step DRIVER_SCRIPT
                              TEST_WORKING_DIRECTORY_NAME
                              TARGET)
 
-    set (BUILD_STEP_OPTION_ARGS ALLOW_FAIL NO_CLEAN)
+    set (BUILD_STEP_OPTION_ARGS ALLOW_FAIL)
 
     cmake_parse_arguments (BUILD_STEP
                            "${BUILD_STEP_OPTION_ARGS}"
@@ -245,16 +256,9 @@ function (_append_build_step DRIVER_SCRIPT
 
     endif (BUILD_STEP_ALLOW_FAIL)
 
-    if (NOT BUILD_STEP_NO_CLEAN)
-
-        set (CLEAN_FIRST_OPTION --clean-first)
-
-    endif (NOT BUILD_STEP_NO_CLEAN)
-
     set (BUILD_COMMAND ${CMAKE_COMMAND}
                        --build
                        ${TEST_WORKING_DIRECTORY_NAME}
-                       ${CLEAN_FIRST_OPTION}
                        --target
                        ${TARGET})
     _add_driver_step (${DRIVER_SCRIPT} BUILD
@@ -298,6 +302,8 @@ function (add_cmake_test TEST_NAME)
     _bootstrap_test_driver_script(${TEST_NAME}
                                   ${TEST_DRIVER_SCRIPT}
                                   ${TEST_INITIAL_CACHE_FILE})
+    _append_clean_step (${TEST_DRIVER_SCRIPT}
+                        ${TEST_WORKING_DIRECTORY_NAME})
     _append_configure_step (${TEST_NAME}
                             ${TEST_DRIVER_SCRIPT}
                             ${TEST_INITIAL_CACHE_FILE}
@@ -348,16 +354,18 @@ function (add_cmake_build_test TEST_NAME VERIFY)
 
     endif (ADD_CMAKE_BUILD_TEST_ALLOW_CONFIGURE_FAIL)
 
-    if (ADD_CMAKE_BUILD_TEST_NO_CLEAN)
-
-        set (NO_CLEAN_OPTION NO_CLEAN)
-
-    endif (ADD_CMAKE_BUILD_TEST_NO_CLEAN)
-
     _define_variables_for_test (${TEST_NAME})
     _bootstrap_test_driver_script(${TEST_NAME}
                                   ${TEST_DRIVER_SCRIPT}
                                   ${TEST_INITIAL_CACHE_FILE})
+
+    if (NOT ADD_CMAKE_BUILD_TEST_NO_CLEAN)
+
+      _append_clean_step (${TEST_DRIVER_SCRIPT}
+                          ${TEST_WORKING_DIRECTORY_NAME})
+
+    endif (NOT ADD_CMAKE_BUILD_TEST_NO_CLEAN)
+
     _append_configure_step (${TEST_NAME}
                             ${TEST_DRIVER_SCRIPT}
                             ${TEST_INITIAL_CACHE_FILE}
