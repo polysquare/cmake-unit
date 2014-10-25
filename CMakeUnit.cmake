@@ -145,20 +145,20 @@ function (_variable_is VARIABLE TYPE COMPARATOR VALUE RESULT_VARIABLE)
 
     if ("${TYPE}" MATCHES "STRING")
 
-        if ("${VARIABLE}" STR${COMPARATOR} "${VALUE}")
+        if ("${${VARIABLE}}" STR${COMPARATOR} "${VALUE}")
 
             set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-        endif ("${VARIABLE}" STR${COMPARATOR} "${VALUE}")
+        endif ("${${VARIABLE}}" STR${COMPARATOR} "${VALUE}")
 
     elseif ("${TYPE}" MATCHES "INTEGER" OR
             "${TYPE}" MATCHES "BOOL")
 
-        if (${VARIABLE} ${COMPARATOR} ${VALUE})
+        if ("${${VARIABLE}}" ${COMPARATOR} ${VALUE})
 
             set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-        endif (${VARIABLE} ${COMPARATOR} ${VALUE})
+        endif ("${${VARIABLE}}" ${COMPARATOR} ${VALUE})
 
     else ("${TYPE}" MATCHES "STRING")
 
@@ -191,7 +191,7 @@ function (assert_variable_is VARIABLE TYPE COMPARATOR VALUE)
 
         message (SEND_ERROR
                  "Expected type ${TYPE} with value ${VALUE}"
-                 " but was ${VARIABLE}")
+                 " but was ${${VARIABLE}}")
 
     endif (NOT RESULT)
 
@@ -219,7 +219,7 @@ function (assert_variable_is_not VARIABLE TYPE COMPARATOR VALUE)
 
         message (SEND_ERROR
                  "Expected type ${TYPE} with value ${VALUE}"
-                 " but was ${VARIABLE}")
+                 " but was ${${VARIABLE}}")
 
     endif (RESULT)
 
