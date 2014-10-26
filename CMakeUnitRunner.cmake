@@ -256,11 +256,24 @@ function (_append_build_step DRIVER_SCRIPT
 
     endif (BUILD_STEP_ALLOW_FAIL)
 
+    # The "all" target is special. It means "do whatever happens by
+    # default". Some build systems literally have a target called
+    # "all", but others (Xcode) don't, so in that case, just don't
+    # add a --target.
+    if ("${TARGET}" STREQUAL "all")
+
+        set (TARGET_OPTION "")
+
+    else ("${TARGET}" STREQUAL "all")
+
+        set (TARGET_OPTION --target ${TARGET})
+
+    endif ("${TARGET}" STREQUAL "all")
+
     set (BUILD_COMMAND ${CMAKE_COMMAND}
                        --build
                        ${TEST_WORKING_DIRECTORY_NAME}
-                       --target
-                       ${TARGET})
+                       ${TARGET_OPTION})
     _add_driver_step (${DRIVER_SCRIPT} BUILD
                       COMMAND ${BUILD_COMMAND}
                       ${ALLOW_FAIL_OPTION})
