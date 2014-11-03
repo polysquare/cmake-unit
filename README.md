@@ -5,9 +5,10 @@ A unit testing framework for CMake.
 
 Status
 ======
-[![Build Status](https://travis-ci.org/polysquare/cmake-unit.svg?branch=master)](https://travis-ci.org/polysquare/cmake-unit)
-[![Build status](https://ci.appveyor.com/api/projects/status/7ntnxx783cr627hm/branch/master?svg=true)](https://ci.appveyor.com/project/smspillaz/cmake-unit-724/branch/master)
-[![Coverage Status](https://coveralls.io/repos/polysquare/cmake-unit/badge.png)](https://coveralls.io/r/polysquare/cmake-unit)
+
+| Travis-CI (Ubuntu) | AppVeyor (Windows) | Coveralls |
+|--------------------|--------------------|-----------|
+|[![Build Status](https://travis-ci.org/polysquare/cmake-unit.svg?branch=master)](https://travis-ci.org/polysquare/cmake-unit)|[![Build status](https://ci.appveyor.com/api/projects/status/7ntnxx783cr627hm/branch/master?svg=true)](https://ci.appveyor.com/project/smspillaz/cmake-unit-724/branch/master)|[![Coverage Status](https://coveralls.io/repos/polysquare/cmake-unit/badge.png)](https://coveralls.io/r/polysquare/cmake-unit)|
 
 Why?
 ====
