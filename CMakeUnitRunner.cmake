@@ -308,17 +308,14 @@ function (_append_configure_step TEST_NAME
         set (TEST_DIRECTORY_CONFIGURE_SCRIPT
              "${TEST_DIRECTORY_NAME}/CMakeLists.txt")
         set (TEST_DIRECTORY_CONFIGURE_SCRIPT_CONTENTS
-             "cmake_policy (VERSION 3.0)\n"
-             "project (TestProject CXX C)\n"
-             "cmake_minimum_required (VERSION 2.8 FATAL_ERROR)\n"
-             "if (POLICY CMP0025)\n"
-             "  cmake_policy (SET CMP0025 NEW)\n"
-             "endif (POLICY CMP0025)\n"
-             "project (TestProject CXX C)\n"
              "cmake_minimum_required (VERSION 2.8 FATAL_ERROR)\n"
              "if (POLICY CMP0042)\n"
              "  cmake_policy (SET CMP0042 NEW)\n"
              "endif (POLICY CMP0042)\n"
+             "if (POLICY CMP0025)\n"
+             "  cmake_policy (SET CMP0025 NEW)\n"
+             "endif (POLICY CMP0025)\n"
+             "project (TestProject CXX C)\n"
              "include (\"${CMAKE_CURRENT_SOURCE_DIR}/${TEST_FILE}\")\n")
 
         file (WRITE "${TEST_DIRECTORY_CONFIGURE_SCRIPT}"
