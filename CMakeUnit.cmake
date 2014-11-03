@@ -289,14 +289,21 @@ function (assert_variable_is_not_defined VARIABLE)
 
 endfunction (assert_variable_is_not_defined)
 
-function (_command_executes_with_success COMMAND_VAR
-                                         RESULT_VARIABLE
+function (_command_executes_with_success RESULT_VARIABLE
                                          ERROR_VARIABLE
                                          CODE_VARIABLE)
 
+    set (COMMAND_EXECUTES_WITH_SUCCESS_MULTIVAR_ARGS COMMAND)
+    cmake_parse_arguments (COMMAND_EXECUTES_WITH_SUCCESS
+                           ""
+                           ""
+                           "${COMMAND_EXECUTES_WITH_SUCCESS_MULTIVAR_ARGS}"
+                           ${ARGN})
+
     set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
-    execute_process (COMMAND ${${COMMAND_VAR}}
+    execute_process (COMMAND
+                     ${COMMAND_EXECUTES_WITH_SUCCESS_COMMAND}
                      RESULT_VARIABLE RESULT
                      ERROR_VARIABLE ERROR)
 
@@ -314,18 +321,20 @@ endfunction (_command_executes_with_success)
 # assert_command_executes_with_success
 #
 # Throws a non-fatal error if the command and argument
-# list specified by COMMAND_VAR does not execute with
+# list specified by COMMAND does not execute with
 # success. Note that the name of the variable containing
 # the command and the argument list must be provided
 # as opposed to the command and argument list itself.
-function (assert_command_executes_with_success COMMAND_VAR)
+#
+# COMMAND: Command to execute
+function (assert_command_executes_with_success)
 
-    _command_executes_with_success (${COMMAND_VAR} RESULT ERROR CODE)
+    _command_executes_with_success (RESULT ERROR CODE ${ARGN})
 
     if (NOT RESULT)
 
         message (SEND_ERROR
-                 "The command ${${COMMAND_VAR}} failed with result "
+                 "The command ${ARGN} failed with result "
                  " ${CODE} : ${ERROR}\n")
 
     endif (NOT RESULT)
@@ -335,18 +344,18 @@ endfunction (assert_command_executes_with_success)
 # assert_command_does_not_execute_with_success
 #
 # Throws a non-fatal error if the command and argument
-# list specified by COMMAND_VAR executes with
+# list specified by COMMAND executes with
 # success. Note that the name of the variable containing
 # the command and the argument list must be provided
 # as opposed to the command and argument list itself.
-function (assert_command_does_not_execute_with_success COMMAND_VAR)
+function (assert_command_does_not_execute_with_success)
 
-    _command_executes_with_success (${COMMAND_VAR} RESULT ERROR CODE)
+    _command_executes_with_success (RESULT ERROR CODE ${ARGN})
 
     if (RESULT)
 
         message (SEND_ERROR
-                 "The command ${${COMMAND_VAR}} succeeded with result "
+                 "The command ${ARGN} succeeded with result "
                  " ${RESULT}\n")
 
     endif (RESULT)

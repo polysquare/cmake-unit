@@ -76,29 +76,37 @@ endfunction (bootstrap_cmake_unit)
 
 macro (_define_variables_for_test TEST_NAME)
 
-    set (TEST_FILE ${TEST_NAME}.cmake)
-    set (TEST_DIRECTORY_NAME ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME})
-    set (TEST_WORKING_DIRECTORY_NAME ${TEST_DIRECTORY_NAME}/build)
+    set (TEST_FILE "${TEST_NAME}.cmake")
+    set (TEST_DIRECTORY_NAME "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}")
+    set (TEST_WORKING_DIRECTORY_NAME "${TEST_DIRECTORY_NAME}/build")
     set (TEST_DRIVER_SCRIPT
-         ${TEST_DIRECTORY_NAME}/${TEST_NAME}Driver.cmake)
+         "${TEST_DIRECTORY_NAME}/${TEST_NAME}Driver.cmake")
     set (TEST_INITIAL_CACHE_FILE
-         ${TEST_DIRECTORY_NAME}/initial_cache.cmake)
+         "${TEST_DIRECTORY_NAME}/initial_cache.cmake")
 
 endmacro (_define_variables_for_test)
 
 function (_bootstrap_test_driver_script TEST_NAME DRIVER_SCRIPT CACHE_FILE)
 
-    file (MAKE_DIRECTORY ${TEST_DIRECTORY_NAME})
-    file (MAKE_DIRECTORY ${TEST_WORKING_DIRECTORY_NAME})
+    file (MAKE_DIRECTORY "${TEST_DIRECTORY_NAME}")
+    file (MAKE_DIRECTORY "${TEST_WORKING_DIRECTORY_NAME}")
     set (TEST_DRIVER_SCRIPT_CONTENTS
-         "function (add_driver_command COMMAND_VAR\n"
-         "                             OUTPUT_FILE\n"
-         "                             ERROR_FILE\n"
-         "                             ALLOW_FAIL)\n"
-         "    message (\"Running \" \${\${COMMAND_VAR}})\n"
-         "    execute_process (COMMAND \${\${COMMAND_VAR}}\n"
+         "include (CMakeParseArguments)\n"
+         "function (add_driver_command)\n"
+         "    set (ADD_COMMAND_OPTION_ARGS ALLOW_FAIL)\n"
+         "    set (ADD_COMMAND_SINGLEVAR_ARGS OUTPUT_LOG ERROR_LOG)\n"
+         "    set (ADD_COMMAND_MULTIVAR_ARGS COMMAND)\n"
+         "    cmake_parse_arguments (ADD_COMMAND\n"
+         "                           \"\${ADD_COMMAND_OPTION_ARGS}\"\n"
+         "                           \"\${ADD_COMMAND_SINGLEVAR_ARGS}\"\n"
+         "                           \"\${ADD_COMMAND_MULTIVAR_ARGS}\"\n"
+         "                           \${ARGN})\n"
+         "    string (REPLACE \"\;\" \" \"\n"
+         "            STRINGIFIED_COMMAND \"\${ADD_COMMAND_COMMAND}\")\n"
+         "    message (STATUS \"Running \${STRINGIFIED_COMMAND}\")\n"
+         "    execute_process (COMMAND \${ADD_COMMAND_COMMAND}\n"
          "                     WORKING_DIRECTORY\n"
-         "                     ${TEST_WORKING_DIRECTORY_NAME}\n"
+         "                     \"${TEST_WORKING_DIRECTORY_NAME}\"\n"
          "                     RESULT_VARIABLE RESULT\n"
          "                     OUTPUT_VARIABLE OUTPUT\n"
          "                     ERROR_VARIABLE ERROR)\n"
@@ -106,21 +114,21 @@ function (_bootstrap_test_driver_script TEST_NAME DRIVER_SCRIPT CACHE_FILE)
          "        message (\"\\n\${OUTPUT}\\n\${ERROR}\")\n"
          "    else (RESULT EQUAL 0 OR ALLOW_FAIL)\n"
          "        message (FATAL_ERROR \n"
-         "                 \"The command \${\${COMMAND_VAR}}} failed with \"\n"
+         "                 \"The command \${STRINFIED_COMMAND} failed with \"\n"
          "                 \"\${RESULT}\\n\${ERROR}\\n\${OUTPUT}\")\n"
          "    endif (RESULT EQUAL 0 OR ALLOW_FAIL)\n"
          "    file (WRITE\n"
-         "          \${OUTPUT_FILE}\n"
+         "          \"\${ADD_COMMAND_OUTPUT_LOG}\"\n"
          "          \"Output:\\n\"\n"
          "          \${OUTPUT})\n"
          "    file (WRITE\n"
-         "          \${ERROR_FILE}\n"
+         "          \"\${ADD_COMMAND_ERROR_LOG}\"\n"
          "          \"Errors:\\n\"\n"
          "          \${ERROR})\n"
          "endfunction (add_driver_command)\n")
-    file (WRITE ${DRIVER_SCRIPT} ${TEST_DRIVER_SCRIPT_CONTENTS})
+    file (WRITE "${DRIVER_SCRIPT}" ${TEST_DRIVER_SCRIPT_CONTENTS})
 
-    file (WRITE ${CACHE_FILE}
+    file (WRITE "${CACHE_FILE}"
           "${_CMAKE_UNIT_INITIAL_CACHE_CONTENTS}")
 
 endfunction (_bootstrap_test_driver_script)
@@ -144,19 +152,34 @@ function (_add_driver_step DRIVER_SCRIPT STEP)
 
     if (ADD_DRIVER_STEP_ALLOW_FAIL)
 
-        set (ALLOW_FAIL ON)
+        set (ALLOW_FAIL ALLOW_FAIL)
 
     else (ADD_DRIVER_STEP_ALLOW_FAIL)
 
-        set (ALLOW_FAIL OFF)
+        set (ALLOW_FAIL "")
 
     endif (ADD_DRIVER_STEP_ALLOW_FAIL)
 
-    file (APPEND ${DRIVER_SCRIPT}
-          "set (${STEP} ${ADD_DRIVER_STEP_COMMAND})\n"
-          "add_driver_command (${STEP}\n"
-          "                    ${TEST_WORKING_DIRECTORY_NAME}/${STEP}.output\n"
-          "                    ${TEST_WORKING_DIRECTORY_NAME}/${STEP}.error\n"
+    # When we pass ADD_DRIVER_STEP_COMMAND into this string, it will appear to
+    # just be a space-separated string, which will have each element converted
+    # into a list element. That's obviously not what we want, so we instead
+    # create a string with escaped quotes for each item that we want to put
+    # on the commandline and then append that to our script.
+    foreach (ARGUMENT ${ADD_DRIVER_STEP_COMMAND})
+
+        list (APPEND STRINGIFIED_ARGS "\"${ARGUMENT}\"")
+
+    endforeach ()
+
+    # Ensure that the list expands with spaces and not semicolons
+    string (REPLACE ";" " " STRINGIFIED_ARGS "${STRINGIFIED_ARGS}")
+
+    file (APPEND "${DRIVER_SCRIPT}"
+          "set (OUTPUT_FILE \"${TEST_WORKING_DIRECTORY_NAME}/${STEP}.output\")\n"
+          "set (ERROR_FILE \"${TEST_WORKING_DIRECTORY_NAME}/${STEP}.error\")\n"
+          "add_driver_command (COMMAND ${STRINGIFIED_ARGS}\n"
+          "                    OUTPUT_LOG \"\${OUTPUT_FILE}\"\n"
+          "                    ERROR_LOG \"\${ERROR_FILE}\"\n"
           "                    ${ALLOW_FAIL})\n")
 
 endfunction (_add_driver_step DRIVER_SCRIPT STEP COMMAND_VAR)
@@ -165,17 +188,17 @@ function (_define_test_for_driver TEST_NAME DRIVER_SCRIPT)
 
     add_test (NAME ${TEST_NAME}
               COMMAND
-              ${CMAKE_COMMAND} -P ${DRIVER_SCRIPT}
-              WORKING_DIRECTORY ${TEST_DIRECTORY_NAME})
+              ${CMAKE_COMMAND} -P "${DRIVER_SCRIPT}"
+              WORKING_DIRECTORY "${TEST_DIRECTORY_NAME}")
 
 endfunction (_define_test_for_driver)
 
 function (_append_clean_step DRIVER_SCRIPT
                              TEST_WORKING_DIRECTORY_NAME)
 
-    file (APPEND ${DRIVER_SCRIPT}
-          "file (REMOVE_RECURSE ${TEST_WORKING_DIRECTORY_NAME})\n"
-          "file (MAKE_DIRECTORY ${TEST_WORKING_DIRECTORY_NAME})\n")
+    file (APPEND "${DRIVER_SCRIPT}"
+          "file (REMOVE_RECURSE \"${TEST_WORKING_DIRECTORY_NAME}\")\n"
+          "file (MAKE_DIRECTORY \"${TEST_WORKING_DIRECTORY_NAME}\")\n")
 
 endfunction (_append_clean_step)
 
@@ -200,16 +223,16 @@ function (_append_configure_step TEST_NAME
     if (EXISTS ${TEST_FILE_PATH})
 
         set (TEST_DIRECTORY_CONFIGURE_SCRIPT
-             ${TEST_DIRECTORY_NAME}/CMakeLists.txt)
+             "${TEST_DIRECTORY_NAME}/CMakeLists.txt")
         set (TEST_DIRECTORY_CONFIGURE_SCRIPT_CONTENTS
              "if (POLICY CMP0025)\n"
              "  cmake_policy (SET CMP0025 NEW)\n"
              "endif (POLICY CMP0025)\n"
              "project (TestProject CXX C)\n"
              "cmake_minimum_required (VERSION 2.8 FATAL_ERROR)\n"
-             "include (${CMAKE_CURRENT_SOURCE_DIR}/${TEST_FILE})\n")
+             "include (\"${CMAKE_CURRENT_SOURCE_DIR}/${TEST_FILE}\")\n")
 
-        file (WRITE ${TEST_DIRECTORY_CONFIGURE_SCRIPT}
+        file (WRITE "${TEST_DIRECTORY_CONFIGURE_SCRIPT}"
               ${TEST_DIRECTORY_CONFIGURE_SCRIPT_CONTENTS})
 
         if (CONFIGURE_STEP_ALLOW_FAIL)
@@ -220,11 +243,11 @@ function (_append_configure_step TEST_NAME
 
         string (REPLACE " " "\\ " GENERATOR ${CMAKE_GENERATOR})
         set (CONFIGURE_COMMAND
-             ${CMAKE_COMMAND} ..
-             -C${CACHE_FILE}
+             "${CMAKE_COMMAND}" "${TEST_DIRECTORY_NAME}"
+             "-C${CACHE_FILE}"
              -DCMAKE_VERBOSE_MAKEFILE=ON
-             -G "${GENERATOR}")
-        _add_driver_step (${DRIVER_SCRIPT} CONFIGURE
+             "-G${GENERATOR}")
+        _add_driver_step ("${DRIVER_SCRIPT}" CONFIGURE
                           COMMAND ${CONFIGURE_COMMAND}
                           ${ALLOW_FAIL_OPTION})
 
@@ -270,11 +293,11 @@ function (_append_build_step DRIVER_SCRIPT
 
     endif ("${TARGET}" STREQUAL "all")
 
-    set (BUILD_COMMAND ${CMAKE_COMMAND}
+    set (BUILD_COMMAND "${CMAKE_COMMAND}"
                        --build
-                       ${TEST_WORKING_DIRECTORY_NAME}
+                       "${TEST_WORKING_DIRECTORY_NAME}"
                        ${TARGET_OPTION})
-    _add_driver_step (${DRIVER_SCRIPT} BUILD
+    _add_driver_step ("${DRIVER_SCRIPT}" BUILD
                       COMMAND ${BUILD_COMMAND}
                       ${ALLOW_FAIL_OPTION})
 
@@ -290,10 +313,10 @@ function (_append_verify_step DRIVER_SCRIPT
     if (EXISTS ${TEST_VERIFY_SCRIPT_FILE})
 
         set (VERIFY_COMMAND
-             ${CMAKE_COMMAND}
-             -C${CACHE_FILE}
-             -P ${TEST_VERIFY_SCRIPT_FILE})
-        _add_driver_step (${DRIVER_SCRIPT} VERIFY
+             "${CMAKE_COMMAND}"
+             -C"${CACHE_FILE}"
+             -P "${TEST_VERIFY_SCRIPT_FILE}")
+        _add_driver_step ("${DRIVER_SCRIPT}" VERIFY
                           COMMAND ${VERIFY_COMMAND})
 
     else (EXISTS ${TEST_VERIFY_SCRIPT_FILE})
@@ -313,17 +336,17 @@ function (add_cmake_test TEST_NAME)
 
     _define_variables_for_test (${TEST_NAME})
     _bootstrap_test_driver_script(${TEST_NAME}
-                                  ${TEST_DRIVER_SCRIPT}
-                                  ${TEST_INITIAL_CACHE_FILE})
-    _append_clean_step (${TEST_DRIVER_SCRIPT}
-                        ${TEST_WORKING_DIRECTORY_NAME})
+                                  "${TEST_DRIVER_SCRIPT}"
+                                  "${TEST_INITIAL_CACHE_FILE}")
+    _append_clean_step ("${TEST_DRIVER_SCRIPT}"
+                        "${TEST_WORKING_DIRECTORY_NAME}")
     _append_configure_step (${TEST_NAME}
-                            ${TEST_DRIVER_SCRIPT}
-                            ${TEST_INITIAL_CACHE_FILE}
-                            ${TEST_DIRECTORY_NAME}
-                            ${TEST_WORKING_DIRECTORY_NAME}
-                            ${TEST_FILE})
-    _define_test_for_driver (${TEST_NAME} ${TEST_DRIVER_SCRIPT})
+                            "${TEST_DRIVER_SCRIPT}"
+                            "${TEST_INITIAL_CACHE_FILE}"
+                            "${TEST_DIRECTORY_NAME}"
+                            "${TEST_WORKING_DIRECTORY_NAME}"
+                            "${TEST_FILE}")
+    _define_test_for_driver (${TEST_NAME} "${TEST_DRIVER_SCRIPT}")
 
 endfunction (add_cmake_test)
 
