@@ -21,11 +21,27 @@ get_filename_component (CMAKE_UNIT_DIRECTORY
 
 set (CMAKE_MODULE_PATH
      ${CMAKE_UNIT_DIRECTORY}
+     ${CMAKE_CURRENT_SOURCE_DIR}
      ${CMAKE_MODULE_PATH})
+
+# Set up variables to forward
+set (MOCK_TRACEFILE_INPUT
+     "${CMAKE_CURRENT_SOURCE_DIR}/TestProjectMockTracefile.trace.in")
+set (FILE_FOR_COVERAGE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/FileForCoverage.cmake")
+set (UNEXECUTED_FILE_FOR_COVERAGE_PATH
+     "${CMAKE_CURRENT_SOURCE_DIR}/UnexecutedFileForCoverage.cmake")
 
 include (CMakeUnitRunner)
 
-bootstrap_cmake_unit (VARIABLES CMAKE_MODULE_PATH)
+bootstrap_cmake_unit (VARIABLES
+                      CMAKE_MODULE_PATH
+                      MOCK_TRACEFILE_INPUT
+                      FILE_FOR_COVERAGE_PATH
+                      UNEXECUTED_FILE_FOR_COVERAGE_PATH
+                      COVERAGE_FILES
+                      "${CMAKE_UNIT_DIRECTORY}/CMakeUnitRunner.cmake"
+                      "${CMAKE_UNIT_DIRECTORY}/CMakeTraceToLCov.cmake"
+                      "${CMAKE_UNIT_DIRECTORY}/CMakeUnit.cmake")
 
 add_cmake_test (TargetExists)
 add_cmake_test (StringContains)
@@ -44,3 +60,15 @@ add_cmake_test (FileContainsSubstring)
 add_cmake_test (FileHasLineMatching)
 add_cmake_test (ListContainsValue)
 add_cmake_test (ListContainsValueEmpty)
+
+# Tests for code coverage
+add_cmake_test (LinesStartingWithCommentNotExecutable)
+add_cmake_test (LinesWithNoContentNotExecutable)
+add_cmake_test (LinesStartingWithEndNotExecutable)
+add_cmake_test (LinesUntilCloseBraceNotExecutable)
+add_cmake_test (SemicolonsDontBreakLines)
+add_cmake_test (SlashNDoesntBreakLines)
+add_cmake_test (AllFilesSpecifiedInTraceFileHaveCoverage)
+add_cmake_test (OtherLinesExecutable)
+add_cmake_test (HitLinesHaveNonZeroDACounter)
+add_cmake_test (MissedLinesHaveNonZeroDACounter)
