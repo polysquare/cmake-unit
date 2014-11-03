@@ -1,0 +1,17 @@
+clone_depth: 10
+
+before_build:
+ - git submodule update --init --recursive
+
+install:
+ - ps: cmake -P .cmake-download-script
+
+build_script:
+ - cd tests
+ - mkdir build
+ - cd build
+ - cmake ..
+ - cmake --build .
+
+test_script:
+ - ctest -C Debug --output-on-failure

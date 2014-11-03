@@ -1,19 +1,20 @@
 # /tests/CommandExecutesWithSuccess.cmake
 # Check the _command_executes_with_success matcher.
 
-find_program (FALSE_PROGRAM false)
-find_program (TRUE_PROGRAM true)
-
 include (CMakeUnit)
 
-_command_executes_with_success (TRUE_PROGRAM
-                                RESULT_TRUE
+_command_executes_with_success (RESULT_TRUE
                                 ERROR_TRUE
-                                CODE_TRUE)
-_command_executes_with_success (FALSE_PROGRAM
-                                RESULT_FALSE
+                                CODE_TRUE
+                                COMMAND "${CMAKE_COMMAND}")
+
+# Bogus argument to CMake, won't ever succeed
+_command_executes_with_success (RESULT_FALSE
                                 ERROR_FALSE
-                                CODE_FALSE)
+                                CODE_FALSE
+                                COMMAND
+                                "${CMAKE_COMMAND}"
+                                "${CMAKE_CURRENT_BINARY_DIR}/does_not_exist")
 
 assert_true (${RESULT_TRUE})
 assert_false (${RESULT_FALSE})
