@@ -10,7 +10,5 @@ set (TEST_NAME SampleTest)
 include (CMakeUnit)
 include (CMakeUnitRunner)
 
-set (VARIABLE "test_value")
-bootstrap_cmake_unit (VARIABLES VARIABLE)
-
+bootstrap_cmake_unit ()
 add_cmake_test (${TEST_NAME})
