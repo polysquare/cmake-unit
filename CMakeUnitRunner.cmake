@@ -32,17 +32,37 @@ include (CTest)
 
 enable_testing ()
 
+option (CMAKE_UNIT_LOG_COVERAGE OFF
+        "Log line hits to ${CMAKE_PROJECT_NAME}.trace")
+
+if (CMAKE_UNIT_LOG_COVERAGE)
+
+    set (CMAKE_UNIT_COVERAGE_FILE
+         "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}.trace")
+
+endif (CMAKE_UNIT_LOG_COVERAGE)
+
+# bootstrap_cmake_unit
+#
+# Sets up the initial environment to use cmake-unit. Call this function
+# before calling add_cmake_test or add_cmake_build_test.
+#
+# VARIABLES: A list of variables to "forward" on to the tests with the same
+#            value that they have at the time of calling bootstrap_cmake_unit
+# COVERAGE_FILES: A list of full absolute paths to files which should
+#                 be tracked for code coverage.
 function (bootstrap_cmake_unit)
 
-    set (FORWARD_MULTIVAR_ARGS VARIABLES)
+    set (BOOTSTRAP_MULTIVAR_ARGS VARIABLES COVERAGE_FILES)
 
-    cmake_parse_arguments (FORWARD
+    cmake_parse_arguments (BOOTSTRAP
                            ""
                            ""
-                           "${FORWARD_MULTIVAR_ARGS}"
+                           "${BOOTSTRAP_MULTIVAR_ARGS}"
                            ${ARGN})
 
-    foreach (VAR ${FORWARD_VARIABLES})
+    # Put variables we want to forward to the tests into their cache
+    foreach (VAR ${BOOTSTRAP_VARIABLES})
 
         get_property (TYPE
                       CACHE ${VAR}
@@ -71,6 +91,16 @@ function (bootstrap_cmake_unit)
     # Escape semicolons
     string (REPLACE ";" "/;" ICC "${ICC}")
     set (_CMAKE_UNIT_INITIAL_CACHE_CONTENTS "${ICC}" PARENT_SCOPE)
+
+    if (CMAKE_UNIT_LOG_COVERAGE)
+
+        set (_CMAKE_UNIT_COVERAGE_LOGGING_FILES
+             ${BOOTSTRAP_COVERAGE_FILES} PARENT_SCOPE)
+
+        # Clobber the coverage report
+        file (WRITE "${CMAKE_UNIT_COVERAGE_FILE}" "")
+
+    endif (CMAKE_UNIT_LOG_COVERAGE)
 
 endfunction (bootstrap_cmake_unit)
 
@@ -235,21 +265,116 @@ function (_append_configure_step TEST_NAME
         file (WRITE "${TEST_DIRECTORY_CONFIGURE_SCRIPT}"
               ${TEST_DIRECTORY_CONFIGURE_SCRIPT_CONTENTS})
 
+        # Whether to allow failures in the configure step
         if (CONFIGURE_STEP_ALLOW_FAIL)
 
             set (ALLOW_FAIL_OPTION ALLOW_FAIL)
 
         endif (CONFIGURE_STEP_ALLOW_FAIL)
 
+        # Set GENERATOR
         string (REPLACE " " "\\ " GENERATOR ${CMAKE_GENERATOR})
+
+        # Whether coverage is being logged pass the --trace switch
+        if (CMAKE_UNIT_LOG_COVERAGE)
+
+            set (TRACE_OPTION "--trace")
+
+        endif (CMAKE_UNIT_LOG_COVERAGE)
+
         set (CONFIGURE_COMMAND
-             "${CMAKE_COMMAND}" "${TEST_DIRECTORY_NAME}"
+             "${CMAKE_COMMAND}"
+             "${TRACE_OPTION}"
+             "${TEST_DIRECTORY_NAME}"
              "-C${CACHE_FILE}"
              -DCMAKE_VERBOSE_MAKEFILE=ON
              "-G${GENERATOR}")
         _add_driver_step ("${DRIVER_SCRIPT}" CONFIGURE
                           COMMAND ${CONFIGURE_COMMAND}
                           ${ALLOW_FAIL_OPTION})
+
+        if (CMAKE_UNIT_LOG_COVERAGE)
+
+            # We need to make sure that the quotes around our coverage
+            # files get passed back down to the driver script
+            foreach (FILE ${_CMAKE_UNIT_COVERAGE_LOGGING_FILES})
+
+                list (APPEND COVERAGE_FILES "\"${FILE}\"")
+
+            endforeach ()
+
+            # Now replace list semicolons with spaces. The result will be
+            # that this is a valid list when parsed by CMake in the second
+            # stage
+            string (REPLACE ";" " " COVERAGE_FILES "${COVERAGE_FILES}")
+
+            # After we've added the driver step, read back CONFIGURE.error
+            # and filter through each of the lines to find "coverage" lines,
+            # logging them into the main CMAKE_UNIT_COVERAGE_FILE
+            file (APPEND "${DRIVER_SCRIPT}"
+                  # First write out the name of this test
+                  "file (APPEND\n"
+                  "      \"${CMAKE_UNIT_COVERAGE_FILE}\"\n"
+                  "      \"TEST:${TEST_NAME}\\n\")\n"
+                  "set (COVERAGE_FILES ${COVERAGE_FILES})\n"
+                  "foreach (FILE \${COVERAGE_FILES})\n"
+                  "    file (APPEND \"${CMAKE_UNIT_COVERAGE_FILE}\"\n"
+                  "          \"FILE:\${FILE}\\n\")\n"
+                  "endforeach ()\n"
+                  "file (READ\n"
+                  "      \"${TEST_WORKING_DIRECTORY_NAME}/CONFIGURE.error\"\n"
+                  "      CONFIGURE_ERROR_CONTENTS)\n"
+                  # This is a tedious way to iterate through lines of a string
+                  # though it is more reliable than trying to make the string
+                  # into a list by converting \n to ;, especially since
+                  # there appears to be a cap on the number of elements
+                  # that can go into a list.
+                  #
+                  # Just keep going through through the string finding \n
+                  # and scan each line as we go. Save everything past the
+                  # found index in the same variable again.
+                  "set (NEXT_LINE_INDEX 0)\n"
+                  "while (NOT NEXT_LINE_INDEX EQUAL -1)\n"
+                  "    string (SUBSTRING \"\${CONFIGURE_ERROR_CONTENTS}\"\n"
+                  "            \${NEXT_LINE_INDEX} -1\n"
+                  "            CONFIGURE_ERROR_CONTENTS)\n"
+                  "    string (FIND \"\${CONFIGURE_ERROR_CONTENTS}\" \"\\n\"\n"
+                  "            NEXT_LINE_INDEX)\n"
+                  "    if (NOT NEXT_LINE_INDEX EQUAL -1)\n"
+                  # Take a substring of what we have now and test it for
+                  # whether it matches one of the paths in our COVERAGE_FILES
+                  "        string (SUBSTRING \"\${CONFIGURE_ERROR_CONTENTS}\"\n"
+                  "                0 \${NEXT_LINE_INDEX} LINE)\n"
+                  "        foreach (FILE \${COVERAGE_FILES})\n"
+                  "            if (\"\${LINE}\" MATCHES \"\${FILE}.*$\")\n"
+                  # Once we've found a matching line, strip out the rest of
+                  # the mostly useless information. Find the first ":" after
+                  # the filename and then write out the string until that
+                  # semicolon is reached
+                  "                string (LENGTH \"${FILE}\" FILE_LEN)\n"
+                  "                string (SUBSTRING \"\${LINE}\"\n"
+                  "                        \${FILE_LEN} -1\n"
+                  "                        AFTER_FILE_STRING)\n"
+                  "                string (FIND \"\${AFTER_FILE_STRING}\"\n"
+                  "                        \":\" COLON_INDEX)\n"
+                  "                math (EXPR COLON_INDEX_IN_LINE\n"
+                  "                      \"\${FILE_LEN} + \${COLON_INDEX}\")\n"
+                  "                string (SUBSTRING \"\${LINE}\"\n"
+                  "                        0 \${COLON_INDEX_IN_LINE}\n"
+                  "                        FILENAME_AND_LINE)\n"
+                  "                file (APPEND\n"
+                  "                      \"${CMAKE_UNIT_COVERAGE_FILE}\"\n"
+                  "                      \"\${FILENAME_AND_LINE}\\n\")\n"
+                  "            endif ()\n"
+                  "        endforeach ()\n"
+                  # Increment NEXT_LINE_INDEX so that we can take a new
+                  # substring without the \n and check for the next one
+                  "        math (EXPR NEXT_LINE_INDEX\n"
+                  "              \"\${NEXT_LINE_INDEX} + 1\")\n"
+                  "    endif (NOT NEXT_LINE_INDEX EQUAL -1)\n"
+                  "endwhile ()\n")
+
+        endif (CMAKE_UNIT_LOG_COVERAGE)
 
 
     else (EXISTS ${TEST_FILE_PATH})

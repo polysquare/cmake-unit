@@ -1,13 +1,22 @@
 language: cpp
+env:
+  - CMAKE_GENERATOR="Unix Makefiles"
+  - CMAKE_GENERATOR="Ninja"
 before_install:
   - git submodule update --init --recursive
   - sudo apt-get -y purge cmake
   - sudo add-apt-repository -y ppa:kubuntu-ppa/beta
+  - sudo apt-add-repository -y ppa:saiarcot895/chromium-dev
+  - gem install coveralls-lcov;
   - sudo apt-get update -qq
   - sudo apt-get install -qq `cat DEPENDENCIES`
 script:
   - mkdir -p tests/build
   - pushd tests/build
-  - cmake ..
+  - cmake .. -G "${CMAKE_GENERATOR}" -DCMAKE_UNIT_LOG_COVERAGE=1
   - ctest --output-on-failure
+  - popd
+after_success:
+  - cmake -DTRACEFILE=tests/build/CMakeUnitTests.trace -DLCOV_OUTPUT=tests/build/coverage.info -P CMakeTraceToLCov.cmake
+  - coveralls-lcov tests/build/coverage.info
   - popd
