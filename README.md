@@ -17,6 +17,14 @@ Because CMake is a powerful and battle-tested language for writing build systems
 
 It is something you want to get right the first time rather than having to scratch your head about it later with the lack of debugging tools for CMake scripts.
 
+Platforms
+---------
+
+`cmake-unit` is written entirely using the CMake language and should work across all platforms where CMake is supported. It had been tested on:
+ * Windows (Visual Studio, NMake)
+ * Mac OS X (XCode, Ninja, Make)
+ * Ubuntu (Ninja, Make)
+
 Usage
 =====
 
