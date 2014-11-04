@@ -1,17 +1,34 @@
 clone_depth: 10
 
+cache:
+ - cmake-inst
+
+environment:
+  matrix:
+    - GENERATOR: "Visual Studio 12"
+    - GENERATOR: "NMake Makefiles"
+
+matrix:
+  fast_finish: true
+
 before_build:
  - git submodule update --init --recursive
 
 install:
  - ps: cmake -P .cmake-download-script
+ - ps: gem install coveralls-lcov
 
 build_script:
- - cd tests
- - mkdir build
- - cd build
- - cmake ..
- - cmake --build .
+ - ps: cd tests
+ - ps: mkdir build
+ - ps: cd build
+ - ps: cmake .. -Wdev --warn-uninitialized -G "$env:GENERATOR" -DCMAKE_UNIT_LOG_COVERAGE=1
+ - ps: cmake --build .
 
 test_script:
- - ctest -C Debug --output-on-failure
+ - ps: ctest -C Debug --output-on-failure
+ - ps: cd ../../
+
+on_success:
+ - ps: cmake -DTRACEFILE=tests/build/CMakeUnitTests.trace -DLCOV_OUTPUT=tests/build/coverage.info -P CMakeTraceToLCov.cmake
+ - ps: coveralls-lcov tests/build/coverage.info

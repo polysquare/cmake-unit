@@ -14,7 +14,7 @@ before_install:
 script:
   - mkdir -p tests/build
   - pushd tests/build
-  - cmake .. -G "${CMAKE_GENERATOR}" -DCMAKE_UNIT_LOG_COVERAGE=1
+  - cmake .. -Wdev --warn-uninitialized -G "${CMAKE_GENERATOR}" -DCMAKE_UNIT_LOG_COVERAGE=1
   - ctest --output-on-failure
   - popd
   # Find all errors except:
