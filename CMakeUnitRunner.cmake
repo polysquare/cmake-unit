@@ -393,10 +393,12 @@ function (_append_configure_step TEST_NAME
                   "                string (SUBSTRING \"\${LINE}\"\n"
                   "                        \${FILE_LEN} -1\n"
                   "                        AFTER_FILE_STRING)\n"
+                  # Match ):. This prevents drive letters on Windows causing
+                  # problems
                   "                string (FIND \"\${AFTER_FILE_STRING}\"\n"
-                  "                        \":\" COLON_INDEX)\n"
+                  "                        \"):\" DEL_IDX)\n"
                   "                math (EXPR COLON_INDEX_IN_LINE\n"
-                  "                      \"\${FILE_LEN} + \${COLON_INDEX}\")\n"
+                  "                      \"\${FILE_LEN} + \${DEL_IDX} + 1\")\n"
                   "                string (SUBSTRING \"\${LINE}\"\n"
                   "                        0 \${COLON_INDEX_IN_LINE}\n"
                   "                        FILENAME_AND_LINE)\n"
