@@ -204,9 +204,10 @@ function (_add_driver_step DRIVER_SCRIPT STEP)
     # Ensure that the list expands with spaces and not semicolons
     string (REPLACE ";" " " STRINGIFIED_ARGS "${STRINGIFIED_ARGS}")
 
+    set (WORKING_DIRECTORY "${TEST_WORKING_DIRECTORY_NAME}")
     file (APPEND "${DRIVER_SCRIPT}"
-          "set (OUTPUT_FILE \"${TEST_WORKING_DIRECTORY_NAME}/${STEP}.output\")\n"
-          "set (ERROR_FILE \"${TEST_WORKING_DIRECTORY_NAME}/${STEP}.error\")\n"
+          "set (OUTPUT_FILE \"${WORKING_DIRECTORY}/${STEP}.output\")\n"
+          "set (ERROR_FILE \"${WORKING_DIRECTORY}/${STEP}.error\")\n"
           "add_driver_command (COMMAND ${STRINGIFIED_ARGS}\n"
           "                    OUTPUT_LOG \"\${OUTPUT_FILE}\"\n"
           "                    ERROR_LOG \"\${ERROR_FILE}\"\n"
@@ -476,7 +477,7 @@ function (add_cmake_test TEST_NAME)
 endfunction (add_cmake_test)
 
 # add_cmake_build_test:
-# 
+#
 # Adds a test with three steps, a "configure", "build" and "verify"
 # step. This will run some checks at the configure phase, then build
 # the configured project and then run the script specified by

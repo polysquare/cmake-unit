@@ -9,7 +9,7 @@ set_property (GLOBAL
               APPEND
               PROPERTY GLOBAL_PROPERTY
               ${GLOBAL_PROPERTY_VALUE})
-set_property (GLOBAL 
+set_property (GLOBAL
               APPEND
               PROPERTY GLOBAL_PROPERTY
               ${GLOBAL_PROPERTY_OTHER_VALUE})

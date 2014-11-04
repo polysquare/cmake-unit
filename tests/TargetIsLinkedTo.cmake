@@ -7,7 +7,7 @@ file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/Library.cpp "")
 file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/Source.cpp "")
 
 add_library (library SHARED
-	         ${CMAKE_CURRENT_BINARY_DIR}/Library.cpp)
+             ${CMAKE_CURRENT_BINARY_DIR}/Library.cpp)
 add_executable (executable
                 ${CMAKE_CURRENT_BINARY_DIR}/Source.cpp)
 
