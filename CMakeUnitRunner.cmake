@@ -34,6 +34,10 @@ enable_testing ()
 
 option (CMAKE_UNIT_LOG_COVERAGE OFF
         "Log line hits to ${CMAKE_PROJECT_NAME}.trace")
+option (CMAKE_UNIT_NO_DEV_WARNINGS OFF
+        "Turn off developer warnings")
+option (CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS OFF
+        "Turn off uninitialized variable usage warnings")
 
 if (CMAKE_UNIT_LOG_COVERAGE)
 
@@ -266,6 +270,8 @@ function (_append_configure_step TEST_NAME
         file (WRITE "${TEST_DIRECTORY_CONFIGURE_SCRIPT}"
               ${TEST_DIRECTORY_CONFIGURE_SCRIPT_CONTENTS})
 
+        set (ALLOW_FAIL_OPTION "")
+
         # Whether to allow failures in the configure step
         if (CONFIGURE_STEP_ALLOW_FAIL)
 
@@ -276,6 +282,11 @@ function (_append_configure_step TEST_NAME
         # Set GENERATOR
         string (REPLACE " " "\\ " GENERATOR ${CMAKE_GENERATOR})
 
+        set (TRACE_OPTION "")
+        set (UNINITIALIZED_OPTION "")
+        set (UNUSED_VARIABLE_OPTION "")
+        set (DEVELOPER_WARNINGS_OPTION "-Wno-dev")
+
         # Whether coverage is being logged pass the --trace switch
         if (CMAKE_UNIT_LOG_COVERAGE)
 
@@ -283,9 +294,24 @@ function (_append_configure_step TEST_NAME
 
         endif (CMAKE_UNIT_LOG_COVERAGE)
 
+        if (NOT CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS)
+
+            set (UNINITIALIZED_OPTION "--warn-uninitialized")
+
+        endif (NOT CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS)
+
+        if (NOT CMAKE_UNIT_NO_DEV_WARNINGS)
+
+            set (DEVELOPER_WARNINGS_OPTION "-Wdev")
+
+        endif (NOT CMAKE_UNIT_NO_DEV_WARNINGS)
+
         set (CONFIGURE_COMMAND
              "${CMAKE_COMMAND}"
              "${TRACE_OPTION}"
+             "${UNINITIALIZED_OPTION}"
+             "${UNUSED_VARIABLE_OPTION}"
+             "${DEVELOPER_WARNINGS_OPTION}"
              "${TEST_DIRECTORY_NAME}"
              "-C${CACHE_FILE}"
              -DCMAKE_VERBOSE_MAKEFILE=ON
@@ -293,6 +319,17 @@ function (_append_configure_step TEST_NAME
         _add_driver_step ("${DRIVER_SCRIPT}" CONFIGURE
                           COMMAND ${CONFIGURE_COMMAND}
                           ${ALLOW_FAIL_OPTION})
+
+        # Don't tolerate warings in the configure phase
+        file (APPEND "${DRIVER_SCRIPT}"
+              "file (READ \"${TEST_WORKING_DIRECTORY_NAME}/CONFIGURE.error\"\n"
+              "      CONFIGURE_WARNINGS_CONTENTS)\n"
+              "if (\"\${CONFIGURE_WARNINGS_CONTENTS}\"\n"
+              "    MATCHES \"^.*CMake Warning.*$\")\n"
+              "    message (FATAL_ERROR \"CMake Warnings were present:\"\n"
+              "             \"\${CONFIGURE_WARNINGS_CONTENTS}\")\n"
+              "endif (\"\${CONFIGURE_WARNINGS_CONTENTS}\"\n"
+              "       MATCHES \"^.*CMake Warning.*$\")\n")
 
         if (CMAKE_UNIT_LOG_COVERAGE)
 
@@ -324,7 +361,7 @@ function (_append_configure_step TEST_NAME
                   "endforeach ()\n"
                   "file (READ\n"
                   "      \"${TEST_WORKING_DIRECTORY_NAME}/CONFIGURE.error\"\n"
-                  "      CONFIGURE_ERROR_CONTENTS)\n"
+                  "      CONFIGURE_TRACE_CONTENTS)\n"
                   # This is a tedious way to iterate through lines of a string
                   # though it is more reliable than trying to make the string
                   # into a list by converting \n to ;, especially since
@@ -336,15 +373,15 @@ function (_append_configure_step TEST_NAME
                   # found index in the same variable again.
                   "set (NEXT_LINE_INDEX 0)\n"
                   "while (NOT NEXT_LINE_INDEX EQUAL -1)\n"
-                  "    string (SUBSTRING \"\${CONFIGURE_ERROR_CONTENTS}\"\n"
+                  "    string (SUBSTRING \"\${CONFIGURE_TRACE_CONTENTS}\"\n"
                   "            \${NEXT_LINE_INDEX} -1\n"
-                  "            CONFIGURE_ERROR_CONTENTS)\n"
-                  "    string (FIND \"\${CONFIGURE_ERROR_CONTENTS}\" \"\\n\"\n"
+                  "            CONFIGURE_TRACE_CONTENTS)\n"
+                  "    string (FIND \"\${CONFIGURE_TRACE_CONTENTS}\" \"\\n\"\n"
                   "            NEXT_LINE_INDEX)\n"
                   "    if (NOT NEXT_LINE_INDEX EQUAL -1)\n"
                   # Take a substring of what we have now and test it for
                   # whether it matches one of the paths in our COVERAGE_FILES
-                  "        string (SUBSTRING \"\${CONFIGURE_ERROR_CONTENTS}\"\n"
+                  "        string (SUBSTRING \"\${CONFIGURE_TRACE_CONTENTS}\"\n"
                   "                0 \${NEXT_LINE_INDEX} LINE)\n"
                   "        foreach (FILE \${COVERAGE_FILES})\n"
                   "            if (\"\${LINE}\" MATCHES \"\${FILE}.*$\")\n"
@@ -356,10 +393,12 @@ function (_append_configure_step TEST_NAME
                   "                string (SUBSTRING \"\${LINE}\"\n"
                   "                        \${FILE_LEN} -1\n"
                   "                        AFTER_FILE_STRING)\n"
+                  # Match ):. This prevents drive letters on Windows causing
+                  # problems
                   "                string (FIND \"\${AFTER_FILE_STRING}\"\n"
-                  "                        \":\" COLON_INDEX)\n"
+                  "                        \"):\" DEL_IDX)\n"
                   "                math (EXPR COLON_INDEX_IN_LINE\n"
-                  "                      \"\${FILE_LEN} + \${COLON_INDEX}\")\n"
+                  "                      \"\${FILE_LEN} + \${DEL_IDX} + 1\")\n"
                   "                string (SUBSTRING \"\${LINE}\"\n"
                   "                        0 \${COLON_INDEX_IN_LINE}\n"
                   "                        FILENAME_AND_LINE)\n"
@@ -398,6 +437,8 @@ function (_append_build_step DRIVER_SCRIPT
                            ""
                            ""
                            ${ARGN})
+
+    set (ALLOW_FAIL_OPTION "")
 
     if (BUILD_STEP_ALLOW_FAIL)
 
@@ -497,6 +538,9 @@ function (add_cmake_build_test TEST_NAME VERIFY)
                            "${ADD_CMAKE_BUILD_TEST_SINGLEVAR_ARGS}"
                            "${ADD_CMAKE_BUILD_TEST_MULTIVAR_ARGS}"
                            ${ARGN})
+
+    set (ALLOW_BUILD_FAIL_OTION "")
+    set (ALLOW_CONFIGURE_FAIL_OPTION "")
 
     if (NOT ADD_CMAKE_BUILD_TEST_TARGET)
 

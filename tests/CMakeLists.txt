@@ -21,8 +21,7 @@ get_filename_component (CMAKE_UNIT_DIRECTORY
 
 set (CMAKE_MODULE_PATH
      ${CMAKE_UNIT_DIRECTORY}
-     ${CMAKE_CURRENT_SOURCE_DIR}
-     ${CMAKE_MODULE_PATH})
+     ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Set up variables to forward
 set (MOCK_TRACEFILE_INPUT
