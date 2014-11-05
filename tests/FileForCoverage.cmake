@@ -3,9 +3,9 @@ macro (my_macro) # Executable
 endmacro () # Not executable - LinesStartingWithEndNotExecutable
 
 function (my_function ARG_ONE # Executable
-                      ARGU_TWO) # Not executable - LinesUntilCloseBraceNotExecutable
-    
-    # Line above is pure whitespace, line below is \n. Both not executable
+                      ARGU_TWO) # LinesUntilCloseBraceNotExecutable
+
+    # Lines above and below are \n. Both not executable
     # See LinesWithNoContentNotExecutable
 
     if (ARG_ONE) # Executable

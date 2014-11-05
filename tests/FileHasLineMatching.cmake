@@ -40,17 +40,17 @@ _file_has_line_matching (${FILE_WITH_FOO}
                          ${MATCH_FOO_SUBSTRING_LINE}
                          NO_MATCH_SUBSTRING_IN_FOO)
 _file_has_line_matching (${FILE_WITH_FOO}
-	                     ${MATCH_FOO_SUBSTRING_LINE}
-	                     NO_MATCH_BOTH_IN_FOO)
+                          ${MATCH_FOO_SUBSTRING_LINE}
+                          NO_MATCH_BOTH_IN_FOO)
 
 _file_has_line_matching (${FILE_WITH_BOTH_INDEPENDENTLY}
-	                     ${MATCH_FOO_LINE}
+                          ${MATCH_FOO_LINE}
                          MATCH_FOO_IN_BOTH_INDEPENDENTLY)
 _file_has_line_matching (${FILE_WITH_BOTH_INDEPENDENTLY}
-	                     ${MATCH_SUBSTRING_LINE}
+                          ${MATCH_SUBSTRING_LINE}
                          MATCH_SUBSTRING_IN_BOTH_INDEPENDENTLY)
 _file_has_line_matching (${FILE_WITH_BOTH_INDEPENDENTLY}
-	                     ${MATCH_FOO_SUBSTRING_LINE}
+                          ${MATCH_FOO_SUBSTRING_LINE}
                          NO_MATCH_BOTH_IN_BOTH_INDEPENDENTLY)
 
 _file_has_line_matching (${FILE_WITH_BOTH}
