@@ -13,8 +13,6 @@ environment:
       VS_VERSION: "11.0"
     - GENERATOR: "Visual Studio 12 2013"
       VS_VERSION: "12.0"
-    - GENERATOR: "Visual Studio 14"
-      VS_VERSION: "14.0"
 
 matrix:
   fast_finish: true
@@ -33,15 +31,16 @@ build_script:
  - cmd: cd tests
  - cmd: mkdir build
  - cmd: cd build
- - cmd: cmake .. -Wdev --warn-uninitialized -G"%GENERATOR%" -DCMAKE_UNIT_LOG_COVERAGE=1
+ - cmd: cmake .. -Wdev --warn-uninitialized -G"%GENERATOR%"
  - cmd: cmake --build .
 
 test_script:
  - cmd: ctest -C Debug --output-on-failure
  - cmd: cd ../../
 
-on_success:
- - ps: cmake -DTRACEFILE="tests/build/CMakeUnitTests.trace" -DLCOV_OUTPUT="tests/build/coverage.info" -P CMakeTraceToLCov.cmake
-# Don't submit coverage report for now, it appears that coveralls-lcov is broken on AppVeyor
-# (certificate verification error)
+# Don't submit coverage report for now, it appears that coveralls-lcov is
+# broken on AppVeyor (certificate verification error). Also, for some reason
+# reading and writing the tracefiles is very slow on Windows.
+# on_success:
+# - ps: cmake -DTRACEFILE="tests/build/CMakeUnitTests.trace" -DLCOV_OUTPUT="tests/build/coverage.info" -P CMakeTraceToLCov.cmake
 # - ps: coveralls-lcov tests/build/coverage.info
