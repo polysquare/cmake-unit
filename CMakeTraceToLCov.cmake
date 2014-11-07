@@ -170,9 +170,6 @@ function (determine_executable_lines FILE)
 
 endfunction ()
 
-# Overwrite lcov file
-file (WRITE "${LCOV_OUTPUT}" "")
-
 # Read over every line in the tracefile, skipping lines that begin with
 # TEST for now, and then read off the () and the number in the braces
 # and the end of the line. The remainder is the filename.
@@ -243,7 +240,7 @@ foreach (FILE ${_ALL_COVERAGE_FILES})
 
     endif (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${RELATIVE_PATH_TO_FILE}")
 
-    file (APPEND "${LCOV_OUTPUT}"
+    list (APPEND LCOV_OUTPUT_CONTENTS
           "SF:${RELATIVE_PATH_TO_FILE}\n")
 
     set (NUMBER_OF_LINES_WITH_POSITIVE_HIT_COUNTS 0)
@@ -272,10 +269,13 @@ foreach (FILE ${_ALL_COVERAGE_FILES})
     endforeach ()
 
     string (REPLACE ";" "\n" SOURCE_FILE_HITS "${SOURCE_FILE_HITS}")
-    file (APPEND "${LCOV_OUTPUT}"
+    list (APPEND LCOV_OUTPUT_CONTENTS
           "${SOURCE_FILE_HITS}\n"
           "LH:${NUMBER_OF_LINES_WITH_POSITIVE_HIT_COUNTS}\n"
           "LF:${NUMBER_OF_EXECUTABLE_LINES}\n"
           "end_of_record\n\n")
 
 endforeach ()
+
+# Write out LCOV_OUTPUT just by writing entire list
+file (WRITE "${LCOV_OUTPUT}" ${LCOV_OUTPUT_CONTENTS})

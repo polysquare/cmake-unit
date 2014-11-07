@@ -1,15 +1,25 @@
 set (CMAKE_INSTALLER_NAME "${CMAKE_CURRENT_SOURCE_DIR}/cmake-inst")
-message (STATUS "Downloading CMake 3.1")
-file (DOWNLOAD
-      "http://www.cmake.org/files/v3.1/cmake-3.1.0-rc1-win32-x86.exe" 
-      "${CMAKE_INSTALLER_NAME}"
-      EXPECTED_HASH MD5=445ec256e20b641cbc8e19d1f5042c66
-      SHOW_PROGRESS
-      INACTIVITY_TIMEOUT 30)
+
+if (NOT EXISTS "${CMAKE_INSTALLER_NAME}")
+
+    message (STATUS "Downloading CMake 3.1 Installer")
+    file (DOWNLOAD
+          "http://www.cmake.org/files/v3.1/cmake-3.1.0-rc1-win32-x86.exe"
+          "${CMAKE_INSTALLER_NAME}"
+          EXPECTED_HASH MD5=445ec256e20b641cbc8e19d1f5042c66
+          SHOW_PROGRESS
+          INACTIVITY_TIMEOUT 30)
+
+else (NOT EXISTS "${CMAKE_INSTALLER_NAME}")
+
+    message (STATUS "Fetched CMake 3.1 installer from cache")
+
+endif (NOT EXISTS "${CMAKE_INSTALLER_NAME}")
+
+message (STATUS "Installing CMake 3.1 from ${CMAKE_INSTALLER_NAME}")
 execute_process (COMMAND "${CMAKE_INSTALLER_NAME}" "/S"
                  RESULT_VARIABLE RESULT)
 
-message (STATUS "Installing CMake 3.1 from ${CMAKE_INSTALLER_NAME}")
 if (NOT RESULT EQUAL 0)
 
     message (FATAL_ERROR "CMake 3.1 Installer failed with ${RESULT}")
