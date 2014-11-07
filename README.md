@@ -21,7 +21,7 @@ Platforms
 ---------
 
 `cmake-unit` is written entirely using the CMake language and should work across all platforms where CMake is supported. It had been tested on:
- * Windows (Visual Studio, NMake)
+ * Windows (Visual Studio 2010, 2012, 2013, NMake)
  * Mac OS X (XCode, Ninja, Make)
  * Ubuntu (Ninja, Make)
 
