@@ -34,3 +34,9 @@ function (my_function ARG_ONE # Executable
     endwhile () # Not executable - LinesStartingWithEndNotExecutable
 
 endfunction () # Not executable - LinesStartingWithEndNotExecutable
+
+my_macro ("ARGUMENT_ONE" # Executable
+          # LinesUntilCloseBraceWithInterleavedCommentsNotExecutable
+          "ARGUMENT_TWO" # See above
+          # LinesUntilCLoseBraceWithInterleavedCommentsNotExecutable
+          "FINAL_ARGUMENT") # Not executable, see above

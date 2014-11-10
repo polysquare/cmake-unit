@@ -66,17 +66,17 @@ function (determine_executable_lines FILE)
     # Tracking line regions with an opening brace but not a closed one
     # (eg call_foo (FOO
     #               BAR)) <- not executable
-    set (IN_OPENED_BRACE_REGION FALSE)
+    set (IN_OPENED_BRACKET_REGION FALSE)
 
     set (LINE_COUNTER 1)
     foreach (LINE ${FILE_LINES})
 
         if (LINE)
 
-            # Only lines after IN_OPENED_BRACE_REGION is set are actually
+            # Only lines after IN_OPENED_BRACKET_REGION is set are actually
             # disqualified. Reset all the other variables.
-            set (DISQUALIFIED_DUE_TO_IN_OPEN_BRACE_REGION
-                 ${IN_OPENED_BRACE_REGION})
+            set (DISQUALIFIED_DUE_TO_IN_OPEN_BRACKET_REGION
+                 ${IN_OPENED_BRACKET_REGION})
             set (DISQUALIFIED_DUE_TO_MATCH FALSE)
             set (DISQUALIFIED_BECAUSE_LINE_ONLY_WHITESPACE FALSE)
 
@@ -124,40 +124,49 @@ function (determine_executable_lines FILE)
             string (STRIP "${LINE_WITHOUT_COMMENTS}"
                     LINE_STRIPPED_WITH_NO_COMMENTS)
             string (FIND "${LINE_STRIPPED_WITH_NO_COMMENTS}" "("
-                    OPEN_BRACE_INDEX)
+                    OPEN_BRACKET_INDEX)
             string (FIND "${LINE_STRIPPED_WITH_NO_COMMENTS}" ")"
-                    LAST_CLOSE_BRACE_INDEX REVERSE)
+                    LAST_CLOSE_BRACKET_INDEX REVERSE)
 
-            # Also get the length of the line - 1 - we'll need it later
+            # Get the length of the line and the position of the last close
+            # bracket index + 1. This way, if the close-bracket is the last
+            # character on the stripped line, we can compare it with the
+            # actual line length (last index + 1) and see if this line
+            # ended with a close-bracket.
             string (LENGTH "${LINE_STRIPPED_WITH_NO_COMMENTS}" LINE_LENGTH)
-            math (EXPR LAST_INDEX_IN_LINE "${LINE_LENGTH} - 1")
+            if (NOT LAST_CLOSE_BRACKET_INDEX EQUAL -1)
 
-            if (IN_OPENED_BRACE_REGION OR
-                NOT OPEN_BRACE_INDEX EQUAL -1)
+                math (EXPR LAST_CLOSE_BRACKET_INDEX
+                      "${LAST_CLOSE_BRACKET_INDEX} + 1")
 
-                if (LAST_CLOSE_BRACE_INDEX EQUAL LAST_INDEX_IN_LINE)
+            endif (NOT LAST_CLOSE_BRACKET_INDEX EQUAL -1)
 
-                    set (IN_OPENED_BRACE_REGION FALSE)
+            if (IN_OPENED_BRACKET_REGION OR
+                NOT OPEN_BRACKET_INDEX EQUAL -1)
 
-                else (LAST_CLOSE_BRACE_INDEX EQUAL LAST_INDEX_IN_LINE)
+                if (LAST_CLOSE_BRACKET_INDEX EQUAL LINE_LENGTH)
 
-                    set (IN_OPENED_BRACE_REGION TRUE)
+                    set (IN_OPENED_BRACKET_REGION FALSE)
 
-                endif (LAST_CLOSE_BRACE_INDEX EQUAL LAST_INDEX_IN_LINE)
+                else (LAST_CLOSE_BRACKET_INDEX EQUAL LINE_LENGTH)
 
-            endif (IN_OPENED_BRACE_REGION OR
-                   NOT OPEN_BRACE_INDEX EQUAL -1)
+                    set (IN_OPENED_BRACKET_REGION TRUE)
+
+                endif (LAST_CLOSE_BRACKET_INDEX EQUAL LINE_LENGTH)
+
+            endif (IN_OPENED_BRACKET_REGION OR
+                   NOT OPEN_BRACKET_INDEX EQUAL -1)
 
             # Finally look at the disqualifications and if none match
             # then append this line to EXECUTABLE_LINES
             if (NOT DISQUALIFIED_DUE_TO_MATCH AND
-                NOT DISQUALIFIED_DUE_TO_IN_OPEN_BRACE_REGION AND
+                NOT DISQUALIFIED_DUE_TO_IN_OPEN_BRACKET_REGION AND
                 NOT DISQUALIFIED_BECAUSE_LINE_ONLY_WHITESPACE)
 
                 list (APPEND EXECUTABLE_LINES ${LINE_COUNTER})
 
             endif (NOT DISQUALIFIED_DUE_TO_MATCH AND
-                   NOT DISQUALIFIED_DUE_TO_IN_OPEN_BRACE_REGION AND
+                   NOT DISQUALIFIED_DUE_TO_IN_OPEN_BRACKET_REGION AND
                    NOT DISQUALIFIED_BECAUSE_LINE_ONLY_WHITESPACE)
 
         endif (LINE)
