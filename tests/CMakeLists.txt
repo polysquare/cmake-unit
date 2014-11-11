@@ -62,6 +62,20 @@ add_cmake_test (ListContainsValueEmpty)
 
 # Tests for CMakeUnitRunner
 add_cmake_test (CoverageFileClobberedOnBootstrap)
+add_cmake_test (InitialCacheWrittenAfterTestAdded)
+add_cmake_test (InitialCacheContainsForwardedVariables)
+add_cmake_test (DriverScriptWrittenAfterTestAdded)
+
+add_cmake_build_test (CMakeTestAddedWhereSetupScriptExists
+                      CMakeTestAddedWhereSetupScriptExistsVerify)
+add_cmake_build_test (CMakeTestNotAddedWhenSetupScriptDoesntExist
+                      CMakeTestNotAddedWhenSetupScriptDoesntExistVerify
+                      ALLOW_CONFIGURE_FAIL)
+add_cmake_build_test (CMakeBuildTestAddedWhereVerifyScriptExists
+                      CMakeBuildTestAddedWhereVerifyScriptExistsVerify)
+add_cmake_build_test (CMakeBuildTestNotAddedWhenVerifyScriptDoesntExist
+                      CMakeBuildTestNotAddedWhenVerifyScriptDoesntExistVerify
+                      ALLOW_CONFIGURE_FAIL)
 
 # Tests for CMakeTraceToLCov
 add_cmake_test (LinesStartingWithCommentNotExecutable)
