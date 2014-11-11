@@ -60,7 +60,10 @@ add_cmake_test (FileHasLineMatching)
 add_cmake_test (ListContainsValue)
 add_cmake_test (ListContainsValueEmpty)
 
-# Tests for code coverage
+# Tests for CMakeUnitRunner
+add_cmake_test (CoverageFileClobberedOnBootstrap)
+
+# Tests for CMakeTraceToLCov
 add_cmake_test (LinesStartingWithCommentNotExecutable)
 add_cmake_test (LinesWithNoContentNotExecutable)
 add_cmake_test (LinesStartingWithEndNotExecutable)
