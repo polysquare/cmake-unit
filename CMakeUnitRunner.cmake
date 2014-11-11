@@ -153,8 +153,9 @@ function (_bootstrap_test_driver_script TEST_NAME
          "        message (\"\\n\${OUTPUT}\\n\${ERROR}\")\n"
          "    else (RESULT EQUAL 0 OR ADD_COMMAND_ALLOW_FAIL)\n"
          "        message (FATAL_ERROR \n"
-         "                 \"The command \${STRINFIED_COMMAND} failed with \"\n"
-         "                 \"\${RESULT}\\n\${ERROR}\\n\${OUTPUT}\")\n"
+         "                 \"The command \${STRINGIFIED_COMMAND}\"\n"
+         "                 \" failed with \${RESULT}\"\n"
+         "                 \"\\n\${ERROR}\\n\${OUTPUT}\")\n"
          "    endif (RESULT EQUAL 0 OR ADD_COMMAND_ALLOW_FAIL)\n"
          "    set (OUTPUT_LOG ${TEST_WORKING_DIRECTORY_NAME}/\${STEP}.output)\n"
          "    set (ERROR_LOG ${TEST_WORKING_DIRECTORY_NAME}/\${STEP}.error)\n"
@@ -612,16 +613,12 @@ endfunction (add_cmake_test)
 # step. This will run some checks at the configure phase, then build and test
 # the configured project and then run the script specified by
 # VERIFY to ensure that the project built correctly.
-#
-# By default the "test" step is allowed to fail, because most build tests
-# won't have a separate "test" step. Specify ENSURE_TEST_SUCCESS
-# in order to ensure that the "test" step always succeeds.
 function (add_cmake_build_test TEST_NAME VERIFY)
 
     set (ADD_CMAKE_BUILD_TEST_OPTION_ARGS
          ALLOW_CONFIGURE_FAIL
          ALLOW_BUILD_FAIL
-         ENSURE_TEST_SUCCESS
+         ALLOW_TEST_FAIL
          NO_CLEAN)
     set (ADD_CMAKE_BUILD_TEST_SINGLEVAR_ARGS
          TARGET)
@@ -656,11 +653,11 @@ function (add_cmake_build_test TEST_NAME VERIFY)
 
     endif (ADD_CMAKE_BUILD_TEST_ALLOW_BUILD_FAIL)
 
-    if (NOT ADD_CMAKE_BUILD_TEST_ENSURE_TEST_SUCCESS)
+    if (ADD_CMAKE_BUILD_TEST_ALLOW_TEST_FAIL)
 
         set (ALLOW_TEST_FAIL_OPTION ALLOW_FAIL)
 
-    endif (NOT ADD_CMAKE_BUILD_TEST_ENSURE_TEST_SUCCESS)
+    endif (ADD_CMAKE_BUILD_TEST_ALLOW_TEST_FAIL)
 
     _define_variables_for_test (${TEST_NAME})
     _bootstrap_test_driver_script(${TEST_NAME}

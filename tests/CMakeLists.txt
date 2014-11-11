@@ -76,6 +76,28 @@ add_cmake_build_test (CMakeBuildTestAddedWhereVerifyScriptExists
 add_cmake_build_test (CMakeBuildTestNotAddedWhenVerifyScriptDoesntExist
                       CMakeBuildTestNotAddedWhenVerifyScriptDoesntExistVerify
                       ALLOW_CONFIGURE_FAIL)
+add_cmake_build_test (CMakeBuildTestErrorOnConfigureFail
+                      CMakeBuildTestErrorOnConfigureFailVerify
+                      ALLOW_TEST_FAIL)
+add_cmake_build_test (CMakeBuildTestNoErrorOnConfigureFailWhereFailAllowed
+                      CMakeBuildTestNoErrorOnConfigureFailWhereFailAllowedVerify)
+add_cmake_build_test (CMakeBuildTestErrorOnBuildFail
+                      CMakeBuildTestErrorOnBuildFailVerify
+                      ALLOW_TEST_FAIL)
+add_cmake_build_test (CMakeBuildTestErrorOnTestFail
+                      CMakeBuildTestErrorOnTestFailVerify
+                      ALLOW_TEST_FAIL)
+add_cmake_build_test (CMakeBuildTestNoErrorOnTestFailWhereFailAllowed
+                      CMakeBuildTestNoErrorOnTestFailWhereFailAllowedVerify
+                      ALLOW_TEST_FAIL)
+add_cmake_build_test (CMakeBuildTestErrorOnVerifyFail
+                      CMakeBuildTestErrorOnVerifyFailVerify
+                      ALLOW_TEST_FAIL)
+
+add_cmake_build_test (CMakeBuildTestBuildStepNotRunIfConfigureCanFail
+                      CMakeBuildTestBuildStepNotRunIfConfigureCanFailVerify)
+add_cmake_build_test (CMakeBuildTestTestStepNotRunIfBuildCanFail
+                      CMakeBuildTestTestStepNotRunIfBuildCanFailVerify)
 
 # Tests for CMakeTraceToLCov
 add_cmake_test (LinesStartingWithCommentNotExecutable)
