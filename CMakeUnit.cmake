@@ -151,14 +151,38 @@ function (_variable_is VARIABLE TYPE COMPARATOR VALUE RESULT_VARIABLE)
 
         endif ("${${VARIABLE}}" STR${COMPARATOR} "${VALUE}")
 
-    elseif ("${TYPE}" MATCHES "INTEGER" OR
-            "${TYPE}" MATCHES "BOOL")
+    elseif ("${TYPE}" MATCHES "INTEGER")
 
         if ("${${VARIABLE}}" ${COMPARATOR} ${VALUE})
 
             set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
         endif ("${${VARIABLE}}" ${COMPARATOR} ${VALUE})
+
+    elseif ("${TYPE}" MATCHES "BOOL")
+
+        if ("${COMPARATOR}" STREQUAL "EQUAL")
+
+            if (${${VARIABLE}} AND ${VALUE})
+
+                set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+
+            elseif (NOT ${${VARIABLE}} AND NOT ${VALUE})
+
+                set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+
+            else (${${VARIABLE}} AND ${VALUE})
+
+                set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
+
+            endif (${${VARIABLE}} AND ${VALUE})
+
+        else ("${COMPARATOR}" STREQUAL "EQUAL")
+
+            message (FATAL_ERROR "No comparators other than EQUAL are supported"
+                                 "for comparing BOOL variables")
+
+        endif ("${COMPARATOR}" STREQUAL "EQUAL")
 
     else ("${TYPE}" MATCHES "STRING")
 
