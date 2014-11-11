@@ -99,6 +99,9 @@ add_cmake_build_test (CMakeBuildTestBuildStepNotRunIfConfigureCanFail
 add_cmake_build_test (CMakeBuildTestTestStepNotRunIfBuildCanFail
                       CMakeBuildTestTestStepNotRunIfBuildCanFailVerify)
 
+add_cmake_build_test (CMakeBuildTestWithCustomTarget
+                      CMakeBuildTestWithCustomTargetVerify)
+
 # Tests for CMakeTraceToLCov
 add_cmake_test (LinesStartingWithCommentNotExecutable)
 add_cmake_test (LinesWithNoContentNotExecutable)
