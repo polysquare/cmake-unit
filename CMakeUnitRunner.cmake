@@ -364,11 +364,11 @@ function (_append_configure_step TEST_NAME
         # Don't tolerate warings in the configure phase
         list (APPEND DRIVER_SCRIPT_CONTENTS
               "if (\"\${CONFIGURE_ERROR}\"\n"
-              "    MATCHES \"^.*CMake Warning.*$\")\n"
+              "    MATCHES \"^CMake Warning.*$\")\n"
               "    message (FATAL_ERROR \"CMake Warnings were present:\"\n"
               "             \"\${CONFIGURE_WARNINGS_CONTENTS}\")\n"
               "endif (\"\${CONFIGURE_ERROR}\"\n"
-              "       MATCHES \"^.*CMake Warning.*$\")\n")
+              "       MATCHES \"^CMake Warning.*$\")\n")
 
         if (CMAKE_UNIT_LOG_COVERAGE)
 
@@ -422,30 +422,37 @@ function (_append_configure_step TEST_NAME
                   # whether it matches one of the paths in our COVERAGE_FILES
                   "        string (SUBSTRING \"\${CONFIGURE_TRACE_CONTENTS}\"\n"
                   "                0 \${NEXT_LINE_INDEX} LINE)\n"
-                  "        foreach (FILE \${COVERAGE_FILES})\n"
-                  "            if (\"\${LINE}\" MATCHES \"\${FILE}.*$\")\n"
+                  # Ignore CMake Warning|Error and anything starting with
+                  # two spaces
+                  "        if (NOT \"\${LINE}\" MATCHES\n"
+                  "            \"^CMake (Warning|Error).*$\" AND\n"
+                  "            NOT \"\${LINE}\" MATCHES\n"
+                  "            \"^  .*$\")\n"
+                  "            foreach (FILE \${COVERAGE_FILES})\n"
+                  "                if (\"\${LINE}\" MATCHES \"\${FILE}.*$\")\n"
                   # Once we've found a matching line, strip out the rest of
                   # the mostly useless information. Find the first ":" after
                   # the filename and then write out the string until that
                   # semicolon is reached
-                  "                string (LENGTH \"${FILE}\" FILE_LEN)\n"
-                  "                string (SUBSTRING \"\${LINE}\"\n"
-                  "                        \${FILE_LEN} -1\n"
-                  "                        AFTER_FILE_STRING)\n"
+                  "                    string (LENGTH \"${FILE}\" FILE_LEN)\n"
+                  "                    string (SUBSTRING \"\${LINE}\"\n"
+                  "                            \${FILE_LEN} -1\n"
+                  "                            AFTER_FILE_STRING)\n"
                   # Match ):. This prevents drive letters on Windows causing
                   # problems
-                  "                string (FIND \"\${AFTER_FILE_STRING}\"\n"
-                  "                        \"):\" DEL_IDX)\n"
-                  "                math (EXPR COLON_INDEX_IN_LINE\n"
-                  "                      \"\${FILE_LEN} + \${DEL_IDX} + 1\")\n"
-                  "                string (SUBSTRING \"\${LINE}\"\n"
-                  "                        0 \${COLON_INDEX_IN_LINE}\n"
-                  "                        FILENAME_AND_LINE)\n"
-                  "                list (APPEND\n"
-                  "                      COVERAGE_FILE_CONTENTS\n"
-                  "                      \"\${FILENAME_AND_LINE}\\n\")\n"
-                  "            endif ()\n"
-                  "        endforeach ()\n"
+                  "                    string (FIND \"\${AFTER_FILE_STRING}\"\n"
+                  "                            \"):\" DEL_IDX)\n"
+                  "                    math (EXPR COLON_INDEX_IN_LINE\n"
+                  "                          \"\${FILE_LEN} + \${DEL_IDX} + 1\")\n"
+                  "                    string (SUBSTRING \"\${LINE}\"\n"
+                  "                            0 \${COLON_INDEX_IN_LINE}\n"
+                  "                            FILENAME_AND_LINE)\n"
+                  "                    list (APPEND\n"
+                  "                          COVERAGE_FILE_CONTENTS\n"
+                  "                          \"\${FILENAME_AND_LINE}\\n\")\n"
+                  "               endif ()\n"
+                  "            endforeach ()\n"
+                  "        endif ()\n"
                   # Increment NEXT_LINE_INDEX so that we can take a new
                   # substring without the \n and check for the next one
                   "        math (EXPR NEXT_LINE_INDEX\n"
