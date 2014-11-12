@@ -98,8 +98,28 @@ function (bootstrap_cmake_unit)
 
     if (CMAKE_UNIT_LOG_COVERAGE)
 
+        # Escape characters out of filenames that will cause problems when
+        # attempting to regex match them later
+        foreach (COVERAGE_FILE ${BOOTSTRAP_COVERAGE_FILES})
+
+            string (REPLACE "\\" "/" COVERAGE_FILE "${COVERAGE_FILE}")
+            string (REPLACE "(" "\\(" COVERAGE_FILE "${COVERAGE_FILE}")
+            string (REPLACE ")" "\\)" COVERAGE_FILE "${COVERAGE_FILE}")
+            string (REPLACE "[" "\\[" COVERAGE_FILE "${COVERAGE_FILE}")
+            string (REPLACE "]" "\\]" COVERAGE_FILE "${COVERAGE_FILE}")
+            string (REPLACE "*" "\\*" COVERAGE_FILE "${COVERAGE_FILE}")
+            string (REPLACE "+" "\\+" COVERAGE_FILE "${COVERAGE_FILE}")
+            string (REPLACE "$" "\\$" COVERAGE_FILE "${COVERAGE_FILE}")
+            string (REPLACE "^" "\\^" COVERAGE_FILE "${COVERAGE_FILE}")
+            string (REPLACE "}" "\\}" COVERAGE_FILE "${COVERAGE_FILE}")
+            string (REPLACE "{" "\\{" COVERAGE_FILE "${COVERAGE_FILE}")
+
+            list (APPEND ESCAPED_COVERAGE_FILES "${COVERAGE_FILE}")
+
+        endforeach ()
+
         set (_CMAKE_UNIT_COVERAGE_LOGGING_FILES
-             ${BOOTSTRAP_COVERAGE_FILES} PARENT_SCOPE)
+             ${ESCAPED_COVERAGE_FILES} PARENT_SCOPE)
 
         # Clobber the coverage report
         file (WRITE "${CMAKE_UNIT_COVERAGE_FILE}" "")
