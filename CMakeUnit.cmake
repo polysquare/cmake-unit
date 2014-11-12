@@ -22,6 +22,24 @@
 
 include (CMakeParseArguments)
 
+function (cmake_unit_escape_string INPUT OUTPUT_VARIABLE)
+
+    string (REPLACE "\\" "\\\\" INPUT "${INPUT}")
+    string (REPLACE "(" "\\(" INPUT "${INPUT}")
+    string (REPLACE ")" "\\)" INPUT "${INPUT}")
+    string (REPLACE "[" "\\[" INPUT "${INPUT}")
+    string (REPLACE "]" "\\]" INPUT "${INPUT}")
+    string (REPLACE "*" "\\*" INPUT "${INPUT}")
+    string (REPLACE "+" "\\+" INPUT "${INPUT}")
+    string (REPLACE "$" "\\$" INPUT "${INPUT}")
+    string (REPLACE "^" "\\^" INPUT "${INPUT}")
+    string (REPLACE "}" "\\}" INPUT "${INPUT}")
+    string (REPLACE "{" "\\{" INPUT "${INPUT}")
+
+    set (${OUTPUT_VARIABLE} "${INPUT}" PARENT_SCOPE)
+
+endfunction (cmake_unit_escape_string)
+
 function (assert_true VARIABLE)
 
     if (NOT VARIABLE)

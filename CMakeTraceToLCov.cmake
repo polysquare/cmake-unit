@@ -54,10 +54,6 @@ function (determine_executable_lines FILE)
     # to commas.
     string (REPLACE ";" "," FILE_CONTENTS "${FILE_CONTENTS}")
 
-    # Ensure there's a space between each semicolon - we need to keep
-    # track of lines that were just \n
-    string (REPLACE "\n" " ;" FILE_CONTENTS "${FILE_CONTENTS}")
-
     # Convert \t to " ". Makes life easier.
     string (REPLACE "\t" " " FILE_LINES "${FILE_CONTENTS}")
 
@@ -69,9 +65,16 @@ function (determine_executable_lines FILE)
     set (IN_OPENED_BRACKET_REGION FALSE)
 
     set (LINE_COUNTER 1)
-    foreach (LINE ${FILE_LINES})
+    set (NEXT_LINE_INDEX 0)
+    while (NOT NEXT_LINE_INDEX EQUAL -1)
 
-        if (LINE)
+        string (SUBSTRING "${FILE_CONTENTS}" ${NEXT_LINE_INDEX} -1
+                FILE_CONTENTS)
+        string (FIND "${FILE_CONTENTS}" "\n" NEXT_LINE_INDEX)
+
+        if (NOT NEXT_LINE_INDEX EQUAL -1)
+
+            string (SUBSTRING "${FILE_CONTENTS}" 0 ${NEXT_LINE_INDEX} LINE)
 
             # Only lines after IN_OPENED_BRACKET_REGION is set are actually
             # disqualified. Reset all the other variables.
@@ -169,11 +172,13 @@ function (determine_executable_lines FILE)
                    NOT DISQUALIFIED_DUE_TO_IN_OPEN_BRACKET_REGION AND
                    NOT DISQUALIFIED_BECAUSE_LINE_ONLY_WHITESPACE)
 
-        endif (LINE)
+            math (EXPR NEXT_LINE_INDEX "${NEXT_LINE_INDEX} + 1")
+
+        endif (NOT NEXT_LINE_INDEX EQUAL -1)
 
         math (EXPR LINE_COUNTER "${LINE_COUNTER} + 1")
 
-    endforeach ()
+    endwhile ()
 
     set ("_${FILE}_EXECUTABLE_LINES" ${EXECUTABLE_LINES} PARENT_SCOPE)
 

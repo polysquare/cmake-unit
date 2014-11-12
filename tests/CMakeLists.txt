@@ -60,7 +60,62 @@ add_cmake_test (FileHasLineMatching)
 add_cmake_test (ListContainsValue)
 add_cmake_test (ListContainsValueEmpty)
 
-# Tests for code coverage
+# Tests for CMakeUnitRunner
+add_cmake_test (CoverageFileClobberedOnBootstrap)
+add_cmake_test (InitialCacheWrittenAfterTestAdded)
+add_cmake_test (InitialCacheContainsForwardedVariables)
+add_cmake_test (DriverScriptWrittenAfterTestAdded)
+
+add_cmake_build_test (CMakeTestAddedWhereSetupScriptExists
+                      CMakeTestAddedWhereSetupScriptExistsVerify)
+add_cmake_build_test (CMakeTestNotAddedWhenSetupScriptDoesntExist
+                      CMakeTestNotAddedWhenSetupScriptDoesntExistVerify
+                      ALLOW_CONFIGURE_FAIL)
+add_cmake_build_test (CMakeBuildTestAddedWhereVerifyScriptExists
+                      CMakeBuildTestAddedWhereVerifyScriptExistsVerify)
+add_cmake_build_test (CMakeBuildTestNotAddedWhenVerifyScriptDoesntExist
+                      CMakeBuildTestNotAddedWhenVerifyScriptDoesntExistVerify
+                      ALLOW_CONFIGURE_FAIL)
+add_cmake_build_test (CMakeBuildTestErrorOnConfigureFail
+                      CMakeBuildTestErrorOnConfigureFailVerify
+                      ALLOW_TEST_FAIL)
+add_cmake_build_test (CMakeBuildTestNoErrorOnConfigureFailWhereFailAllowed
+                      CMakeBuildTestNoErrorOnConfigureFailWhereFailAllowedVerify)
+add_cmake_build_test (CMakeBuildTestErrorOnBuildFail
+                      CMakeBuildTestErrorOnBuildFailVerify
+                      ALLOW_TEST_FAIL)
+add_cmake_build_test (CMakeBuildTestErrorOnTestFail
+                      CMakeBuildTestErrorOnTestFailVerify
+                      ALLOW_TEST_FAIL)
+add_cmake_build_test (CMakeBuildTestNoErrorOnTestFailWhereFailAllowed
+                      CMakeBuildTestNoErrorOnTestFailWhereFailAllowedVerify
+                      ALLOW_TEST_FAIL)
+add_cmake_build_test (CMakeBuildTestErrorOnVerifyFail
+                      CMakeBuildTestErrorOnVerifyFailVerify
+                      ALLOW_TEST_FAIL)
+
+add_cmake_build_test (CMakeBuildTestBuildStepNotRunIfConfigureCanFail
+                      CMakeBuildTestBuildStepNotRunIfConfigureCanFailVerify)
+add_cmake_build_test (CMakeBuildTestTestStepNotRunIfBuildCanFail
+                      CMakeBuildTestTestStepNotRunIfBuildCanFailVerify)
+
+add_cmake_build_test (CMakeBuildTestWithCustomTarget
+                      CMakeBuildTestWithCustomTargetVerify)
+add_cmake_build_test (CMakeBuildTestCleanStepAlwaysRuns
+                      CMakeBuildTestCleanStepAlwaysRunsVerify)
+add_cmake_build_test (CMakeBuildTestCleanStepNotRunOnNoClean
+                      CMakeBuildTestCleanStepNotRunOnNoCleanVerify)
+
+add_cmake_build_test (CMakeBuildTestWarningsAreErrors
+                      CMakeBuildTestWarningsAreErrorsVerify
+                      ALLOW_TEST_FAIL)
+add_cmake_build_test (CMakeBuildTestWarningsNotErrorsWhereWErrorDisabled
+                      CMakeBuildTestWarningsNotErrorsWhereWErrorDisabledVerify)
+
+add_cmake_build_test (CMakeTestFilesRecordedInTracefileAcrossTests
+                      CMakeTestFilesRecordedInTracefileAcrossTestsVerify)
+
+# Tests for CMakeTraceToLCov
 add_cmake_test (LinesStartingWithCommentNotExecutable)
 add_cmake_test (LinesWithNoContentNotExecutable)
 add_cmake_test (LinesStartingWithEndNotExecutable)
