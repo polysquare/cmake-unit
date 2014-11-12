@@ -101,6 +101,19 @@ add_cmake_build_test (CMakeBuildTestTestStepNotRunIfBuildCanFail
 
 add_cmake_build_test (CMakeBuildTestWithCustomTarget
                       CMakeBuildTestWithCustomTargetVerify)
+add_cmake_build_test (CMakeBuildTestCleanStepAlwaysRuns
+                      CMakeBuildTestCleanStepAlwaysRunsVerify)
+add_cmake_build_test (CMakeBuildTestCleanStepNotRunOnNoClean
+                      CMakeBuildTestCleanStepNotRunOnNoCleanVerify)
+
+add_cmake_build_test (CMakeBuildTestWarningsAreErrors
+                      CMakeBuildTestWarningsAreErrorsVerify
+                      ALLOW_TEST_FAIL)
+add_cmake_build_test (CMakeBuildTestWarningsNotErrorsWhereWErrorDisabled
+                      CMakeBuildTestWarningsNotErrorsWhereWErrorDisabledVerify)
+
+add_cmake_build_test (CMakeTestFilesRecordedInTracefileAcrossTests
+                      CMakeTestFilesRecordedInTracefileAcrossTestsVerify)
 
 # Tests for CMakeTraceToLCov
 add_cmake_test (LinesStartingWithCommentNotExecutable)

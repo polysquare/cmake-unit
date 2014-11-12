@@ -167,9 +167,9 @@ function (_bootstrap_test_driver_script TEST_NAME
          "          \"\${ERROR_LOG}\"\n"
          "          \"Errors:\\n\"\n"
          "          \${ERROR})\n"
-         "    set (\${OUTPUT_RETURN} \${OUTPUT} PARENT_SCOPE)\n"
-         "    set (\${ERROR_RETURN} \${ERROR} PARENT_SCOPE)\n"
-         "    set (\${RESULT_RETURN} \${RESULT} PARENT_SCOPE)\n"
+         "    set (\${OUTPUT_RETURN} \"\${OUTPUT}\" PARENT_SCOPE)\n"
+         "    set (\${ERROR_RETURN} \"\${ERROR}\" PARENT_SCOPE)\n"
+         "    set (\${RESULT_RETURN} \"\${RESULT}\" PARENT_SCOPE)\n"
          "endfunction (add_driver_command)\n")
 
     set (${PARENT_DRIVER_SCRIPT_CONTENTS} ${DRIVER_SCRIPT_CONTENTS}
@@ -280,7 +280,7 @@ function (_append_configure_step TEST_NAME
                                  TEST_WORKING_DIRECTORY_NAME
                                  TEST_FILE)
 
-    set (CONFIGURE_STEP_OPTION_ARGS ALLOW_FAIL)
+    set (CONFIGURE_STEP_OPTION_ARGS ALLOW_FAIL ALLOW_WARNINGS)
 
     cmake_parse_arguments (CONFIGURE_STEP
                            "${CONFIGURE_STEP_OPTION_ARGS}"
@@ -296,6 +296,7 @@ function (_append_configure_step TEST_NAME
         set (TEST_DIRECTORY_CONFIGURE_SCRIPT
              "${TEST_DIRECTORY_NAME}/CMakeLists.txt")
         set (TEST_DIRECTORY_CONFIGURE_SCRIPT_CONTENTS
+             "cmake_policy (VERSION 3.0)\n"
              "project (TestProject CXX C)\n"
              "cmake_minimum_required (VERSION 2.8 FATAL_ERROR)\n"
              "if (POLICY CMP0025)\n"
@@ -362,14 +363,13 @@ function (_append_configure_step TEST_NAME
                           COMMAND ${CONFIGURE_COMMAND}
                           ${ALLOW_FAIL_OPTION})
 
-        # Don't tolerate warings in the configure phase
+
+        # After we've added the driver step, read back CONFIGURE.error
+        # and filter through each of the lines to find "coverage" lines,
+        # logging them into the main CMAKE_UNIT_COVERAGE_FILE
         list (APPEND DRIVER_SCRIPT_CONTENTS
-              "if (\"\${CONFIGURE_ERROR}\"\n"
-              "    MATCHES \"^CMake Warning.*$\")\n"
-              "    message (FATAL_ERROR \"CMake Warnings were present:\"\n"
-              "             \"\${CONFIGURE_WARNINGS_CONTENTS}\")\n"
-              "endif (\"\${CONFIGURE_ERROR}\"\n"
-              "       MATCHES \"^CMake Warning.*$\")\n")
+              # Reduce IO by buffering in memory
+              "set (COVERAGE_FILE_CONTENTS \"\")\n")
 
         if (CMAKE_UNIT_LOG_COVERAGE)
 
@@ -386,13 +386,9 @@ function (_append_configure_step TEST_NAME
             # stage
             string (REPLACE ";" " " COVERAGE_FILES "${COVERAGE_FILES}")
 
-            # After we've added the driver step, read back CONFIGURE.error
-            # and filter through each of the lines to find "coverage" lines,
-            # logging them into the main CMAKE_UNIT_COVERAGE_FILE
+            # First write out the name of this test and all the files
+            # we will be covering
             list (APPEND DRIVER_SCRIPT_CONTENTS
-                  # Reduce IO by buffering in memory
-                  "set (COVERAGE_FILE_CONTENTS \"\")\n"
-                  # First write out the name of this test
                   "list (APPEND\n"
                   "      COVERAGE_FILE_CONTENTS\n"
                   "      \"TEST:${TEST_NAME}\\n\")\n"
@@ -400,29 +396,51 @@ function (_append_configure_step TEST_NAME
                   "foreach (FILE \${COVERAGE_FILES})\n"
                   "    list (APPEND COVERAGE_FILE_CONTENTS\n"
                   "          \"FILE:\${FILE}\\n\")\n"
-                  "endforeach ()\n"
-                  "set (CONFIGURE_TRACE_CONTENTS \"\${CONFIGURE_ERROR}\")\n"
-                  # This is a tedious way to iterate through lines of a string
-                  # though it is more reliable than trying to make the string
-                  # into a list by converting \n to ;, especially since
-                  # there appears to be a cap on the number of elements
-                  # that can go into a list.
-                  #
-                  # Just keep going through through the string finding \n
-                  # and scan each line as we go. Save everything past the
-                  # found index in the same variable again.
-                  "set (NEXT_LINE_INDEX 0)\n"
-                  "while (NOT NEXT_LINE_INDEX EQUAL -1)\n"
-                  "    string (SUBSTRING \"\${CONFIGURE_TRACE_CONTENTS}\"\n"
-                  "            \${NEXT_LINE_INDEX} -1\n"
-                  "            CONFIGURE_TRACE_CONTENTS)\n"
-                  "    string (FIND \"\${CONFIGURE_TRACE_CONTENTS}\" \"\\n\"\n"
-                  "            NEXT_LINE_INDEX)\n"
-                  "    if (NOT NEXT_LINE_INDEX EQUAL -1)\n"
-                  # Take a substring of what we have now and test it for
-                  # whether it matches one of the paths in our COVERAGE_FILES
-                  "        string (SUBSTRING \"\${CONFIGURE_TRACE_CONTENTS}\"\n"
-                  "                0 \${NEXT_LINE_INDEX} LINE)\n"
+                  "endforeach ()\n")
+
+        endif (CMAKE_UNIT_LOG_COVERAGE)
+
+        list (APPEND DRIVER_SCRIPT_CONTENTS
+              "set (CONFIGURE_TRACE_CONTENTS\n"
+              "     \"\${CONFIGURE_ERROR}\")\n"
+              # This is a tedious way to iterate through lines of a string
+              # though it is more reliable than trying to make the string
+              # into a list by converting \n to ;, especially since
+              # there appears to be a cap on the number of elements
+              # that can go into a list.
+              #
+              # Just keep going through through the string finding \n
+              # and scan each line as we go. Save everything past the
+              # found index in the same variable again.
+              "set (NEXT_LINE_INDEX 0)\n"
+              "while (NOT NEXT_LINE_INDEX EQUAL -1)\n"
+              "    string (SUBSTRING \"\${CONFIGURE_TRACE_CONTENTS}\"\n"
+              "            \${NEXT_LINE_INDEX} -1\n"
+              "            CONFIGURE_TRACE_CONTENTS)\n"
+              "    string (FIND \"\${CONFIGURE_TRACE_CONTENTS}\" \"\\n\"\n"
+              "            NEXT_LINE_INDEX)\n"
+              "    if (NOT NEXT_LINE_INDEX EQUAL -1)\n"
+              # Take a substring of what we have now and test it for
+              # whether it matches one of the paths in our COVERAGE_FILES
+              "        string (SUBSTRING \"\${CONFIGURE_TRACE_CONTENTS}\"\n"
+              "                0 \${NEXT_LINE_INDEX} LINE)\n")
+
+        if (NOT CONFIGURE_STEP_ALLOW_WARNINGS)
+
+            # Don't tolerate warings in the configure phase
+            list (APPEND DRIVER_SCRIPT_CONTENTS
+                  "        if (\"\${LINE}\"\n"
+                  "            MATCHES \"^CMake Warning.*$\")\n"
+                  "            message (FATAL_ERROR\n"
+                  "                     \"CMake Warnings were present:\")\n"
+                  "        endif (\"\${LINE}\"\n"
+                  "               MATCHES \"^CMake Warning.*$\")\n")
+
+        endif (NOT CONFIGURE_STEP_ALLOW_WARNINGS)
+
+        if (CMAKE_UNIT_LOG_COVERAGE)
+
+            list (APPEND DRIVER_SCRIPT_CONTENTS
                   # Ignore CMake Warning|Error and anything starting with
                   # two spaces
                   "        if (NOT \"\${LINE}\" MATCHES\n"
@@ -430,21 +448,21 @@ function (_append_configure_step TEST_NAME
                   "            NOT \"\${LINE}\" MATCHES\n"
                   "            \"^  .*$\")\n"
                   "            foreach (FILE \${COVERAGE_FILES})\n"
-                  "                if (\"\${LINE}\" MATCHES \"\${FILE}.*$\")\n"
+                  "                if (\"\${LINE}\" MATCHES \"^\${FILE}.*$\")\n"
                   # Once we've found a matching line, strip out the rest of
                   # the mostly useless information. Find the first ":" after
                   # the filename and then write out the string until that
                   # semicolon is reached
-                  "                    string (LENGTH \"${FILE}\" FILE_LEN)\n"
+                  "                    string (LENGTH \"${FILE}\" F_LEN)\n"
                   "                    string (SUBSTRING \"\${LINE}\"\n"
-                  "                            \${FILE_LEN} -1\n"
+                  "                            \${F_LEN} -1\n"
                   "                            AFTER_FILE_STRING)\n"
                   # Match ):. This prevents drive letters on Windows causing
                   # problems
                   "                    string (FIND \"\${AFTER_FILE_STRING}\"\n"
                   "                            \"):\" DEL_IDX)\n"
                   "                    math (EXPR COLON_INDEX_IN_LINE\n"
-                  "                          \"\${FILE_LEN} + \${DEL_IDX} + 1\")\n"
+                  "                          \"\${F_LEN} + \${DEL_IDX} + 1\")\n"
                   "                    string (SUBSTRING \"\${LINE}\"\n"
                   "                            0 \${COLON_INDEX_IN_LINE}\n"
                   "                            FILENAME_AND_LINE)\n"
@@ -453,14 +471,22 @@ function (_append_configure_step TEST_NAME
                   "                          \"\${FILENAME_AND_LINE}\\n\")\n"
                   "               endif ()\n"
                   "            endforeach ()\n"
-                  "        endif ()\n"
-                  # Increment NEXT_LINE_INDEX so that we can take a new
-                  # substring without the \n and check for the next one
-                  "        math (EXPR NEXT_LINE_INDEX\n"
-                  "              \"\${NEXT_LINE_INDEX} + 1\")\n"
-                  "    endif (NOT NEXT_LINE_INDEX EQUAL -1)\n"
-                  "endwhile ()\n"
-                  # Append to coverage file
+                  "        endif ()\n")
+
+        endif (CMAKE_UNIT_LOG_COVERAGE)
+
+        # Increment NEXT_LINE_INDEX so that we can take a new
+        # substring without the \n and check for the next one
+        list (APPEND DRIVER_SCRIPT_CONTENTS
+              "        math (EXPR NEXT_LINE_INDEX\n"
+              "              \"\${NEXT_LINE_INDEX} + 1\")\n"
+              "    endif (NOT NEXT_LINE_INDEX EQUAL -1)\n"
+              "endwhile ()\n")
+
+        if (CMAKE_UNIT_LOG_COVERAGE)
+
+            # Append to coverage file
+            list (APPEND DRIVER_SCRIPT_CONTENTS
                   "file (APPEND \"${CMAKE_UNIT_COVERAGE_FILE}\"\n"
                   "      \${COVERAGE_FILE_CONTENTS})\n")
 
@@ -617,6 +643,7 @@ function (add_cmake_build_test TEST_NAME VERIFY)
 
     set (ADD_CMAKE_BUILD_TEST_OPTION_ARGS
          ALLOW_CONFIGURE_FAIL
+         ALLOW_CONFIGURE_WARNINGS
          ALLOW_BUILD_FAIL
          ALLOW_TEST_FAIL
          NO_CLEAN)
@@ -638,6 +665,12 @@ function (add_cmake_build_test TEST_NAME VERIFY)
         set (ADD_CMAKE_BUILD_TEST_TARGET all)
 
     endif (NOT ADD_CMAKE_BUILD_TEST_TARGET)
+
+    if (ADD_CMAKE_BUILD_TEST_ALLOW_CONFIGURE_WARNINGS)
+
+        set (ALLOW_CONFIGURE_WARNINGS_OPTION ALLOW_WARNINGS)
+
+    endif (ADD_CMAKE_BUILD_TEST_ALLOW_CONFIGURE_WARNINGS)
 
     if (ADD_CMAKE_BUILD_TEST_ALLOW_CONFIGURE_FAIL)
 
@@ -677,7 +710,8 @@ function (add_cmake_build_test TEST_NAME VERIFY)
                             "${TEST_DIRECTORY_NAME}"
                             "${TEST_WORKING_DIRECTORY_NAME}"
                             "${TEST_FILE}"
-                            ${ALLOW_CONFIGURE_FAIL_OPTION})
+                            ${ALLOW_CONFIGURE_FAIL_OPTION}
+                            ${ALLOW_CONFIGURE_WARNINGS_OPTION})
 
     # Can't build if the configure step is allowed to fail
     if (NOT ADD_CMAKE_BUILD_TEST_ALLOW_CONFIGURE_FAIL)
