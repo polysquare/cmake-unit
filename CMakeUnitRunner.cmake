@@ -28,6 +28,7 @@
 # Defines some global variables for the CMakeUnit framework. Pass
 # VARIABLES to forward those variables to tests.
 include (CMakeParseArguments)
+include (CMakeUnit)
 include (CTest)
 
 enable_testing ()
@@ -102,19 +103,8 @@ function (bootstrap_cmake_unit)
         # attempting to regex match them later
         foreach (COVERAGE_FILE ${BOOTSTRAP_COVERAGE_FILES})
 
-            string (REPLACE "\\" "/" COVERAGE_FILE "${COVERAGE_FILE}")
-            string (REPLACE "(" "\\(" COVERAGE_FILE "${COVERAGE_FILE}")
-            string (REPLACE ")" "\\)" COVERAGE_FILE "${COVERAGE_FILE}")
-            string (REPLACE "[" "\\[" COVERAGE_FILE "${COVERAGE_FILE}")
-            string (REPLACE "]" "\\]" COVERAGE_FILE "${COVERAGE_FILE}")
-            string (REPLACE "*" "\\*" COVERAGE_FILE "${COVERAGE_FILE}")
-            string (REPLACE "+" "\\+" COVERAGE_FILE "${COVERAGE_FILE}")
-            string (REPLACE "$" "\\$" COVERAGE_FILE "${COVERAGE_FILE}")
-            string (REPLACE "^" "\\^" COVERAGE_FILE "${COVERAGE_FILE}")
-            string (REPLACE "}" "\\}" COVERAGE_FILE "${COVERAGE_FILE}")
-            string (REPLACE "{" "\\{" COVERAGE_FILE "${COVERAGE_FILE}")
-
-            list (APPEND ESCAPED_COVERAGE_FILES "${COVERAGE_FILE}")
+            cmake_unit_escape_string ("${COVERAGE_FILE}" ESCAPED_COVERAGE_FILE)
+            list (APPEND ESCAPED_COVERAGE_FILES "${ESCAPED_COVERAGE_FILE}")
 
         endforeach ()
 

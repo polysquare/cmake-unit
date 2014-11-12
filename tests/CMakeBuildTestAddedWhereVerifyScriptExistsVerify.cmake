@@ -8,11 +8,14 @@
 
 include (CMakeUnit)
 
+cmake_unit_escape_string ("${CMAKE_COMMAND}" ESCAPED_CMAKE_COMMAND)
+cmake_unit_escape_string ("${CMAKE_CTEST_COMMAND}" ESCAPED_CMAKE_CTEST_COMMAND)
+
 set (TEST_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/TEST.output")
 assert_file_has_line_matching ("${TEST_OUTPUT}" "^.*Start.*SampleTest.*$")
 assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "^.*${CMAKE_COMMAND} --build.*$")
+                               "^.*${ESCAPED_CMAKE_COMMAND} --build.*$")
 assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "^.*${CMAKE_CTEST_COMMAND}.*$")
+                               "^.*${ESCAPED_CMAKE_TEST_COMMAND}.*$")
 assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "^.*${CMAKE_COMMAND}.*P.*SampleTestVerify.*$")
+                               "^.*${ESCAPED_CMAKE_COMMAND}.*P.*SampleTestVerify.*$")
