@@ -17,5 +17,5 @@ assert_file_has_line_matching ("${TEST_OUTPUT}"
                                "^.*${ESCAPED_CMAKE_COMMAND} --build.*$")
 assert_file_has_line_matching ("${TEST_OUTPUT}"
                                "^.*${ESCAPED_CMAKE_TEST_COMMAND}.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "^.*${ESCAPED_CMAKE_COMMAND}.*P.*SampleTestVerify.*$")
+set (VERIFY_REGEX "^.*${ESCAPED_CMAKE_COMMAND}.*P.*SampleTestVerify.*$")
+assert_file_has_line_matching ("${TEST_OUTPUT}" "${VERIFY_REGEX}")
