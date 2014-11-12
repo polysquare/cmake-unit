@@ -115,6 +115,9 @@ add_cmake_build_test (CMakeBuildTestWarningsNotErrorsWhereWErrorDisabled
 add_cmake_build_test (CMakeTestFilesRecordedInTracefileAcrossTests
                       CMakeTestFilesRecordedInTracefileAcrossTestsVerify)
 
+add_cmake_build_test (CMakeTestsHaveVerboseOutput
+                      CMakeTestsHaveVerboseOutputVerify)
+
 # Tests for CMakeTraceToLCov
 add_cmake_test (LinesStartingWithCommentNotExecutable)
 add_cmake_test (LinesWithNoContentNotExecutable)

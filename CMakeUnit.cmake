@@ -40,6 +40,57 @@ function (cmake_unit_escape_string INPUT OUTPUT_VARIABLE)
 
 endfunction (cmake_unit_escape_string)
 
+function (_make_dummy_print_message_target TARGET_RETURN)
+
+    cmake_parse_arguments (MAKE_DUMMY
+                           ""
+                           ""
+                           "COMMAND"
+                           ${ARGN})
+
+    string (RANDOM TARGET_NAME)
+    string (REPLACE ";" " " STRINGIFIED_COMMAND "${MAKE_DUMMY_COMMAND}")
+
+    add_custom_target (${TARGET_NAME}
+                       COMMAND
+                       ${CMAKE_COMMAND} -E echo
+                       ${STRINGIFIED_COMMAND}
+                       VERBATIM)
+
+    set (${TARGET_RETURN} ${TARGET_NAME} PARENT_SCOPE)
+
+endfunction (_make_dummy_print_message_target)
+
+# Wraps add_custom_command to print out the COMMAND line on generators that
+# wont print that even when verbose mode is enabled.
+function (add_custom_command)
+
+    set (CMAKE_UNIT_ACC_MULTIVAR_ARGS COMMAND DEPENDS)
+    cmake_parse_arguments (CMAKE_UNIT_ACC
+                           ""
+                           ""
+                           "${CMAKE_UNIT_ACC_MULTIVAR_ARGS}"
+                           ${ARGN})
+
+    if (CMAKE_UNIT_ACC_COMMAND)
+
+        _make_dummy_print_message_target (TARGET
+                                          COMMAND
+                                          "${CMAKE_UNIT_ACC_COMMAND}")
+
+        # Append TARGET to CMAKE_UNIT_ACC_DEPENDS and pass it in at
+        # the end of the argument list. This will cause any pre-existing
+        # DEPENDS for this custom_command to be overwritten with
+        # our new, appended list.
+        list (APPEND CMAKE_UNIT_ACC_DEPENDS
+              ${TARGET})
+
+    endif (CMAKE_UNIT_ACC_COMMAND)
+
+    _add_custom_command (${ARGN} DEPENDS ${CMAKE_UNIT_ACC_DEPENDS})
+
+endfunction (add_custom_command)
+
 function (assert_true VARIABLE)
 
     if (NOT VARIABLE)
