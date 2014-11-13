@@ -547,10 +547,18 @@ function (_append_build_step PARENT_DRIVER_SCRIPT_CONTENTS
 
     endif ("${TARGET}" STREQUAL "all")
 
+    if ("${CMAKE_MAKE_PROGRAM}" MATCHES ".*ninja.*")
+
+        set (BUILD_TOOL_VERBOSE_OPTION "-v")
+
+    endif ("${CMAKE_MAKE_PROGRAM}" MATCHES ".*ninja.*")
+
     set (BUILD_COMMAND "${CMAKE_COMMAND}"
                        --build
                        "${TEST_WORKING_DIRECTORY_NAME}"
-                       ${TARGET_OPTION})
+                       ${TARGET_OPTION}
+                       --
+                       "${BUILD_TOOL_VERBOSE_OPTION}")
     set (DRIVER_SCRIPT_CONTENTS ${${PARENT_DRIVER_SCRIPT_CONTENTS}})
     _add_driver_step (DRIVER_SCRIPT_CONTENTS BUILD
                       COMMAND ${BUILD_COMMAND}
