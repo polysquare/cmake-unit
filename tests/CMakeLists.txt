@@ -66,6 +66,7 @@ add_cmake_test (InitialCacheWrittenAfterTestAdded)
 add_cmake_test (InitialCacheContainsForwardedVariables)
 add_cmake_test (DriverScriptWrittenAfterTestAdded)
 
+# Test adding CMake test and error behaviour
 add_cmake_build_test (CMakeTestAddedWhereSetupScriptExists
                       CMakeTestAddedWhereSetupScriptExistsVerify)
 add_cmake_build_test (CMakeTestNotAddedWhenSetupScriptDoesntExist
@@ -94,11 +95,13 @@ add_cmake_build_test (CMakeBuildTestErrorOnVerifyFail
                       CMakeBuildTestErrorOnVerifyFailVerify
                       ALLOW_TEST_FAIL)
 
+# Test that certain steps are not run where ALLOW_FAIL is specified
 add_cmake_build_test (CMakeBuildTestBuildStepNotRunIfConfigureCanFail
                       CMakeBuildTestBuildStepNotRunIfConfigureCanFailVerify)
 add_cmake_build_test (CMakeBuildTestTestStepNotRunIfBuildCanFail
                       CMakeBuildTestTestStepNotRunIfBuildCanFailVerify)
 
+# Custom target, clean step
 add_cmake_build_test (CMakeBuildTestWithCustomTarget
                       CMakeBuildTestWithCustomTargetVerify)
 add_cmake_build_test (CMakeBuildTestCleanStepAlwaysRuns
@@ -106,17 +109,44 @@ add_cmake_build_test (CMakeBuildTestCleanStepAlwaysRuns
 add_cmake_build_test (CMakeBuildTestCleanStepNotRunOnNoClean
                       CMakeBuildTestCleanStepNotRunOnNoCleanVerify)
 
+# Convert warnings to errors
 add_cmake_build_test (CMakeBuildTestWarningsAreErrors
                       CMakeBuildTestWarningsAreErrorsVerify
                       ALLOW_TEST_FAIL)
 add_cmake_build_test (CMakeBuildTestWarningsNotErrorsWhereWErrorDisabled
                       CMakeBuildTestWarningsNotErrorsWhereWErrorDisabledVerify)
 
+# Tracefile recording
 add_cmake_build_test (CMakeTestFilesRecordedInTracefileAcrossTests
                       CMakeTestFilesRecordedInTracefileAcrossTestsVerify)
 
+# Verbose output
 add_cmake_build_test (CMakeTestsHaveVerboseOutput
                       CMakeTestsHaveVerboseOutputVerify)
+
+# Source file and executable generation
+add_cmake_test (SourceFileCreatedBeforeBuildExists)
+add_cmake_test (SourceFileCreatedBeforeBuildWithCustomName)
+add_cmake_test (SourceFileCreatedBeforeBuildWithDefines)
+add_cmake_test (SourceFileCreatedBeforeBuildWithIncludes)
+add_cmake_test (SourceFileCreatedBeforeBuildWithIncludesInsideIncludeDir)
+add_cmake_test (SourceFileCreatedBeforeBuildHasPrependedContents)
+add_cmake_test (SourceFileCreatedBeforeBuildWithFunctionDecls)
+add_cmake_test (SourceFileCreatedBeforeBuildWithFunctionDefinitions)
+add_cmake_test (SourceFileCreatedBeforeBuildNoFunctionDefinitionsIfHeader)
+add_cmake_test (SourceFileCreatedBeforeBuildHeaderGuardsIfHeader)
+
+# Generated source files
+add_cmake_build_test (SourceFileGeneratedDuringBuildExists
+                      SourceFileGeneratedDuringBuildExistsVerify)
+add_cmake_build_test (GeneratedAndCreatedSourceFilesEqual
+                      GeneratedAndCreatedSourceFilesEqualVerify)
+
+# Superficial Executables and Libraries
+add_cmake_build_test (CreateSimpleExecutable
+                      CreateSimpleExecutableVerify)
+add_cmake_build_test (CreateSimpleLibrary
+                      CreateSimpleLibraryVerify)
 
 # Tests for CMakeTraceToLCov
 add_cmake_test (LinesStartingWithCommentNotExecutable)
