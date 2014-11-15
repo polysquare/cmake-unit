@@ -123,6 +123,8 @@ add_cmake_build_test (CMakeTestFilesRecordedInTracefileAcrossTests
 # Verbose output
 add_cmake_build_test (CMakeTestsHaveVerboseOutput
                       CMakeTestsHaveVerboseOutputVerify)
+add_cmake_build_test (PreserveContentsOfCMakeErrorsInConfigureOutput
+                      PreserveContentsOfCMakeErrorsInConfigureOutputVerify)
 
 # Source file and executable generation
 add_cmake_test (SourceFileCreatedBeforeBuildExists)
