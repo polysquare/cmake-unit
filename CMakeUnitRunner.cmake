@@ -376,12 +376,12 @@ function (_append_configure_step TEST_NAME
         set (UNUSED_VARIABLE_OPTION "")
         set (DEVELOPER_WARNINGS_OPTION "-Wno-dev")
 
-        # Whether coverage is being logged pass the --trace switch
-        #if (CMAKE_UNIT_LOG_COVERAGE)
+        # When coverage is being logged pass the --trace switch
+        if (CMAKE_UNIT_LOG_COVERAGE)
 
             set (TRACE_OPTION "--trace")
 
-        #endif (CMAKE_UNIT_LOG_COVERAGE)
+        endif (CMAKE_UNIT_LOG_COVERAGE)
 
         if (NOT CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS)
 
@@ -425,13 +425,9 @@ function (_append_configure_step TEST_NAME
 
         endif (NOT CONFIGURE_STEP_ALLOW_WARNINGS)
 
-        # After we've added the driver step, read back CONFIGURE.error
-        # and filter through each of the lines to find "coverage" lines,
-        # logging them into the main CMAKE_UNIT_COVERAGE_FILE
-        list (APPEND DRIVER_SCRIPT_CONTENTS
-              # Reduce IO by buffering in memory
-              "set (COVERAGE_FILE_CONTENTS \"\")\n")
-
+        # After we've added the driver step, read back CONFIGURE.error and
+        # VERIFY.error and filter through each of the lines to find
+        # "coverage" lines, logging them into the main CMAKE_UNIT_COVERAGE_FILE
         if (CMAKE_UNIT_LOG_COVERAGE)
 
             # We need to make sure that the quotes around our coverage
@@ -450,6 +446,8 @@ function (_append_configure_step TEST_NAME
             # First write out the name of this test and all the files
             # we will be covering
             list (APPEND DRIVER_SCRIPT_CONTENTS
+                  # Reduce IO by buffering in memory
+                  "set (COVERAGE_FILE_CONTENTS \"\")\n"
                   "list (APPEND\n"
                   "      COVERAGE_FILE_CONTENTS\n"
                   "      \"TEST:${TEST_NAME}\\n\")\n"
@@ -593,16 +591,23 @@ function (_append_test_step PARENT_DRIVER_SCRIPT_CONTENTS)
 endfunction (_append_test_step)
 
 function (_append_verify_step PARENT_DRIVER_SCRIPT_CONTENTS
-                              CACHE_FILE
-                              VERIFY)
+                              CACHE_FILE)
 
     set (TEST_VERIFY_SCRIPT_FILE
          "${CMAKE_CURRENT_SOURCE_DIR}/${VERIFY}.cmake")
 
     if (EXISTS ${TEST_VERIFY_SCRIPT_FILE})
 
+        # When coverage is being logged pass the --trace switch
+        if (CMAKE_UNIT_LOG_COVERAGE)
+
+            set (TRACE_OPTION "--trace")
+
+        endif (CMAKE_UNIT_LOG_COVERAGE)
+
         set (VERIFY_COMMAND
              "${CMAKE_COMMAND}"
+             "${TRACE_OPTION}"
              "-C${CACHE_FILE}"
              -P "${TEST_VERIFY_SCRIPT_FILE}")
         set (DRIVER_SCRIPT_CONTENTS ${${PARENT_DRIVER_SCRIPT_CONTENTS}})
@@ -619,6 +624,81 @@ function (_append_verify_step PARENT_DRIVER_SCRIPT_CONTENTS
     endif (EXISTS ${TEST_VERIFY_SCRIPT_FILE})
 
 endfunction (_append_verify_step)
+
+function (_append_coverage_step PARENT_DRIVER_SCRIPT_CONTENTS)
+
+    if (NOT CMAKE_UNIT_LOG_COVERAGE)
+
+        return ()
+
+    endif (NOT CMAKE_UNIT_LOG_COVERAGE)
+
+    # We need to make sure that the quotes around our coverage
+    # files get passed back down to the driver script
+    foreach (FILE ${_CMAKE_UNIT_COVERAGE_LOGGING_FILES})
+
+        list (APPEND COVERAGE_FILES "\"${FILE}\"")
+
+    endforeach ()
+
+    # Now replace list semicolons with spaces. The result will be
+    # that this is a valid list when parsed by CMake in the second
+    # stage
+    string (REPLACE ";" " " COVERAGE_FILES "${COVERAGE_FILES}")
+
+    # First write out the name of this test and all the files
+    # we will be covering
+    list (APPEND DRIVER_SCRIPT_CONTENTS
+          ${${PARENT_DRIVER_SCRIPT_CONTENTS}}
+          # Reduce IO by buffering in memory
+          "set (COVERAGE_FILE_CONTENTS \"\")\n"
+          "list (APPEND\n"
+          "      COVERAGE_FILE_CONTENTS\n"
+          "      \"TEST:${TEST_NAME}\\n\")\n"
+          "set (COVERAGE_FILES ${COVERAGE_FILES})\n"
+          "foreach (FILE \${COVERAGE_FILES})\n"
+          "    list (APPEND COVERAGE_FILE_CONTENTS\n"
+          "          \"FILE:\${FILE}\\n\")\n"
+          "endforeach ()\n"
+          # Ensure that only tracefile-like lines are included
+          "set (TRACE_LINES \${CONFIGURE_ERROR} \${VERIFY_ERROR})\n"
+          "foreach (LINE \${TRACE_LINES})\n"
+          # Search for lines matching a trace pattern
+          "    if (\"\${LINE}\" MATCHES \"^.*\\\\([0-9]*\\\\):.*$\")\n"
+          "        foreach (FILE \${COVERAGE_FILES})\n"
+          "            if (\"\${LINE}\"\n"
+          "                MATCHES \"^\${FILE}\\\\([0-9]*\\\\):.*$\")\n"
+          # Once we've found a matching line, strip out the rest of
+          # the mostly useless information. Find the first ":" after
+          # the filename and then write out the string until that
+          # semicolon is reached
+          "                string (LENGTH \"${FILE}\" F_LEN)\n"
+          "                string (SUBSTRING \"\${LINE}\"\n"
+          "                        \${F_LEN} -1\n"
+          "                        AFTER_FILE_STRING)\n"
+          # Match ):. This prevents drive letters on Windows causing
+          # problems
+          "                string (FIND \"\${AFTER_FILE_STRING}\"\n"
+          "                        \"):\" DEL_IDX)\n"
+          "                math (EXPR COLON_INDEX_IN_LINE\n"
+          "                      \"\${F_LEN} + \${DEL_IDX} + 1\")\n"
+          "                string (SUBSTRING \"\${LINE}\"\n"
+          "                        0 \${COLON_INDEX_IN_LINE}\n"
+          "                        FILENAME_AND_LINE)\n"
+          "                list (APPEND\n"
+          "                      COVERAGE_FILE_CONTENTS\n"
+          "                      \"\${FILENAME_AND_LINE}\\n\")\n"
+          "           endif ()\n"
+          "        endforeach ()\n"
+          "    endif ()\n"
+          "endforeach ()\n"
+          "file (APPEND \"${CMAKE_UNIT_COVERAGE_FILE}\"\n"
+          "      \${COVERAGE_FILE_CONTENTS})\n")
+
+    set (${PARENT_DRIVER_SCRIPT_CONTENTS}
+         ${DRIVER_SCRIPT_CONTENTS} PARENT_SCOPE)
+
+endfunction (_append_coverage_step)
 
 # add_cmake_test:
 #
@@ -638,11 +718,12 @@ function (add_cmake_test TEST_NAME)
                             "${TEST_DIRECTORY_NAME}"
                             "${TEST_WORKING_DIRECTORY_NAME}"
                             "${TEST_FILE}")
+    _append_coverage_step (TEST_DRIVER_SCRIPT_CONTENTS)
     _define_test_for_driver (${TEST_NAME}
                              "${TEST_DRIVER_SCRIPT}"
                              CONTENTS ${TEST_DRIVER_SCRIPT_CONTENTS})
 
-endfunction (add_cmake_test)
+endfunction (add_cmake_test PARENT_DRIVER_SCRIPT_CONTENTS)
 
 # add_cmake_build_test:
 #
@@ -744,8 +825,8 @@ function (add_cmake_build_test TEST_NAME VERIFY)
     endif (NOT ADD_CMAKE_BUILD_TEST_ALLOW_BUILD_FAIL)
 
     _append_verify_step (TEST_DRIVER_SCRIPT_CONTENTS
-                         "${TEST_INITIAL_CACHE_FILE}"
-                         ${VERIFY})
+                         "${TEST_INITIAL_CACHE_FILE}")
+    _append_coverage_step (TEST_DRIVER_SCRIPT_CONTENTS)
     _define_test_for_driver (${TEST_NAME}
                              "${TEST_DRIVER_SCRIPT}"
                              CONTENTS ${TEST_DRIVER_SCRIPT_CONTENTS})
