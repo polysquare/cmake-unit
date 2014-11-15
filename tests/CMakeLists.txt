@@ -7,7 +7,7 @@ if (POLICY CMP0025)
 
     cmake_policy (SET CMP0025 NEW)
 
-endif (POLICY CMP0025)
+endif ()
 
 project (CMakeUnitTests)
 cmake_minimum_required (VERSION 2.8)

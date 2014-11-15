@@ -16,7 +16,7 @@ function (my_function ARG_ONE # Executable
         message ("Executable line with \n carriage return") # Executable
         # Line 17 not executable - SlashNDoesntBreakLines
 
-    endif (ARGUMENT_ONE) # Not executable - LinesStartingWithEndNotExecutable
+    endif () # Not executable - LinesStartingWithEndNotExecutable
 
     set (LIST ARGUMENT_ONE # Executable
               ARGUMENT_TWO) # Not executable - LinesUntilCloseBraceNotExecutable

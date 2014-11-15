@@ -21,7 +21,7 @@ script:
   # 1. Spaces between control and condition (preferred style)
   # 2. Indentation errors
   # 3. Logic inside else/endif (preferred style)
-  - find . -type f -name "*.cmake" -not -path "./tests/build/*"| xargs cmakelint --spaces=4 --filter=-whitespace/extra,-readability/logic,-whitespace/indent > .cmake-lint-log
+  - find . -type f -name "*.cmake" -not -path "./tests/build/*"| xargs cmakelint --spaces=4 --filter=-whitespace/extra,-whitespace/indent > .cmake-lint-log
   - cat .cmake-lint-log
   # Fails if file has length
   - echo "! [ -s .cmake-lint-log ]" > .check-link-script.bash

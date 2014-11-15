@@ -45,7 +45,7 @@ if (CMAKE_UNIT_LOG_COVERAGE)
     set (CMAKE_UNIT_COVERAGE_FILE
          "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}.trace")
 
-endif (CMAKE_UNIT_LOG_COVERAGE)
+endif ()
 
 set (_RUNNER_LIST_DIR "${CMAKE_CURRENT_LIST_DIR}")
 # bootstrap_cmake_unit
@@ -115,9 +115,9 @@ function (bootstrap_cmake_unit)
         # Clobber the coverage report
         file (WRITE "${CMAKE_UNIT_COVERAGE_FILE}" "")
 
-    endif (CMAKE_UNIT_LOG_COVERAGE)
+    endif ()
 
-endfunction (bootstrap_cmake_unit)
+endfunction ()
 
 macro (_define_variables_for_test TEST_NAME)
 
@@ -130,7 +130,7 @@ macro (_define_variables_for_test TEST_NAME)
     set (TEST_INITIAL_CACHE_FILE
          "${TEST_DIRECTORY_NAME}/initial_cache.cmake")
 
-endmacro (_define_variables_for_test)
+endmacro ()
 
 function (_bootstrap_test_driver_script TEST_NAME
                                         PARENT_DRIVER_SCRIPT_CONTENTS)
@@ -203,16 +203,17 @@ function (_bootstrap_test_driver_script TEST_NAME
          "        message (FATAL_ERROR \n"
          "                 \"The command \${STRINGIFIED_COMMAND}\"\n"
          "                 \" failed with \${RESULT}\")\n"
-         "    endif (NOT RESULT EQUAL 0 AND NOT ADD_COMMAND_ALLOW_FAIL)\n"
+         "    endif ()\n"
          "    set (\${OUTPUT_RETURN} \${OUTPUT_LINES} PARENT_SCOPE)\n"
          "    set (\${ERROR_RETURN} \${ERROR_LINES} PARENT_SCOPE)\n"
          "    set (\${RESULT_RETURN} \"\${RESULT}\" PARENT_SCOPE)\n"
-         "endfunction (add_driver_command)\n")
+         "endfunction ()\n"
+         "\n")
 
     set (${PARENT_DRIVER_SCRIPT_CONTENTS} ${DRIVER_SCRIPT_CONTENTS}
          PARENT_SCOPE)
 
-endfunction (_bootstrap_test_driver_script)
+endfunction ()
 
 function (_add_driver_step ADD_STEP_PARENT_DRIVER_SCRIPT_CONTENTS STEP)
 
@@ -229,17 +230,17 @@ function (_add_driver_step ADD_STEP_PARENT_DRIVER_SCRIPT_CONTENTS STEP)
 
         message (FATAL_ERROR "A COMMAND must be provided to add_driver_step")
 
-    endif (NOT ADD_DRIVER_STEP_COMMAND)
+    endif ()
 
     if (ADD_DRIVER_STEP_ALLOW_FAIL)
 
         set (ALLOW_FAIL ALLOW_FAIL)
 
-    else (ADD_DRIVER_STEP_ALLOW_FAIL)
+    else ()
 
         set (ALLOW_FAIL "")
 
-    endif (ADD_DRIVER_STEP_ALLOW_FAIL)
+    endif ()
 
     # When we pass ADD_DRIVER_STEP_COMMAND into this string, it will appear to
     # just be a space-separated string, which will have each element converted
@@ -267,7 +268,7 @@ function (_add_driver_step ADD_STEP_PARENT_DRIVER_SCRIPT_CONTENTS STEP)
     set (${ADD_STEP_PARENT_DRIVER_SCRIPT_CONTENTS} ${DRIVER_SCRIPT_CONTENTS}
          PARENT_SCOPE)
 
-endfunction (_add_driver_step)
+endfunction ()
 
 function (_define_test_for_driver TEST_NAME DRIVER_SCRIPT)
 
@@ -282,7 +283,7 @@ function (_define_test_for_driver TEST_NAME DRIVER_SCRIPT)
 
         message (FATAL_ERROR "Test driver script must have contents")
 
-    endif (NOT DEFINE_TEST_FOR_DRIVER_CONTENTS)
+    endif ()
 
     # Write driver script, but see below:
     string (REPLACE "@SEMICOLON@" "\;" DEFINE_TEST_FOR_DRIVER_CONTENTS
@@ -309,7 +310,7 @@ function (_define_test_for_driver TEST_NAME DRIVER_SCRIPT)
               ${CMAKE_COMMAND} -P "${DRIVER_SCRIPT}"
               WORKING_DIRECTORY "${TEST_DIRECTORY_NAME}")
 
-endfunction (_define_test_for_driver)
+endfunction ()
 
 function (_append_clean_step PARENT_DRIVER_SCRIPT_CONTENTS
                              TEST_WORKING_DIRECTORY_NAME)
@@ -321,7 +322,7 @@ function (_append_clean_step PARENT_DRIVER_SCRIPT_CONTENTS
     set (${PARENT_DRIVER_SCRIPT_CONTENTS} ${DRIVER_SCRIPT_CONTENTS}
          PARENT_SCOPE)
 
-endfunction (_append_clean_step)
+endfunction ()
 
 function (_append_configure_step TEST_NAME
                                  PARENT_DRIVER_SCRIPT_CONTENTS
@@ -349,10 +350,10 @@ function (_append_configure_step TEST_NAME
              "cmake_minimum_required (VERSION 2.8 FATAL_ERROR)\n"
              "if (POLICY CMP0042)\n"
              "  cmake_policy (SET CMP0042 NEW)\n"
-             "endif (POLICY CMP0042)\n"
+             "endif ()\n"
              "if (POLICY CMP0025)\n"
              "  cmake_policy (SET CMP0025 NEW)\n"
-             "endif (POLICY CMP0025)\n"
+             "endif ()\n"
              "project (TestProject CXX C)\n"
              "include (\"${CMAKE_CURRENT_SOURCE_DIR}/${TEST_FILE}\")\n")
 
@@ -366,7 +367,7 @@ function (_append_configure_step TEST_NAME
 
             set (ALLOW_FAIL_OPTION ALLOW_FAIL)
 
-        endif (CONFIGURE_STEP_ALLOW_FAIL)
+        endif ()
 
         # Set GENERATOR
         string (REPLACE " " "\\ " GENERATOR ${CMAKE_GENERATOR})
@@ -381,19 +382,19 @@ function (_append_configure_step TEST_NAME
 
             set (TRACE_OPTION "--trace")
 
-        endif (CMAKE_UNIT_LOG_COVERAGE)
+        endif ()
 
         if (NOT CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS)
 
             set (UNINITIALIZED_OPTION "--warn-uninitialized")
 
-        endif (NOT CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS)
+        endif ()
 
         if (NOT CMAKE_UNIT_NO_DEV_WARNINGS)
 
             set (DEVELOPER_WARNINGS_OPTION "-Wdev")
 
-        endif (NOT CMAKE_UNIT_NO_DEV_WARNINGS)
+        endif ()
 
         set (CONFIGURE_COMMAND
              "${CMAKE_COMMAND}"
@@ -420,10 +421,11 @@ function (_append_configure_step TEST_NAME
                   "    if (\"\${LINE}\" MATCHES \"^CMake Warning.*\")\n"
                   "        message (SEND_ERROR\n"
                   "                 \"CMake Warnings were present!\")\n"
-                  "    endif (\"\${LINE}\" MATCHES \"^CMake Warning.*\")\n"
-                  "endforeach ()\n")
+                  "    endif ()\n"
+                  "endforeach ()\n"
+                  "\n")
 
-        endif (NOT CONFIGURE_STEP_ALLOW_WARNINGS)
+        endif ()
 
         # After we've added the driver step, read back CONFIGURE.error and
         # VERIFY.error and filter through each of the lines to find
@@ -491,19 +493,19 @@ function (_append_configure_step TEST_NAME
                   "file (APPEND \"${CMAKE_UNIT_COVERAGE_FILE}\"\n"
                   "      \${COVERAGE_FILE_CONTENTS})\n")
 
-        endif (CMAKE_UNIT_LOG_COVERAGE)
+        endif ()
 
         set (${PARENT_DRIVER_SCRIPT_CONTENTS} ${DRIVER_SCRIPT_CONTENTS}
              PARENT_SCOPE)
 
-    else (EXISTS ${TEST_FILE_PATH})
+    else ()
 
         message (SEND_ERROR "The file ${TEST_FILE_PATH} must exist"
                             " in order for the configure step to run")
 
-    endif (EXISTS ${TEST_FILE_PATH})
+    endif ()
 
-endfunction (_append_configure_step)
+endfunction ()
 
 function (_append_build_step PARENT_DRIVER_SCRIPT_CONTENTS
                              TEST_WORKING_DIRECTORY_NAME
@@ -523,7 +525,7 @@ function (_append_build_step PARENT_DRIVER_SCRIPT_CONTENTS
 
         set (ALLOW_FAIL_OPTION ALLOW_FAIL)
 
-    endif (BUILD_STEP_ALLOW_FAIL)
+    endif ()
 
     # The "all" target is special. It means "do whatever happens by
     # default". Some build systems literally have a target called
@@ -533,17 +535,17 @@ function (_append_build_step PARENT_DRIVER_SCRIPT_CONTENTS
 
         set (TARGET_OPTION "")
 
-    else ("${TARGET}" STREQUAL "all")
+    else ()
 
         set (TARGET_OPTION --target ${TARGET})
 
-    endif ("${TARGET}" STREQUAL "all")
+    endif ()
 
     if ("${CMAKE_MAKE_PROGRAM}" MATCHES ".*ninja.*")
 
         set (BUILD_TOOL_VERBOSE_OPTION "-v")
 
-    endif ("${CMAKE_MAKE_PROGRAM}" MATCHES ".*ninja.*")
+    endif ()
 
     set (BUILD_COMMAND "${CMAKE_COMMAND}"
                        --build
@@ -558,7 +560,7 @@ function (_append_build_step PARENT_DRIVER_SCRIPT_CONTENTS
     set (${PARENT_DRIVER_SCRIPT_CONTENTS} ${DRIVER_SCRIPT_CONTENTS}
          PARENT_SCOPE)
 
-endfunction (_append_build_step)
+endfunction ()
 
 function (_append_test_step PARENT_DRIVER_SCRIPT_CONTENTS)
 
@@ -576,7 +578,7 @@ function (_append_test_step PARENT_DRIVER_SCRIPT_CONTENTS)
 
         set (ALLOW_FAIL_OPTION ALLOW_FAIL)
 
-    endif (TEST_STEP_ALLOW_FAIL)
+    endif ()
 
     set (TEST_COMMAND "${CMAKE_CTEST_COMMAND}"
                        -C Debug
@@ -588,7 +590,7 @@ function (_append_test_step PARENT_DRIVER_SCRIPT_CONTENTS)
     set (${PARENT_DRIVER_SCRIPT_CONTENTS} ${DRIVER_SCRIPT_CONTENTS}
          PARENT_SCOPE)
 
-endfunction (_append_test_step)
+endfunction ()
 
 function (_append_verify_step PARENT_DRIVER_SCRIPT_CONTENTS
                               CACHE_FILE)
@@ -603,7 +605,7 @@ function (_append_verify_step PARENT_DRIVER_SCRIPT_CONTENTS
 
             set (TRACE_OPTION "--trace")
 
-        endif (CMAKE_UNIT_LOG_COVERAGE)
+        endif ()
 
         set (VERIFY_COMMAND
              "${CMAKE_COMMAND}"
@@ -616,14 +618,14 @@ function (_append_verify_step PARENT_DRIVER_SCRIPT_CONTENTS
         set (${PARENT_DRIVER_SCRIPT_CONTENTS} ${DRIVER_SCRIPT_CONTENTS}
              PARENT_SCOPE)
 
-    else (EXISTS ${TEST_VERIFY_SCRIPT_FILE})
+    else ()
 
         message (SEND_ERROR "The file ${TEST_VERIFY_SCRIPT_FILE} must exist"
                             " in order for the verify step to run")
 
-    endif (EXISTS ${TEST_VERIFY_SCRIPT_FILE})
+    endif ()
 
-endfunction (_append_verify_step)
+endfunction ()
 
 function (_append_coverage_step PARENT_DRIVER_SCRIPT_CONTENTS)
 
@@ -631,7 +633,7 @@ function (_append_coverage_step PARENT_DRIVER_SCRIPT_CONTENTS)
 
         return ()
 
-    endif (NOT CMAKE_UNIT_LOG_COVERAGE)
+    endif ()
 
     # We need to make sure that the quotes around our coverage
     # files get passed back down to the driver script
@@ -698,7 +700,7 @@ function (_append_coverage_step PARENT_DRIVER_SCRIPT_CONTENTS)
     set (${PARENT_DRIVER_SCRIPT_CONTENTS}
          ${DRIVER_SCRIPT_CONTENTS} PARENT_SCOPE)
 
-endfunction (_append_coverage_step)
+endfunction ()
 
 # add_cmake_test:
 #
@@ -723,7 +725,7 @@ function (add_cmake_test TEST_NAME)
                              "${TEST_DRIVER_SCRIPT}"
                              CONTENTS ${TEST_DRIVER_SCRIPT_CONTENTS})
 
-endfunction (add_cmake_test PARENT_DRIVER_SCRIPT_CONTENTS)
+endfunction ()
 
 # add_cmake_build_test:
 #
@@ -756,33 +758,33 @@ function (add_cmake_build_test TEST_NAME VERIFY)
 
         set (ADD_CMAKE_BUILD_TEST_TARGET all)
 
-    endif (NOT ADD_CMAKE_BUILD_TEST_TARGET)
+    endif ()
 
     if (ADD_CMAKE_BUILD_TEST_ALLOW_CONFIGURE_WARNINGS)
 
         set (ALLOW_CONFIGURE_WARNINGS_OPTION ALLOW_WARNINGS)
 
-    endif (ADD_CMAKE_BUILD_TEST_ALLOW_CONFIGURE_WARNINGS)
+    endif ()
 
     if (ADD_CMAKE_BUILD_TEST_ALLOW_CONFIGURE_FAIL)
 
         set (ALLOW_CONFIGURE_FAIL_OPTION ALLOW_FAIL)
         set (ADD_CMAKE_BUILD_TEST_ALLOW_BUILD_FAIL ON)
 
-    endif (ADD_CMAKE_BUILD_TEST_ALLOW_CONFIGURE_FAIL)
+    endif ()
 
     if (ADD_CMAKE_BUILD_TEST_ALLOW_BUILD_FAIL)
 
         set (ALLOW_BUILD_FAIL_OPTION ALLOW_FAIL)
         set (ADD_CMAKE_BUILD_TEST_ENSURE_TEST_SUCCESS OFF)
 
-    endif (ADD_CMAKE_BUILD_TEST_ALLOW_BUILD_FAIL)
+    endif ()
 
     if (ADD_CMAKE_BUILD_TEST_ALLOW_TEST_FAIL)
 
         set (ALLOW_TEST_FAIL_OPTION ALLOW_FAIL)
 
-    endif (ADD_CMAKE_BUILD_TEST_ALLOW_TEST_FAIL)
+    endif ()
 
     _define_variables_for_test (${TEST_NAME})
     _bootstrap_test_driver_script(${TEST_NAME}
@@ -794,7 +796,7 @@ function (add_cmake_build_test TEST_NAME VERIFY)
       _append_clean_step (TEST_DRIVER_SCRIPT_CONTENTS
                           "${TEST_WORKING_DIRECTORY_NAME}")
 
-    endif (NOT ADD_CMAKE_BUILD_TEST_NO_CLEAN)
+    endif ()
 
     _append_configure_step (${TEST_NAME}
                             TEST_DRIVER_SCRIPT_CONTENTS
@@ -814,7 +816,7 @@ function (add_cmake_build_test TEST_NAME VERIFY)
                             ${ALLOW_BUILD_FAIL_OPTION}
                             ${NO_CLEAN_OPTION})
 
-    endif (NOT ADD_CMAKE_BUILD_TEST_ALLOW_CONFIGURE_FAIL)
+    endif ()
 
     # Can't test the project if the build step is allowed to fail
     if (NOT ADD_CMAKE_BUILD_TEST_ALLOW_BUILD_FAIL)
@@ -822,7 +824,7 @@ function (add_cmake_build_test TEST_NAME VERIFY)
         _append_test_step (TEST_DRIVER_SCRIPT_CONTENTS
                            ${ALLOW_TEST_FAIL_OPTION})
 
-    endif (NOT ADD_CMAKE_BUILD_TEST_ALLOW_BUILD_FAIL)
+    endif ()
 
     _append_verify_step (TEST_DRIVER_SCRIPT_CONTENTS
                          "${TEST_INITIAL_CACHE_FILE}")
@@ -831,4 +833,4 @@ function (add_cmake_build_test TEST_NAME VERIFY)
                              "${TEST_DRIVER_SCRIPT}"
                              CONTENTS ${TEST_DRIVER_SCRIPT_CONTENTS})
 
-endfunction (add_cmake_build_test)
+endfunction ()
