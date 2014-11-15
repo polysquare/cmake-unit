@@ -28,8 +28,7 @@ if (NOT LCOV_OUTPUT)
 
 endif (NOT LCOV_OUTPUT)
 
-file (READ "${TRACEFILE}" TRACEFILE_CONTENTS)
-string (REPLACE "\n" ";" TRACEFILE_CONTENTS "${TRACEFILE_CONTENTS}")
+file (STRINGS "${TRACEFILE}" TRACEFILE_CONTENTS)
 
 # Open the file and read it for "executable lines"
 # An executable line is any line that is not all whitespace or does not
@@ -48,6 +47,8 @@ function (determine_executable_lines FILE)
     list (APPEND _ALL_COVERAGE_FILES "${FILE}")
     set (_ALL_COVERAGE_FILES "${_ALL_COVERAGE_FILES}" PARENT_SCOPE)
 
+    # file (STRINGS) can't be used here as a skips empty lines. We need
+    # line-for-line accuracy.
     file (READ "${FILE}" FILE_CONTENTS)
 
     # Can't have semicolons, doesn't matter what they are, just change them
