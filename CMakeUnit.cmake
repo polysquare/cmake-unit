@@ -31,7 +31,7 @@ if (_CMAKE_UNIT_INCLUDED)
 
     return ()
 
-endif (_CMAKE_UNIT_INCLUDED)
+endif ()
 set (_CMAKE_UNIT_INCLUDED TRUE)
 
 include (CMakeParseArguments)
@@ -60,7 +60,7 @@ function (cmake_unit_escape_string INPUT OUTPUT_VARIABLE)
 
     set (${OUTPUT_VARIABLE} "${INPUT}" PARENT_SCOPE)
 
-endfunction (cmake_unit_escape_string)
+endfunction ()
 
 function (_cmake_unit_make_dummy_print_message_target TARGET_RETURN)
 
@@ -81,7 +81,7 @@ function (_cmake_unit_make_dummy_print_message_target TARGET_RETURN)
 
     set (${TARGET_RETURN} ${TARGET_NAME} PARENT_SCOPE)
 
-endfunction (_cmake_unit_make_dummy_print_message_target)
+endfunction ()
 
 # Wraps add_custom_command to print out the COMMAND line on generators that
 # wont print that even when verbose mode is enabled.
@@ -109,11 +109,11 @@ function (add_custom_command)
         list (APPEND CMAKE_UNIT_ACC_DEPENDS
               ${TARGET})
 
-    endif (ACC_COMMAND)
+    endif ()
 
     _add_custom_command (${ARGN} DEPENDS ${CMAKE_UNIT_ACC_DEPENDS})
 
-endfunction (add_custom_command)
+endfunction ()
 
 set (_CMAKE_UNIT_SOURCE_FILE_OPTION_ARGS)
 set (_CMAKE_UNIT_SOURCE_FILE_SINGLEVAR_ARGS NAME FUNCTIONS_EXPORT_TARGET)
@@ -144,7 +144,7 @@ function (_cmake_unit_get_created_source_file_contents CONTENTS_RETURN
 
         set (GET_CREATED_NAME "Source.cpp")
 
-    endif (NOT GET_CREATED_NAME)
+    endif ()
 
     # Detect intended file type from filename
 
@@ -159,11 +159,11 @@ function (_cmake_unit_get_created_source_file_contents CONTENTS_RETURN
 
         set (SOURCE_TYPE HEADER)
 
-    else (SOURCE_INDEX EQUAL -1)
+    else ()
 
         set (SOURCE_TYPE SOURCE)
 
-    endif (SOURCE_INDEX EQUAL -1)
+    endif ()
 
     # Header guards (if header)
     if ("${SOURCE_TYPE}" STREQUAL "HEADER")
@@ -175,7 +175,7 @@ function (_cmake_unit_get_created_source_file_contents CONTENTS_RETURN
               "#ifndef ${HEADER_GUARD}"
               "#define ${HEADER_GUARD}")
 
-    endif ("${SOURCE_TYPE}" STREQUAL "HEADER")
+    endif ()
 
     # If this is a "source" file and FUNCTIONS_EXPORT_TARGET is set then
     # we're building a library. As such, we need to insert some platform
@@ -190,7 +190,7 @@ function (_cmake_unit_get_created_source_file_contents CONTENTS_RETURN
                 EXPORT_TARGET_UPPER)
         set (EXPORT_MACRO "${EXPORT_TARGET_UPPER}_EXPORT ")
 
-    endif (GET_CREATED_FUNCTIONS_EXPORT_TARGET)
+    endif ()
 
     # Defines
     foreach (DEFINE ${GET_CREATED_DEFINES})
@@ -229,9 +229,9 @@ function (_cmake_unit_get_created_source_file_contents CONTENTS_RETURN
                     set (INCLUDED_AT_GLOBAL_SCOPE TRUE)
                     break ()
 
-                endif ("${INCLUDE_BEGIN}" STREQUAL "${DIR}")
+                endif ()
 
-            endif (DIR_LENGTH LESS INCLUDE_LENGTH)
+            endif ()
 
         endforeach ()
 
@@ -240,7 +240,7 @@ function (_cmake_unit_get_created_source_file_contents CONTENTS_RETURN
             list (APPEND CONTENTS
                   "#include \"${INCLUDE}\"")
 
-        endif (NOT INCLUDED_AT_GLOBAL_SCOPE)
+        endif ()
 
     endforeach ()
 
@@ -260,7 +260,7 @@ function (_cmake_unit_get_created_source_file_contents CONTENTS_RETURN
 
         list (APPEND CONTENTS "${GET_CREATED_PREPEND_CONTENTS}")
 
-    endif (GET_CREATED_PREPEND_CONTENTS)
+    endif ()
 
     # Function definitions, but only if we're a source
     if ("${SOURCE_TYPE}" STREQUAL "SOURCE")
@@ -275,7 +275,7 @@ function (_cmake_unit_get_created_source_file_contents CONTENTS_RETURN
 
         endforeach ()
 
-    endif ("${SOURCE_TYPE}" STREQUAL "SOURCE")
+    endif ()
 
     # End header guard
     if ("${SOURCE_TYPE}" STREQUAL "HEADER")
@@ -283,12 +283,12 @@ function (_cmake_unit_get_created_source_file_contents CONTENTS_RETURN
         list (APPEND CONTENTS
               "#endif")
 
-    endif ("${SOURCE_TYPE}" STREQUAL "HEADER")
+    endif ()
 
     set (${NAME_RETURN} "${GET_CREATED_NAME}" PARENT_SCOPE)
     set (${CONTENTS_RETURN} "${CONTENTS}" PARENT_SCOPE)
 
-endfunction (_cmake_unit_get_created_source_file_contents)
+endfunction ()
 
 function (_cmake_unit_write_out_file_without_semicolons NAME)
 
@@ -303,7 +303,7 @@ function (_cmake_unit_write_out_file_without_semicolons NAME)
     file (WRITE "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}"
           "${CONTENTS}\n")
 
-endfunction (_cmake_unit_write_out_file_without_semicolons)
+endfunction ()
 
 # cmake_unit_write_out_source_file_before_build
 #
@@ -335,7 +335,7 @@ function (cmake_unit_create_source_file_before_build)
     _cmake_unit_write_out_file_without_semicolons ("${NAME}"
                                                    CONTENTS ${CONTENTS})
 
-endfunction (cmake_unit_create_source_file_before_build)
+endfunction ()
 
 # cmake_unit_generate_source_file_during_build
 #
@@ -404,7 +404,7 @@ function (cmake_unit_generate_source_file_during_build TARGET_RETURN)
 
     set (${TARGET_RETURN} "${TARGET_NAME}" PARENT_SCOPE)
 
-endfunction (cmake_unit_generate_source_file_during_build)
+endfunction ()
 
 function (_cmake_unit_create_source_for_simple_target NAME
                                                       SOURCE_LOCATION_RETURN)
@@ -416,7 +416,7 @@ function (_cmake_unit_create_source_for_simple_target NAME
                                                 ${ARGN})
     set (${SOURCE_LOCATION_RETURN} "${SOURCE_LOCATION}" PARENT_SCOPE)
 
-endfunction (_cmake_unit_create_source_for_simple_target)
+endfunction ()
 
 # cmake_unit_create_simple_executable
 #
@@ -441,7 +441,7 @@ function (cmake_unit_create_simple_executable NAME)
                                                  ${CREATE_SOURCE_FUNCTIONS})
     add_executable (${NAME} "${LOCATION}")
 
-endfunction (cmake_unit_create_simple_executable)
+endfunction ()
 
 # cmake_unit_create_simple_library
 #
@@ -458,7 +458,7 @@ function (cmake_unit_create_simple_library NAME TYPE)
     add_library (${NAME} ${TYPE} "${LOCATION}")
     generate_export_header (${NAME})
 
-endfunction (cmake_unit_create_simple_library)
+endfunction ()
 
 # cmake_unit_get_target_location_from_exports
 #
@@ -523,7 +523,7 @@ function (cmake_unit_get_target_location_from_exports EXPORTS
         message (FATAL_ERROR "Error whilst getting location of ${TARGET}\n"
                              "See ${DETERMINE_LOCATION_ERROR_LOG} for details")
 
-    endif (NOT RESULT EQUAL 0)
+    endif ()
 
     file (READ ${DETERMINE_LOCATION_CAPTURE} LOCATION)
     set (${LOCATION_RETURN} "${LOCATION}" PARENT_SCOPE)
@@ -552,7 +552,7 @@ function (cmake_unit_export_cfg_int_dir LOCATION)
     add_custom_target (write_cfg_int_dir_${LOCATION_NAME} ALL
                        SOURCES ${LOCATION})
 
-endfunction (cmake_unit_export_cfg_int_dir)
+endfunction ()
 
 # cmake_unit_import_cfg_int_dir
 #
@@ -575,7 +575,7 @@ function (assert_true VARIABLE)
         message (SEND_ERROR
                  "Expected ${VARIABLE} to be true")
 
-    endif (NOT VARIABLE)
+    endif ()
 
 endfunction ()
 
@@ -586,7 +586,7 @@ function (assert_false VARIABLE)
         message (SEND_ERROR
                  "Expected ${VARIABLE} to be false")
 
-    endif (VARIABLE)
+    endif ()
 
 endfunction ()
 
@@ -598,9 +598,9 @@ function (_target_exists TARGET_NAME RESULT_VARIABLE)
 
         set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-    endif (TARGET ${TARGET_NAME})
+    endif ()
 
-endfunction (_target_exists)
+endfunction ()
 
 # assert_target_exists
 #
@@ -615,9 +615,9 @@ function (assert_target_exists TARGET_NAME)
         message (SEND_ERROR
                  "Expected ${TARGET_NAME} to be a target")
 
-    endif (NOT RESULT)
+    endif ()
 
-endfunction (assert_target_exists)
+endfunction ()
 
 
 # assert_target_does_not_exist
@@ -633,9 +633,9 @@ function (assert_target_does_not_exist TARGET_NAME)
         message (SEND_ERROR
                  "Expected ${TARGET_NAME} not to be a target")
 
-    endif (RESULT)
+    endif ()
 
-endfunction (assert_target_does_not_exist)
+endfunction ()
 
 function (_string_contains MAIN_STRING SUBSTRING RESULT_VARIABLE)
 
@@ -647,9 +647,9 @@ function (_string_contains MAIN_STRING SUBSTRING RESULT_VARIABLE)
 
         set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-    endif (NOT POSITION EQUAL -1)
+    endif ()
 
-endfunction (_string_contains)
+endfunction ()
 
 # assert_string_contains
 #
@@ -664,9 +664,9 @@ function (assert_string_contains MAIN_STRING SUBSTRING)
         message (SEND_ERROR
                  "Substring ${SUBSTRING} not found in ${MAIN_STRING}")
 
-    endif (NOT RESULT)
+    endif ()
 
-endfunction (assert_string_contains)
+endfunction ()
 
 # assert_string_does_not_contain
 #
@@ -681,9 +681,9 @@ function (assert_string_does_not_contain MAIN_STRING SUBSTRING)
         message (SEND_ERROR
                  "Substring ${SUBSTRING} not found in ${MAIN_STRING}")
 
-    endif (RESULT)
+    endif ()
 
-endfunction (assert_string_does_not_contain)
+endfunction ()
 
 function (_variable_is VARIABLE TYPE COMPARATOR VALUE RESULT_VARIABLE)
 
@@ -695,7 +695,7 @@ function (_variable_is VARIABLE TYPE COMPARATOR VALUE RESULT_VARIABLE)
 
             set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-        endif ("${${VARIABLE}}" STR${COMPARATOR} "${VALUE}")
+        endif ()
 
     elseif ("${TYPE}" MATCHES "INTEGER")
 
@@ -703,7 +703,7 @@ function (_variable_is VARIABLE TYPE COMPARATOR VALUE RESULT_VARIABLE)
 
             set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-        endif ("${${VARIABLE}}" ${COMPARATOR} ${VALUE})
+        endif ()
 
     elseif ("${TYPE}" MATCHES "BOOL")
 
@@ -717,27 +717,27 @@ function (_variable_is VARIABLE TYPE COMPARATOR VALUE RESULT_VARIABLE)
 
                 set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-            else (${${VARIABLE}} AND ${VALUE})
+            else ()
 
                 set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
-            endif (${${VARIABLE}} AND ${VALUE})
+            endif ()
 
-        else ("${COMPARATOR}" STREQUAL "EQUAL")
+        else ()
 
             message (FATAL_ERROR "No comparators other than EQUAL are supported"
                                  "for comparing BOOL variables")
 
-        endif ("${COMPARATOR}" STREQUAL "EQUAL")
+        endif ()
 
-    else ("${TYPE}" MATCHES "STRING")
+    else ()
 
         message (FATAL_ERROR
                  "Asked to match unknown type ${TYPE}")
 
-    endif ("${TYPE}" MATCHES "STRING")
+    endif ()
 
-endfunction (_variable_is)
+endfunction ()
 
 # assert_variable_is
 #
@@ -763,9 +763,9 @@ function (assert_variable_is VARIABLE TYPE COMPARATOR VALUE)
                  "Expected type ${TYPE} with value ${VALUE}"
                  " but was ${${VARIABLE}}")
 
-    endif (NOT RESULT)
+    endif ()
 
-endfunction (assert_variable_is)
+endfunction ()
 
 # assert_variable_is_not
 #
@@ -791,9 +791,9 @@ function (assert_variable_is_not VARIABLE TYPE COMPARATOR VALUE)
                  "Expected type ${TYPE} with value ${VALUE}"
                  " but was ${${VARIABLE}}")
 
-    endif (RESULT)
+    endif ()
 
-endfunction (assert_variable_is_not)
+endfunction ()
 
 # assert_variable_matches_regex
 #
@@ -807,9 +807,9 @@ function (assert_variable_matches_regex VARIABLE REGEX)
         message (SEND_ERROR
                  "Expected ${VARIABLE} to match ${REGEX}")
 
-    endif (NOT ${VARIABLE} MATCHES ${REGEX})
+    endif ()
 
-endfunction (assert_variable_matches_regex)
+endfunction ()
 
 # assert_variable_does_not_match_regex
 #
@@ -823,9 +823,9 @@ function (assert_variable_does_not_match_regex VARIABLE REGEX)
         message (SEND_ERROR
                  "Expected ${VARIABLE} to not match ${REGEX}")
 
-    endif (${VARIABLE} MATCHES ${REGEX})
+    endif ()
 
-endfunction (assert_variable_does_not_match_regex)
+endfunction ()
 
 # assert_variable_is_defined
 #
@@ -839,9 +839,9 @@ function (assert_variable_is_defined VARIABLE)
         message (SEND_ERROR
                  "${VARIABLE} is not defined")
 
-    endif (NOT DEFINED ${VARIABLE})
+    endif ()
 
-endfunction (assert_variable_is_defined)
+endfunction ()
 
 # assert_variable_is_not_defined
 #
@@ -855,9 +855,9 @@ function (assert_variable_is_not_defined VARIABLE)
         message (SEND_ERROR
                  "${VARIABLE} is defined")
 
-    endif (DEFINED ${VARIABLE})
+    endif ()
 
-endfunction (assert_variable_is_not_defined)
+endfunction ()
 
 function (_command_executes_with_success RESULT_VARIABLE
                                          ERROR_VARIABLE
@@ -881,12 +881,12 @@ function (_command_executes_with_success RESULT_VARIABLE
 
         set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-    endif (RESULT EQUAL 0)
+    endif ()
 
     set (${ERROR_VARIABLE} ${ERROR} PARENT_SCOPE)
     set (${CODE_VARIABLE} ${RESULT} PARENT_SCOPE)
 
-endfunction (_command_executes_with_success)
+endfunction ()
 
 # assert_command_executes_with_success
 #
@@ -907,9 +907,9 @@ function (assert_command_executes_with_success)
                  "The command ${ARGN} failed with result "
                  " ${CODE} : ${ERROR}\n")
 
-    endif (NOT RESULT)
+    endif ()
 
-endfunction (assert_command_executes_with_success)
+endfunction ()
 
 # assert_command_does_not_execute_with_success
 #
@@ -928,9 +928,9 @@ function (assert_command_does_not_execute_with_success)
                  "The command ${ARGN} succeeded with result "
                  " ${RESULT}\n")
 
-    endif (RESULT)
+    endif ()
 
-endfunction (assert_command_does_not_execute_with_success)
+endfunction ()
 
 function (_lib_found_in_libraries LIBRARY RESULT_VARIABLE)
 
@@ -948,11 +948,11 @@ function (_lib_found_in_libraries LIBRARY RESULT_VARIABLE)
 
             set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-        endif (_lib MATCHES "(^.*${LIBRARY}.*$)")
+        endif ()
 
     endforeach ()
 
-endfunction (_lib_found_in_libraries)
+endfunction ()
 
 function (_print_all_target_libraries TARGET)
 
@@ -967,15 +967,15 @@ function (_print_all_target_libraries TARGET)
 
         message (STATUS "Part of link interface: " ${_lib})
 
-    endforeach (${_lib})
+    endforeach ()
 
     foreach (_lib ${LINK_LIBRARIES})
 
         message (STATUS "Link library: " ${_lib})
 
-    endforeach (${_lib})
+    endforeach ()
 
-endfunction (_print_all_target_libraries)
+endfunction ()
 
 function (_target_is_linked_to TARGET_NAME
                                LIBRARY
@@ -997,13 +997,13 @@ function (_target_is_linked_to TARGET_NAME
 
         set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-    else (FOUND_IN_INTERFACE OR FOUND_IN_LINK)
+    else ()
 
         set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
-    endif (FOUND_IN_INTERFACE OR FOUND_IN_LINK)
+    endif ()
 
-endfunction (_target_is_linked_to)
+endfunction ()
 
 # assert_target_is_linked_to
 #
@@ -1023,9 +1023,9 @@ function (assert_target_is_linked_to TARGET_NAME LIBRARY)
 
         _print_all_target_libraries (${TARGET_NAME})
 
-    endif (NOT RESULT)
+    endif ()
 
-endfunction (assert_target_is_linked_to)
+endfunction ()
 
 # assert_target_is_not_linked_to
 #
@@ -1046,9 +1046,9 @@ function (assert_target_is_not_linked_to TARGET_NAME LIBRARY)
 
         _print_all_target_libraries (${TARGET_NAME})
 
-    endif (RESULT)
+    endif ()
 
-endfunction (assert_target_is_not_linked_to)
+endfunction ()
 
 function (_item_has_property_with_value ITEM_TYPE
                                         ITEM
@@ -1064,7 +1064,7 @@ function (_item_has_property_with_value ITEM_TYPE
 
         set (ITEM)
 
-    endif (ITEM_TYPE STREQUAL "GLOBAL")
+    endif ()
 
     get_property (_property_value
                   ${ITEM_TYPE} ${ITEM}
@@ -1078,7 +1078,7 @@ function (_item_has_property_with_value ITEM_TYPE
 
     set (${RESULT_VARIABLE} ${RESULT} PARENT_SCOPE)
 
-endfunction (_item_has_property_with_value)
+endfunction ()
 
 # assert_has_property_with_value
 #
@@ -1106,9 +1106,9 @@ function (assert_has_property_with_value ITEM_TYPE
                  "Expected ${ITEM_TYPE} ${ITEM} to have property ${PROPERTY} "
                  " of type ${PROPERTY_TYPE} with value ${VALUE}")
 
-    endif (NOT RESULT)
+    endif ()
 
-endfunction (assert_has_property_with_value)
+endfunction ()
 
 # assert_does_not_have_property_with_value
 #
@@ -1137,9 +1137,9 @@ function (assert_does_not_have_property_with_value ITEM_TYPE
                  "Expected ${ITEM_TYPE} ${ITEM} not to have property"
                  " ${PROPERTY} of type ${PROPERTY_TYPE} with value ${VALUE}")
 
-    endif (RESULT)
+    endif ()
 
-endfunction (assert_does_not_have_property_with_value)
+endfunction ()
 
 function (_list_contains_value LIST_VARIABLE
                                TYPE
@@ -1162,11 +1162,11 @@ function (_list_contains_value LIST_VARIABLE
 
             set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-        endif (RESULT)
+        endif ()
 
     endforeach ()
 
-endfunction (_list_contains_value)
+endfunction ()
 
 # assert_list_contains_value
 #
@@ -1189,9 +1189,9 @@ function (assert_list_contains_value LIST_VARIABLE
         message (SEND_ERROR "List ${LIST_VARIABLE} does not contain a value "
                             "${COMPARATOR} ${VALUE}")
 
-    endif (NOT RESULT)
+    endif ()
 
-endfunction (assert_list_contains_value)
+endfunction ()
 
 # assert_list_contains_value
 #
@@ -1213,9 +1213,9 @@ function (assert_list_does_not_contain_value LIST_VARIABLE
         message (SEND_ERROR "List ${LIST_VARIABLE} contains a value "
                             "${COMPARATOR} ${VALUE}")
 
-    endif (RESULT)
+    endif ()
 
-endfunction (assert_list_does_not_contain_value)
+endfunction ()
 
 function (_item_has_property_containing_value ITEM_TYPE
                                               ITEM
@@ -1233,7 +1233,7 @@ function (_item_has_property_containing_value ITEM_TYPE
 
         set (ITEM)
 
-    endif (ITEM_TYPE STREQUAL "GLOBAL")
+    endif ()
 
     get_property (_property_values
                   ${ITEM_TYPE} ${ITEM}
@@ -1249,9 +1249,9 @@ function (_item_has_property_containing_value ITEM_TYPE
 
         set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-    endif (RESULT)
+    endif ()
 
-endfunction (_item_has_property_containing_value)
+endfunction ()
 
 # assert_has_property_containing_value
 #
@@ -1279,9 +1279,9 @@ function (assert_has_property_containing_value ITEM_TYPE
                  "Expected ${ITEM_TYPE} ${ITEM} to have property ${PROPERTY} "
                  " of type ${PROPERTY_TYPE} containing value ${VALUE}")
 
-    endif (NOT RESULT)
+    endif ()
 
-endfunction (assert_has_property_containing_value)
+endfunction ()
 
 # assert_does_not_have_property_containing_value
 #
@@ -1310,9 +1310,9 @@ function (assert_does_not_have_property_containing_value ITEM_TYPE
                  "${PROPERTY} of type ${PROPERTY_TYPE} containing "
                  "value ${VALUE}")
 
-    endif (RESULT)
+    endif ()
 
-endfunction (assert_does_not_have_property_containing_value)
+endfunction ()
 
 function (_file_exists FILE RESULT_VARIABLE)
 
@@ -1322,9 +1322,9 @@ function (_file_exists FILE RESULT_VARIABLE)
 
         set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
-    endif (NOT EXISTS ${FILE})
+    endif ()
 
-endfunction (_file_exists)
+endfunction ()
 
 # assert_file_exists:
 #
@@ -1338,9 +1338,9 @@ function (assert_file_exists FILE)
 
         message (SEND_ERROR "The file ${FILE} does not exist")
 
-    endif (NOT RESULT)
+    endif ()
 
-endfunction (assert_file_exists)
+endfunction ()
 
 # assert_file_does_not_exist:
 #
@@ -1354,9 +1354,9 @@ function (assert_file_does_not_exist FILE)
 
         message (SEND_ERROR "The file ${FILE} does exist")
 
-    endif (RESULT)
+    endif ()
 
-endfunction (assert_file_does_not_exist)
+endfunction ()
 
 function (_file_contains_substring FILE SUBSTRING RESULT_VARIABLE)
 
@@ -1368,7 +1368,7 @@ function (_file_contains_substring FILE SUBSTRING RESULT_VARIABLE)
     # propogate the result here too
     set (${RESULT_VARIABLE} ${RESULT} PARENT_SCOPE)
 
-endfunction (_file_contains_substring)
+endfunction ()
 
 # assert_file_contains:
 #
@@ -1383,9 +1383,9 @@ function (assert_file_contains FILE SUBSTRING)
         message (SEND_ERROR "The file ${FILE} does not contain the string "
                  " ${SUBSTRING}")
 
-    endif (NOT RESULT)
+    endif ()
 
-endfunction (assert_file_contains)
+endfunction ()
 
 # assert_file_does_not_contain:
 #
@@ -1399,9 +1399,9 @@ function (assert_file_does_not_contain FILE SUBSTRING)
 
         message (SEND_ERROR "The file ${FILE} contains the string ${SUBSTRING}")
 
-    endif (RESULT)
+    endif ()
 
-endfunction (assert_file_does_not_contain)
+endfunction ()
 
 function (_file_has_line_matching FILE PATTERN RESULT_VARIABLE)
 
@@ -1421,11 +1421,11 @@ function (_file_has_line_matching FILE PATTERN RESULT_VARIABLE)
             set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
             break ()
 
-        endif (LINE MATCHES ${PATTERN})
+        endif ()
 
     endforeach ()
 
-endfunction (_file_has_line_matching)
+endfunction ()
 
 # assert_file_has_line_matching
 #
@@ -1440,7 +1440,7 @@ function (assert_file_has_line_matching FILE PATTERN)
         message (SEND_ERROR "The file ${FILE} does not have "
                  "a line matching ${PATTERN}")
 
-    endif (NOT RESULT)
+    endif ()
 
 endfunction ()
 
@@ -1457,6 +1457,6 @@ function (assert_file_does_not_have_line_matching FILE PATTERN)
         message (SEND_ERROR "The file ${FILE} has "
                  "a line matching ${PATTERN}")
 
-    endif (RESULT)
+    endif ()
 
 endfunction ()

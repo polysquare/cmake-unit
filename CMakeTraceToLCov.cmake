@@ -20,13 +20,13 @@ if (NOT TRACEFILE)
 
     message (FATAL_ERROR "TRACEFILE must be specified")
 
-endif (NOT TRACEFILE)
+endif ()
 
 if (NOT LCOV_OUTPUT)
 
     message (FATAL_ERROR "LCOV_OUTPUT must be specified")
 
-endif (NOT LCOV_OUTPUT)
+endif ()
 
 file (STRINGS "${TRACEFILE}" TRACEFILE_CONTENTS)
 
@@ -42,7 +42,7 @@ function (determine_executable_lines FILE)
 
         return ()
 
-    endif (NOT FILE_INDEX EQUAL -1)
+    endif ()
 
     list (APPEND _ALL_COVERAGE_FILES "${FILE}")
     set (_ALL_COVERAGE_FILES "${_ALL_COVERAGE_FILES}" PARENT_SCOPE)
@@ -90,7 +90,7 @@ function (determine_executable_lines FILE)
 
                 set (DISQUALIFIED_BECAUSE_LINE_ONLY_WHITESPACE TRUE)
 
-            endif (NOT STRIPPED_LINE)
+            endif ()
 
             # The following patterns are always non-executable
             set (NON_EXECUTABLE_LINE_MATCHES
@@ -107,7 +107,7 @@ function (determine_executable_lines FILE)
                     set (DISQUALIFIED_DUE_TO_MATCH TRUE)
                     break ()
 
-                endif ("${LINE}" MATCHES "${MATCH}")
+                endif ()
 
             endforeach ()
 
@@ -119,11 +119,11 @@ function (determine_executable_lines FILE)
                 string (SUBSTRING "${LINE}" 0 ${COMMENT_INDEX}
                         LINE_WITHOUT_COMMENTS)
 
-            else (NOT COMMENT_INDEX EQUAL -1)
+            else ()
 
                 set (LINE_WITHOUT_COMMENTS "${LINE}")
 
-            endif (NOT COMMENT_INDEX EQUAL -1)
+            endif ()
 
             string (STRIP "${LINE_WITHOUT_COMMENTS}"
                     LINE_STRIPPED_WITH_NO_COMMENTS)
@@ -143,7 +143,7 @@ function (determine_executable_lines FILE)
                 math (EXPR LAST_CLOSE_BRACKET_INDEX
                       "${LAST_CLOSE_BRACKET_INDEX} + 1")
 
-            endif (NOT LAST_CLOSE_BRACKET_INDEX EQUAL -1)
+            endif ()
 
             if (IN_OPENED_BRACKET_REGION OR
                 NOT OPEN_BRACKET_INDEX EQUAL -1)
@@ -152,11 +152,11 @@ function (determine_executable_lines FILE)
 
                     set (IN_OPENED_BRACKET_REGION FALSE)
 
-                else (LAST_CLOSE_BRACKET_INDEX EQUAL LINE_LENGTH)
+                else ()
 
                     set (IN_OPENED_BRACKET_REGION TRUE)
 
-                endif (LAST_CLOSE_BRACKET_INDEX EQUAL LINE_LENGTH)
+                endif ()
 
             endif (IN_OPENED_BRACKET_REGION OR
                    NOT OPEN_BRACKET_INDEX EQUAL -1)
@@ -175,7 +175,7 @@ function (determine_executable_lines FILE)
 
             math (EXPR NEXT_LINE_INDEX "${NEXT_LINE_INDEX} + 1")
 
-        endif (NOT NEXT_LINE_INDEX EQUAL -1)
+        endif ()
 
         math (EXPR LINE_COUNTER "${LINE_COUNTER} + 1")
 
@@ -203,7 +203,7 @@ foreach (LINE ${TRACEFILE_CONTENTS})
         string (SUBSTRING "${LINE}" ${HEADER_LENGTH} -1 FILEPATH)
         determine_executable_lines ("${FILEPATH}")
 
-    endif ("${LINE}" MATCHES "FILE.*$")
+    endif ()
 
     if (NOT "${LINE}" MATCHES "TEST.*$" AND
         NOT "${LINE}" MATCHES "FILE.*$")
@@ -227,7 +227,7 @@ foreach (LINE ${TRACEFILE_CONTENTS})
 
             set ("${HIT_VARIABLE}" 0)
 
-        endif (NOT "${${HIT_VARIABLE}}")
+        endif ()
 
         math (EXPR "${HIT_VARIABLE}" "${${HIT_VARIABLE}} + 1")
 
@@ -253,7 +253,7 @@ foreach (FILE ${_ALL_COVERAGE_FILES})
                              " to ${CMAKE_CURRENT_SOURCE_DIR}. Are you running "
                              " this script from the toplevel source directory?")
 
-    endif (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${RELATIVE_PATH_TO_FILE}")
+    endif ()
 
     list (APPEND LCOV_OUTPUT_CONTENTS
           "SF:${RELATIVE_PATH_TO_FILE}\n")
@@ -272,14 +272,14 @@ foreach (FILE ${_ALL_COVERAGE_FILES})
             list (APPEND SOURCE_FILE_HITS
                   "DA:${EXECUTABLE_LINE},0")
 
-        else (NOT "${${HIT_VARIABLE}}")
+        else ()
 
             list (APPEND SOURCE_FILE_HITS
                   "DA:${EXECUTABLE_LINE},${${HIT_VARIABLE}}")
             math (EXPR NUMBER_OF_LINES_WITH_POSITIVE_HIT_COUNTS
                   "${NUMBER_OF_LINES_WITH_POSITIVE_HIT_COUNTS} + 1")
 
-        endif (NOT "${${HIT_VARIABLE}}")
+        endif ()
 
     endforeach ()
 
