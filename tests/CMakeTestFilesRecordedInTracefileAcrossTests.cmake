@@ -49,6 +49,9 @@ set (FIRST_TEST_SCRIPT_NAME "FirstTest")
 set (FIRST_TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/FirstTest.cmake")
 set (SECOND_TEST_SCRIPT_NAME "SecondTest")
 set (SECOND_TEST_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/SecondTest.cmake")
+set (SECOND_TEST_VERIFY_SCRIPT_NAME "SecondTestVerify")
+set (SECOND_TEST_VERIFY_SCRIPT
+     "${CMAKE_CURRENT_SOURCE_DIR}/SecondTestVerify.cmake")
 
 bootstrap_cmake_unit (COVERAGE_FILES "${INCLUDED_SCRIPT}"
                                      "${FIRST_TEST_SPECIFIC_SCRIPT}"
@@ -62,6 +65,10 @@ file (WRITE "${SECOND_TEST_SCRIPT}"
       "include (${EXCLUDED_SCRIPT})\n"
       "include (${INCLUDED_SCRIPT})\n"
       "include (${SECOND_TEST_SPECIFIC_SCRIPT})\n")
+file (WRITE "${SECOND_TEST_VERIFY_SCRIPT}"
+      "include (${SECOND_TEST_SPECIFIC_SCRIPT})\n")
 
+# Coverage should be recorded in both the test and verify steps
 add_cmake_test ("${FIRST_TEST_SCRIPT_NAME}")
-add_cmake_test ("${SECOND_TEST_SCRIPT_NAME}")
+add_cmake_build_test ("${SECOND_TEST_SCRIPT_NAME}"
+                      "${SECOND_TEST_VERIFY_SCRIPT_NAME}")
