@@ -148,6 +148,10 @@ add_cmake_build_test (CreateSimpleExecutable
 add_cmake_build_test (CreateSimpleLibrary
                       CreateSimpleLibraryVerify)
 
+# CFG_INT_DIR
+add_cmake_build_test (ExportImportCfgIntDir
+                      ExportImportCfgIntDirVerify)
+
 # Tests for CMakeTraceToLCov
 add_cmake_test (LinesStartingWithCommentNotExecutable)
 add_cmake_test (LinesWithNoContentNotExecutable)

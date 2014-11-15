@@ -377,11 +377,11 @@ function (_append_configure_step TEST_NAME
         set (DEVELOPER_WARNINGS_OPTION "-Wno-dev")
 
         # Whether coverage is being logged pass the --trace switch
-        if (CMAKE_UNIT_LOG_COVERAGE)
+        #if (CMAKE_UNIT_LOG_COVERAGE)
 
             set (TRACE_OPTION "--trace")
 
-        endif (CMAKE_UNIT_LOG_COVERAGE)
+        #endif (CMAKE_UNIT_LOG_COVERAGE)
 
         if (NOT CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS)
 

@@ -1,6 +1,6 @@
 # /CMakeUnit.cmake
 # A Simple CMake Unit Testing Framework - assertions
-# library.
+# and utility library.
 #
 # This file provides some simple assertions for CMakeUnit
 # which test scripts can use to verify certain details about
@@ -13,12 +13,26 @@
 # Usually the assertions would use the same determination
 # as thier backend.
 #
+# This library also provides some utility functions which are useful
+# in implementing CMake tests, like functions to generate source
+# files and simple executables or to find the location of such
+# libraries and executables at verify-time.
+#
 # The library isn't really designed for total flexibility
 # but rather should be modified (and patches sent upstream!).
 # This is due to a lack of polymorphism or support for
 # first class functions in CMake .
 #
 # See LICENCE.md for Copyright information
+
+# Be paranoid about multiple-inclusion. This file overrides core functions
+# so it can only ever be included once.
+if (_CMAKE_UNIT_INCLUDED)
+
+    return ()
+
+endif (_CMAKE_UNIT_INCLUDED)
+set (_CMAKE_UNIT_INCLUDED TRUE)
 
 include (CMakeParseArguments)
 include (GenerateExportHeader)
@@ -72,6 +86,8 @@ endfunction (_cmake_unit_make_dummy_print_message_target)
 # Wraps add_custom_command to print out the COMMAND line on generators that
 # wont print that even when verbose mode is enabled.
 function (add_custom_command)
+
+    set (INSIDE_ADD_CUSTOM_COMMAND_WRAPPER TRUE)
 
     set (CMAKE_UNIT_ACC_MULTIVAR_ARGS COMMAND DEPENDS)
     cmake_parse_arguments (ACC
@@ -510,6 +526,44 @@ function (cmake_unit_get_target_location_from_exports EXPORTS
     endif (NOT RESULT EQUAL 0)
 
     file (READ ${DETERMINE_LOCATION_CAPTURE} LOCATION)
+    set (${LOCATION_RETURN} "${LOCATION}" PARENT_SCOPE)
+
+endfunction ()
+
+# cmake_unit_export_cfg_int_dir
+#
+# Exports the current CMAKE_CFG_INTDIR variable (known at build-time)
+# and writes it into the file specified at LOCATION. This file could be read
+# after the build to determine the CMAKE_CFG_INTDIR property
+#
+# LOCATION: Filename to write CMAKE_CFG_INTDIR variable to.
+function (cmake_unit_export_cfg_int_dir LOCATION)
+
+    get_filename_component (LOCATION_NAME "${LOCATION}" NAME)
+    set (WRITE_TO_OUTPUT_FILE_SCRIPT ${LOCATION}.write.cmake)
+    set (WRITE_TO_OUTPUT_FILE_SCRIPT_CONTENTS
+         "file (WRITE ${LOCATION} \"\${INTDIR}\")\n")
+    file (WRITE ${WRITE_TO_OUTPUT_FILE_SCRIPT}
+          "${WRITE_TO_OUTPUT_FILE_SCRIPT_CONTENTS}")
+    add_custom_command (OUTPUT ${LOCATION}
+                        COMMAND ${CMAKE_COMMAND}
+                        -DINTDIR=${CMAKE_CFG_INTDIR}
+                        -P ${WRITE_TO_OUTPUT_FILE_SCRIPT})
+    add_custom_target (write_cfg_int_dir_${LOCATION_NAME} ALL
+                       SOURCES ${LOCATION})
+
+endfunction (cmake_unit_export_cfg_int_dir)
+
+# cmake_unit_import_cfg_int_dir
+#
+# Reads LOCATION To import the value of the CMAKE_CFG_INTDIR property
+# and stores the value inside of LOCATION_RETURN
+#
+# OUTPUT_FILE: Filename to read CMAKE_CFG_INTDIR variable from.
+# LOCATION_RETURN: Variable to store CMAKE_CFG_INTDIR value into.
+function (cmake_unit_import_cfg_int_dir OUTPUT_FILE LOCATION_RETURN)
+
+    file (READ ${OUTPUT_FILE} LOCATION)
     set (${LOCATION_RETURN} "${LOCATION}" PARENT_SCOPE)
 
 endfunction ()
