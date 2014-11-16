@@ -346,6 +346,7 @@ endfunction ()
 # it does not have a C or C++ extension, then header guards will be written
 # and function definitions will not be included.
 #
+# TARGET_RETURN: Name of the target that this source file will be generated on.
 # [Optional] NAME: Name of the source file. May include slashes which will
 #                  be interpreted as a subdirectory relative to
 #                  CMAKE_CURRENT_SOURCE_DIR. The default is Source.cpp
@@ -465,7 +466,7 @@ endfunction ()
 # For an exports file EXPORTS and target TARGET, finds the location of a
 # target from an already generated EXPORTS file.
 #
-# This function should be run in the Verify stage in order to determine the
+# This function should be run in the verify phase in order to determine the
 # location of a binary or library built by CMake. The initial configure
 # step should run export (TARGETS ...) in order to generate this file.
 #
@@ -532,7 +533,7 @@ endfunction ()
 
 # cmake_unit_export_cfg_int_dir
 #
-# Exports the current CMAKE_CFG_INTDIR variable (known at build-time)
+# Exports the current CMAKE_CFG_INTDIR variable (known at configure-time)
 # and writes it into the file specified at LOCATION. This file could be read
 # after the build to determine the CMAKE_CFG_INTDIR property
 #
@@ -556,8 +557,11 @@ endfunction ()
 
 # cmake_unit_import_cfg_int_dir
 #
-# Reads LOCATION To import the value of the CMAKE_CFG_INTDIR property
-# and stores the value inside of LOCATION_RETURN
+# Reads OUTPUT_FILE to import the value of the CMAKE_CFG_INTDIR property
+# and stores the value inside of LOCATION_RETURN. This should be run in the
+# verify phase to get the CMAKE_CFG_INTDIR property for the configure phase
+# generator. Use cmake_unit_export_cfg_int_dir in the configure phase
+# to export the CMAKE_CFG_INTDIR property.
 #
 # OUTPUT_FILE: Filename to read CMAKE_CFG_INTDIR variable from.
 # LOCATION_RETURN: Variable to store CMAKE_CFG_INTDIR value into.

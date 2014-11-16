@@ -48,6 +48,7 @@ if (CMAKE_UNIT_LOG_COVERAGE)
 endif ()
 
 set (_RUNNER_LIST_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
 # bootstrap_cmake_unit
 #
 # Sets up the initial environment to use cmake-unit. Call this function
@@ -709,6 +710,8 @@ endfunction ()
 #
 # Adds a test with just the configure step. If the test script
 # exits with an error then the test fails.
+#
+# TEST_NAME: The name of a file to import for a "configure-only" test.
 function (add_cmake_test TEST_NAME)
 
     _define_variables_for_test (${TEST_NAME})
@@ -736,6 +739,11 @@ endfunction ()
 # step. This will run some checks at the configure phase, then build and test
 # the configured project and then run the script specified by
 # VERIFY to ensure that the project built correctly.
+#
+#
+# TEST_NAME: The name of a file to import for a "build" test.
+# VERIFY: The name of a file to run after build for a "build" test.
+# []
 function (add_cmake_build_test TEST_NAME VERIFY)
 
     set (ADD_CMAKE_BUILD_TEST_OPTION_ARGS
