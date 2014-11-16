@@ -743,7 +743,16 @@ endfunction ()
 #
 # TEST_NAME: The name of a file to import for a "build" test.
 # VERIFY: The name of a file to run after build for a "build" test.
-# []
+# [Optional]: ALLOW_CONFIGURE_FAIL: Allow the configure step to fail. The build
+#                                   and test steps will not run with this option
+#                                   set
+# [Optional]: ALLOW_CONFIGURE_WARNINGS: Don't treat warnings as errors in the
+#                                       configure step.
+# [Optional]: ALLOW_BUILD_FAIL: Allow the build step to fail. The test step will
+#                               not run with this option set.
+# [Optional]: ALLOW_TEST_FAIL: Allow the test step to fail.
+# [Optional]: NO_CLEAN: Do not clean the source directory before build.
+# [Optional]: TARGET: Build this target instead of the default target.
 function (add_cmake_build_test TEST_NAME VERIFY)
 
     set (ADD_CMAKE_BUILD_TEST_OPTION_ARGS
