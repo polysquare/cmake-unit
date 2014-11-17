@@ -19,11 +19,16 @@ set (GENERATED_FILE "${CMAKE_CURRENT_BINARY_DIR}/Generated.cpp")
 file (WRITE "${SOURCE_FILE}" "")
 file (WRITE "${TEST_FILE}"
       "include (CMakeUnit)\n"
+      "add_custom_target (faux_dependency)\n"
       "add_custom_command (OUTPUT\n"
       "                    \"${GENERATED_FILE}\"\n"
       "                    COMMAND\n"
       "                    \"${CMAKE_COMMAND}\" -E touch\n"
-      "                    \"${GENERATED_FILE}\")\n"
+      "                    \"${GENERATED_FILE}\"\n"
+      "                    DEPENDS\n"
+      "                    faux_dependency\n"
+      "                    COMMENT\n"
+      "                    \"Generating File Comment\n\")\n"
       "add_custom_target (custom_target ALL\n"
       "                   SOURCES \"${GENERATED_FILE}\")\n")
 file (WRITE "${TEST_VERIFY_FILE}" "")
