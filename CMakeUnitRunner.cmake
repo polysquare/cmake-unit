@@ -1,4 +1,4 @@
-# CMakeUnitRunner.cmake
+# /CMakeUnitRunner.cmake
 #
 # The main test runner for the CMakeUnit framework.
 #
@@ -21,7 +21,7 @@
 # way that the user expected it to. Build tests can take
 # much longer to execute and should be used sparingly.
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 # bootstrap_cmake_unit:
 #

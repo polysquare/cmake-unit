@@ -1,5 +1,8 @@
 # /tests/CommandExecutesWithSuccess.cmake
+#
 # Check the _command_executes_with_success matcher.
+#
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

@@ -1,5 +1,8 @@
-# /tests/VariableIs.cmake
+# /tests/VariableIsEmpty.cmake
+#
 # Check the _variable_is matcher with empty values
+#
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

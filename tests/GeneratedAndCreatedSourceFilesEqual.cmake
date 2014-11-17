@@ -3,7 +3,7 @@
 # Check that source files created and generated with the same options
 # are completely equal
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

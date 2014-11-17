@@ -1,4 +1,5 @@
 # /tests/LinesStartingWithCommentNotExecutable.cmake
+#
 # Check that lines starting with a "#" are not executable
 # with CMakeTraceToLCov
 #

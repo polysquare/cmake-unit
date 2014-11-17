@@ -1,5 +1,8 @@
 # /tests/VariableIs.cmake
+#
 # Check the _variable_is matcher.
+#
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

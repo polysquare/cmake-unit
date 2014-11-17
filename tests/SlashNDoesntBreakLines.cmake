@@ -1,4 +1,5 @@
-# /tests/SemicolonsDontBreakLines.cmake
+# /tests/SlashNDoesntBreakLines.cmake
+#
 # Check that \n in the middle of the line don't cause extra lines to be
 # added (such that we get a bogus line report from CMakeTraceToLCov)
 #

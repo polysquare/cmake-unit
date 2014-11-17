@@ -1,4 +1,4 @@
-# /tests/PreserveContentsOfConfigureOutput.cmake
+# /tests/PreserveContentsOfCMakeErrorsInConfigureOutput.cmake
 #
 # Add a test whose configure step is allowed to fail and make it print a
 # FATAL_WARNING on the configure step.

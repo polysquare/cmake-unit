@@ -1,4 +1,4 @@
-# /tests/CMakeBuildTestWarnignsNotErrorsWhereWErrorDisabledVerify.cmake
+# /tests/CMakeBuildTestWarningsNotErrorsWhereWErrorDisabledVerify.cmake
 #
 # Make sure that we don't have any errors, but warnings are allowed
 #

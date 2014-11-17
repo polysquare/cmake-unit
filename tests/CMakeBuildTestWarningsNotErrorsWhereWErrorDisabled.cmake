@@ -1,4 +1,4 @@
-# /tests/CMakeBuildTestWarnignsNotErrorsWhereWErrorDisabled.cmake
+# /tests/CMakeBuildTestWarningsNotErrorsWhereWErrorDisabled.cmake
 #
 # Adds a cmake_build_test with a warning, but specify ALLOW_WARNIGNS
 #

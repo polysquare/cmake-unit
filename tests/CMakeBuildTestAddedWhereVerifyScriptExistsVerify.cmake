@@ -1,4 +1,4 @@
-# /tests/CMakeTestAddedWhereVerifyScriptExistsVerify.cmake
+# /tests/CMakeBuildTestAddedWhereVerifyScriptExistsVerify.cmake
 #
 # Make sure that the CTest output indicates that we're running SampleTest and
 # furthermore that the build output indicates that we built, tested and

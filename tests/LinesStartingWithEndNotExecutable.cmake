@@ -1,4 +1,5 @@
 # /tests/LinesStartingWithEndNotExecutable.cmake
+#
 # Check that lines starting with ".*end" are not executable
 #
 # See LICENCE.md for Copyright information

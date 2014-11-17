@@ -1,5 +1,8 @@
-# /tests/ItemHasPropertyWithValue.cmake
+# /tests/ItemHasPropertyContainingValueGlobal.cmake
+#
 # Check the _item_has_property_with_value matcher with GLOBAL properties.
+#
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

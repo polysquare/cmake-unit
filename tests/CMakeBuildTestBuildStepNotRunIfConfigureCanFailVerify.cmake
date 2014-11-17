@@ -1,4 +1,4 @@
-# /tests/CMakeBuildTestBuildStepNotRunIfConfigureCanFail.cmake
+# /tests/CMakeBuildTestBuildStepNotRunIfConfigureCanFailVerify.cmake
 #
 # Check that the build step never runs
 #

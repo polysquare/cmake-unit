@@ -1,7 +1,8 @@
 # /tests/ListContainsValue.cmake
+#
 # Check the _list_contains_value matcher.
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

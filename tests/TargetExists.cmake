@@ -1,5 +1,8 @@
 # /tests/TargetExists.cmake
+#
 # Check the _target_exists matcher.
+#
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

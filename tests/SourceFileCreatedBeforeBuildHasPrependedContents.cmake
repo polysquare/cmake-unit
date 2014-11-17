@@ -4,7 +4,7 @@
 # ${CMAKE_CURRENT_SOURCE_DIR} with specified prepended contents
 # (after defines and includes)
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

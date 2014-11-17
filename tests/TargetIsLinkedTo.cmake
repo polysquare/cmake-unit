@@ -1,5 +1,8 @@
-# /tests/VariableIs.cmake
+# /tests/TargetIsLinkedTo.cmake
+#
 # Check the _target_is_linked_to matcher.
+#
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

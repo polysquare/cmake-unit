@@ -4,7 +4,7 @@
 # cmake_unit_get_target_location_from_exports from the
 # ${CMAKE_CURRENT_BINARY_DIR}/exports.cmake and executes it
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

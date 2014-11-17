@@ -1,5 +1,8 @@
 # /tests/ItemHasPropertyWithValueEmpty.cmake
+#
 # Check the _item_has_property_with_value matcher with empty values.
+#
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

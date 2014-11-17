@@ -1,4 +1,5 @@
 # /tests/AllFilesSpecifiedInTraceFileHaveCoverage.cmake
+#
 # All files, eg
 # - FileForCoverage.cmake
 # - UnexecutedFileForCoverage.cmake

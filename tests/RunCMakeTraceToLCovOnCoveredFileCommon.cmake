@@ -1,8 +1,9 @@
 # /tests/RunCMakeTraceToLCovOnCoveredFileCommon.cmake
+#
 # A script shared between tests to copy in a common "covered file"
 # and run CMakeTraceToLCov on it.
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 set (FILE_FOR_COVERAGE_LOCAL_PATH
      "${CMAKE_CURRENT_SOURCE_DIR}/FileForCoverage.cmake")

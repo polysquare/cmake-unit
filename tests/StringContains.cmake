@@ -1,5 +1,8 @@
 # /tests/StringContains.cmake
+#
 # Check the _string_contains matcher.
+#
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

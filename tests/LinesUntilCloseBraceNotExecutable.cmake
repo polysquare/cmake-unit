@@ -1,4 +1,5 @@
 # /tests/LinesUntilCloseBraceNotExecutable.cmake
+#
 # Check that lines overflowing after an intial open-brace are not executable
 # until the brace is closed on the end of the line
 #

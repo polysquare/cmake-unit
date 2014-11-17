@@ -1,4 +1,4 @@
-# /tests/CMakeBuildTestCleanStepAlwaysRunsVerify.cmake
+# /tests/CMakeBuildTestCleanStepNotRunOnNoCleanVerify.cmake
 #
 # Make sure that we cleaned out the build directory
 #

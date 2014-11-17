@@ -1,4 +1,5 @@
-# /tests/MissedLinesHaveZeroDACounter.cmake
+# /tests/MissedLinesHaveNonZeroDACounter.cmake
+#
 # All missed-but-executable lines have a DA counter of zero.
 #
 # See LICENCE.md for Copyright information
