@@ -88,8 +88,6 @@ endfunction ()
 # wont print that even when verbose mode is enabled.
 function (add_custom_command)
 
-    set (INSIDE_ADD_CUSTOM_COMMAND_WRAPPER TRUE)
-
     set (CMAKE_UNIT_ACC_MULTIVAR_ARGS COMMAND DEPENDS)
     cmake_parse_arguments (ACC
                            ""
