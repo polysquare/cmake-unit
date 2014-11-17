@@ -1,4 +1,5 @@
 # /tests/LinesWithNoContentNotExecutable.cmake
+#
 # Check that lines starting with a "\n" or just whitespace are not executable
 # with CMakeTraceToLCov
 #

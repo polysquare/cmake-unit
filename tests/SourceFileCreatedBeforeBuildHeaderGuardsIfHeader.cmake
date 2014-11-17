@@ -7,7 +7,7 @@
 # ...
 # #endif
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

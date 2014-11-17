@@ -4,7 +4,7 @@
 # cmake_unit_create_simple_executable and links to a simple library
 # named "library" created by using cmake_unit_create_simple_library
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

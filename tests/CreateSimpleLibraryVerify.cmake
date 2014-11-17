@@ -3,7 +3,7 @@
 # Checks the build output to make sure a "simple" executable is linked to
 # the "simple" library.
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

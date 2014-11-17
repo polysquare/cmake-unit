@@ -1,4 +1,4 @@
-# /tests/CMakeBuildTestErrorOnTestFailWhereEnsureTestSuccess.cmake
+# /tests/CMakeBuildTestErrorOnTestFail.cmake
 #
 # Add a build test that will fail to configure.
 #

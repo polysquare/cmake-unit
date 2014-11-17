@@ -4,7 +4,7 @@
 # ${CMAKE_CURRENT_SOURCE_DIR} with #include "my_include.h" when we call
 # cmake_unit_create_source_file_before_build with INCLUDES my_include.h
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

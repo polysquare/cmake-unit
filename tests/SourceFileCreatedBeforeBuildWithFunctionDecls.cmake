@@ -5,7 +5,7 @@
 # int custom_function (); when we call
 # cmake_unit_create_source_file_before_build with FUNCTIONS custom_function
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

@@ -1,4 +1,4 @@
-# /tests/CMakeBuildTestCleanStepAlwaysRuns.cmake
+# /tests/CMakeBuildTestCleanStepNotRunOnNoClean.cmake
 #
 # Adds a cmake_build_test
 #

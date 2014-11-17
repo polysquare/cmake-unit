@@ -1,4 +1,4 @@
-# /tests/PreserveContentsOfConfigureOutputVerify.cmake
+# /tests/PreserveContentsOfCMakeErrorsInConfigureOutputVerify.cmake
 #
 # Check the test output to make sure that we got "CMake Error", both lines of
 # our error message and the call stack

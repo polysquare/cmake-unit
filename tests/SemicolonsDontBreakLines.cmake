@@ -1,4 +1,5 @@
 # /tests/SemicolonsDontBreakLines.cmake
+#
 # Check that semicolons in the middle of the file don't cause extra lines to be
 # added (such that we get a bogus line report from CMakeTraceToLCov)
 #

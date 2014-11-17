@@ -1,7 +1,8 @@
 # /tests/ListContainsValueEmpty.cmake
+#
 # Check the _list_contains_value matcher with empty values
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

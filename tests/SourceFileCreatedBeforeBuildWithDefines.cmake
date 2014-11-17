@@ -4,7 +4,7 @@
 # ${CMAKE_CURRENT_SOURCE_DIR} with #define CUSTOM_DEFINE when we call
 # cmake_unit_create_source_file_before_build with DEFINES CUSTOM_DEFINE
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

@@ -1,5 +1,8 @@
 # /tests/FileExists.cmake
+#
 # Check the _file_exists matcher.
+#
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

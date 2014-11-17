@@ -1,4 +1,4 @@
-# /tests/CMakeBuildTestErrorOnConfigureFailVerify.cmake
+# /tests/CMakeBuildTestErrorOnTestFailVerify.cmake
 #
 # Check that there's a CMake error when the test step fails
 #

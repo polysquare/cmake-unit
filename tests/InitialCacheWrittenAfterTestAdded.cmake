@@ -2,6 +2,8 @@
 #
 # Ensure that ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}/initial_cache.cmake
 # is written out after add_cmake_test
+#
+# See LICENCE.md for Copyright information
 
 set (TEST_NAME SampleTest)
 file (WRITE "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}.cmake" "")

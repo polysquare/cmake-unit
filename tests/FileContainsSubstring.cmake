@@ -1,5 +1,8 @@
 # /tests/FileContainsSubstring.cmake
+#
 # Check the _file_contains_substring matcher.
+#
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

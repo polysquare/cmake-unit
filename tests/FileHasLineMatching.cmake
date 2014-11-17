@@ -1,5 +1,8 @@
 # /tests/FileHasLineMatching.cmake
+#
 # Check the _file_has_line_matching matcher.
+#
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

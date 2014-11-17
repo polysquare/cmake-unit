@@ -6,7 +6,7 @@
 # INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include/my_include.h
 # and INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

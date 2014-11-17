@@ -3,6 +3,8 @@
 # Ensure that ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}/initial_cache.cmake
 # contains some of the variables that we intended to forward to each test,
 # in this test that would be TEST_VARIABLE
+#
+# See LICENCE.md for Copyright information
 
 set (TEST_NAME SampleTest)
 file (WRITE "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}.cmake" "")

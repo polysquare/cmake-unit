@@ -1,4 +1,4 @@
-# /tests/CMakeTestWithCustomTargetVerify.cmake
+# /tests/CMakeBuildTestWithCustomTargetVerify.cmake
 #
 # Make sure that we passed our custom target to cmake --build
 #

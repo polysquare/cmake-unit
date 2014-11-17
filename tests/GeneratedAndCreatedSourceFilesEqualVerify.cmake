@@ -4,7 +4,7 @@
 # completely equal (eg, hash is equal) to a file created during configure
 # time.
 #
-# See LICENCE.md for Copyright information.
+# See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 

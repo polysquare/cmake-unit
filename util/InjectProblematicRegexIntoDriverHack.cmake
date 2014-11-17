@@ -1,4 +1,4 @@
-# /util/InjectProblematicRejectIntoDriverHack.cmake
+# /util/InjectProblematicRegexIntoDriverHack.cmake
 #
 # Reads a driver script as indicated by DRIVER_SCRIPT and replaces
 # all instances of @PROBLEMATIC_REGEX_ONE@ and @PROBLEMATIC_REGEX_TWO@ with
