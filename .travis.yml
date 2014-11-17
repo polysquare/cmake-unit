@@ -11,6 +11,7 @@ before_install:
   - sudo pip install cmakelint polysquare-generic-file-linter
   - sudo apt-get update -qq
   - sudo apt-get install -qq `cat DEPENDENCIES`
+  - cmake --version
 script:
   - mkdir -p tests/build
   - pushd tests/build
