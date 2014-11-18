@@ -13,17 +13,21 @@ set (TEST_NAME_VERIFY "SampleTestVerify")
 set (TEST_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}.cmake")
 set (TEST_VERIFY_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME_VERIFY}.cmake")
 
-set (SOURCE_FILE "${CMAKE_CURRENT_BINARY_DIR}/Source.cpp")
 set (GENERATED_FILE "${CMAKE_CURRENT_BINARY_DIR}/Generated.cpp")
 
-file (WRITE "${SOURCE_FILE}" "")
 file (WRITE "${TEST_FILE}"
       "include (CMakeUnit)\n"
       "add_custom_command (OUTPUT\n"
       "                    \"${GENERATED_FILE}\"\n"
+      # The two commands will actually be to generate a
+      # file called FirstCommand.cpp, and then another
+      # command to generate SecondCommand.cpp
       "                    COMMAND\n"
       "                    \"${CMAKE_COMMAND}\" -E touch\n"
-      "                    \"${GENERATED_FILE}\")\n"
+      "                    \"${CMAKE_CURRENT_BINARY_DIR}/FirstCommand.cpp\"\n"
+      "                    COMMAND\n"
+      "                    \"${CMAKE_COMMAND}\" -E touch\n"
+      "                    \"${CMAKE_CURRENT_BINARY_DIR}/SecondCommand.cpp\")\n"
       "add_custom_target (custom_target ALL\n"
       "                   SOURCES \"${GENERATED_FILE}\")\n")
 file (WRITE "${TEST_VERIFY_FILE}" "")

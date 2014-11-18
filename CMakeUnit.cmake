@@ -84,33 +84,97 @@ function (_cmake_unit_make_dummy_print_message_target TARGET_RETURN)
 
 endfunction ()
 
+# Helper macro to append an accumulated command list to
+# ADD_CUSTOM_COMMAND_PRINT_STRINGS
+#
+# Do not call this macro outside of the add_custom_command
+# wrapper. Do not change it to a function.
+macro (_cmake_unit_append_command_being_accumulated)
+
+    if (ACCUMULATING_COMMAND)
+
+        string (REPLACE ";" " "
+                STRINGIFIED_COMMAND "${COMMAND_BEING_ACCUMULATED}")
+        list (APPEND ADD_CUSTOM_COMMAND_PRINT_STRINGS
+              COMMAND "${STRINGIFIED_COMMAND}")
+        unset (COMMAND_BEING_ACCUMULATED)
+        set (ACCUMULATING_COMMAND FALSE)
+
+    endif ()
+
+endmacro ()
+
 # Wraps add_custom_command to print out the COMMAND line on generators that
 # wont print that even when verbose mode is enabled.
 function (add_custom_command)
 
-    set (CMAKE_UNIT_ACC_MULTIVAR_ARGS COMMAND DEPENDS)
-    cmake_parse_arguments (ACC
-                           ""
-                           ""
-                           "${CMAKE_UNIT_ACC_MULTIVAR_ARGS}"
-                           ${ARGN})
+    set (ADD_CUSTOM_COMMAND_KNOWN_ARGUMENTS
+         OUTPUT
+         COMMAND
+         MAIN_DEPENDENCY
+         DEPENDS
+         IMPLICIT_DEPENDS
+         WORKING_DIRECTORY
+         COMMENT
+         VERBATIM)
 
-    if (ACC_COMMAND)
+    set (ADD_CUSTOM_COMMAND_PRINT_STRINGS)
+    # COMMAND can be repeated multiple times inside of add_custom_command
+    # so we can't use cmake_parse_arguments to extract it. Instead we
+    # need to loop through all the arguments and find instances of
+    # COMMAND. Once one is found, we'll stop and add a a new COMMAND to
+    # append-arguments list to print it
+    set (ACCUMULATING_COMMAND FALSE)
+    set (COMMAND_BEING_ACCUMULATED)
 
-        _cmake_unit_make_dummy_print_message_target (TARGET
-                                                     COMMAND
-                                                     "${ACC_COMMAND}")
+    foreach (ARG ${ARGN})
 
-        # Append TARGET to CMAKE_UNIT_ACC_DEPENDS and pass it in at
-        # the end of the argument list. This will cause any pre-existing
-        # DEPENDS for this custom_command to be overwritten with
-        # our new, appended list.
-        list (APPEND CMAKE_UNIT_ACC_DEPENDS
-              ${TARGET})
+        foreach (KNOWN_ARG ${ADD_CUSTOM_COMMAND_KNOWN_ARGUMENTS})
 
-    endif ()
+            if (KNOWN_ARG STREQUAL ARG)
 
-    _add_custom_command (${ARGN} DEPENDS ${CMAKE_UNIT_ACC_DEPENDS})
+                # Hit a new list argument. If we're accumulating a command,
+                # stop and add it to our PRINT_STRINGS list
+                _cmake_unit_append_command_being_accumulated ()
+
+            endif ()
+
+        endforeach ()
+
+        if (ACCUMULATING_COMMAND)
+
+            list (APPEND COMMAND_BEING_ACCUMULATED
+                  ${ARG})
+
+        endif ()
+
+        # Avoid CMP0054 violation
+        set (COMMAND_ARG "COMMAND")
+
+        # If the arg we just hit was COMMAND, then start
+        # accumulating commands
+        if (ARG STREQUAL COMMAND_ARG)
+
+            set (ACCUMULATING_COMMAND TRUE)
+
+        endif ()
+
+    endforeach ()
+
+    # End of list. If a command was being accumulated, add it now
+    _cmake_unit_append_command_being_accumulated ()
+
+    # Now loop over PRINT_STRINGS to build the APPEND_ARGUMENTS list
+    set (ADD_CUSTOM_COMMAND_APPEND_ARGUMENTS)
+    foreach (STRING ${ADD_CUSTOM_COMMAND_PRINT_STRINGS})
+
+        list (APPEND ADD_CUSTOM_COMMAND_APPEND_ARGUMENTS
+              COMMAND "${CMAKE_COMMAND}" -E echo "${STRING}")
+
+    endforeach ()
+
+    _add_custom_command (${ARGN}
+                         ${ADD_CUSTOM_COMMAND_APPEND_ARGUMENTS})
 
 endfunction ()
 
