@@ -15,7 +15,7 @@ set (EXTERNAL_PROJECT_BINARY_DIR
 set (EXTERNAL_PROJECT_EXPORTS
      "${EXTERNAL_PROJECT_BINARY_DIR}/exports.cmake")
 
-cmake_unit_import_cfg_int_dir (${CMAKE_CURRENT_BINARY_DIR}/CfgIntDir.txt
+cmake_unit_import_cfg_int_dir ("${CMAKE_CURRENT_BINARY_DIR}/CfgIntDir.txt"
                                CFG_INT_DIR)
 cmake_unit_get_target_location_from_exports ("${EXTERNAL_PROJECT_EXPORTS}"
                                              executable
@@ -31,8 +31,10 @@ get_filename_component (EXPECTED_EXECUTABLE_LOCATION_HEADER
 string (LENGTH "${EXPECTED_EXECUTABLE_LOCATION_HEADER}"
         EXPECTED_EXECUTABLE_LOCATION_HEADER_LENGTH)
 string (SUBSTRING "${EXECUTABLE_LOCATION}"
-        0 ${EXPECTED_EXECUTABLE_LOCATION_HEADER_LENGTH}
+        0
+        ${EXPECTED_EXECUTABLE_LOCATION_HEADER_LENGTH}
         EXECUTABLE_LOCATION_HEADER)
 
-assert_variable_is (EXECUTABLE_LOCATION_HEADER STRING EQUAL
-                    "${EXPECTED_EXECUTABLE_LOCATION_HEADER}")
+cmake_unit_assert_variable_is (EXECUTABLE_LOCATION_HEADER
+                               STRING EQUAL
+                               "${EXPECTED_EXECUTABLE_LOCATION_HEADER}")

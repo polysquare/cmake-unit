@@ -15,9 +15,9 @@ cmake_unit_create_source_file_before_build (NAME "Header.h"
                                             PREPEND_CONTENTS
                                             "int foo@SEMICOLON@")
 
-assert_file_has_line_matching ("${CMAKE_CURRENT_SOURCE_DIR}/Header.h"
-                               "^.*ifndef HEADER_H")
-assert_file_has_line_matching ("${CMAKE_CURRENT_SOURCE_DIR}/Header.h"
-                               "^.*define HEADER_H")
-assert_file_has_line_matching ("${CMAKE_CURRENT_SOURCE_DIR}/Header.h"
-                               "^.*endif")
+cmake_unit_assert_file_has_line_matching ("${CMAKE_CURRENT_SOURCE_DIR}/Header.h"
+                                          "^.*ifndef HEADER_H")
+cmake_unit_assert_file_has_line_matching ("${CMAKE_CURRENT_SOURCE_DIR}/Header.h"
+                                          "^.*define HEADER_H")
+cmake_unit_assert_file_has_line_matching ("${CMAKE_CURRENT_SOURCE_DIR}/Header.h"
+                                          "^.*endif")

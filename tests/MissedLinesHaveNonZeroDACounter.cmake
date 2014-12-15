@@ -7,4 +7,4 @@
 include (CMakeUnit)
 include (RunCMakeTraceToLCovOnCoveredFileCommon)
 
-assert_file_has_line_matching ("${LCOV_OUTPUT}" "^DA:32,0$")
+cmake_unit_assert_file_has_line_matching ("${LCOV_OUTPUT}" "^DA:32,0$")

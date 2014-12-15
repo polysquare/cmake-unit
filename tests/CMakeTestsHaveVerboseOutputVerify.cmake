@@ -14,5 +14,5 @@ set (TEST_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/TEST.output")
 
 set (CUSTOM_COMMAND_CMAKE_REGEX
      "^.*${ESCAPED_CMAKE_COMMAND} -E touch .*Generated.cpp.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "${CUSTOM_COMMAND_CMAKE_REGEX}")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "${CUSTOM_COMMAND_CMAKE_REGEX}")

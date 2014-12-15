@@ -10,5 +10,6 @@ include (CMakeUnit)
 
 cmake_unit_create_source_file_before_build (DEFINES "CUSTOM_DEFINE")
 
-assert_file_has_line_matching ("${CMAKE_CURRENT_SOURCE_DIR}/Source.cpp"
-                               "^.define CUSTOM_DEFINE$")
+set (SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/Source.cpp")
+cmake_unit_assert_file_has_line_matching ("${SOURCE_FILE}"
+                                          "^.define CUSTOM_DEFINE$")

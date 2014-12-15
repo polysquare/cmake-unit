@@ -21,26 +21,26 @@
 include (CMakeUnit)
 
 set (COVERAGE_TRACEFILE "${CMAKE_CURRENT_BINARY_DIR}/SampleTests.trace")
-assert_file_exists ("${COVERAGE_TRACEFILE}")
+cmake_unit_assert_file_exists ("${COVERAGE_TRACEFILE}")
 
 # IncludedScript.cmake
-assert_file_has_line_matching ("${COVERAGE_TRACEFILE}"
-                               "^.*IncludedScript.cmake.1.*$")
+cmake_unit_assert_file_has_line_matching ("${COVERAGE_TRACEFILE}"
+                                          "^.*IncludedScript.cmake.1.*$")
 
 # FirstTestSpecificScript.cmake
-assert_file_has_line_matching ("${COVERAGE_TRACEFILE}"
-                               "^.*FirstTestSpecificScript.cmake.1.*$")
+cmake_unit_assert_file_has_line_matching ("${COVERAGE_TRACEFILE}"
+                                          "^.*FirstTestSpecific.cmake.1.*$")
 
 # SecondTestSpecificScript.cmake
-assert_file_has_line_matching ("${COVERAGE_TRACEFILE}"
-                               "^.*SecondTestSpecificScript.cmake.1.*$")
+cmake_unit_assert_file_has_line_matching ("${COVERAGE_TRACEFILE}"
+                                          "^.*SecondTestSpecific.cmake.1.*$")
 
 # Don't include the tests themselves
-assert_file_does_not_have_line_matching ("${COVERAGE_TRACEFILE}"
-                                         "^.*FirstTest.cmake.*$")
-assert_file_does_not_have_line_matching ("${COVERAGE_TRACEFILE}"
-                                         "^.*SecondTest.cmake.*$")
+cmake_unit_assert_file_does_not_have_line_matching ("${COVERAGE_TRACEFILE}"
+                                                    "^.*FirstTest.cmake.*$")
+cmake_unit_assert_file_does_not_have_line_matching ("${COVERAGE_TRACEFILE}"
+                                                    "^.*SecondTest.cmake.*$")
 
 # Does not include ExcludedScript.cmake
-assert_file_does_not_have_line_matching ("${COVERAGE_TRACEFILE}"
-                                         "^.*ExcludedScript.cmake.*$")
+cmake_unit_assert_file_does_not_have_line_matching ("${COVERAGE_TRACEFILE}"
+                                                    "^.*Excluded.cmake.*$")

@@ -15,14 +15,14 @@ cmake_minimum_required (VERSION 2.8)
 
 # We assume that it is one-above us
 set (CMAKE_UNIT_RELATIVE_CMAKE_DIRECTORY
-     ${CMAKE_CURRENT_SOURCE_DIR}/..)
+     "${CMAKE_CURRENT_SOURCE_DIR}/..")
 get_filename_component (CMAKE_UNIT_DIRECTORY
-                        ${CMAKE_UNIT_RELATIVE_CMAKE_DIRECTORY}
+                        "${CMAKE_UNIT_RELATIVE_CMAKE_DIRECTORY}"
                         ABSOLUTE)
 
 set (CMAKE_MODULE_PATH
-     ${CMAKE_UNIT_DIRECTORY}
-     ${CMAKE_CURRENT_SOURCE_DIR})
+     "${CMAKE_UNIT_DIRECTORY}"
+     "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Set up variables to forward
 set (MOCK_TRACEFILE_INPUT
@@ -33,137 +33,137 @@ set (UNEXECUTED_FILE_FOR_COVERAGE_PATH
 
 include (CMakeUnitRunner)
 
-bootstrap_cmake_unit (VARIABLES
-                      CMAKE_MODULE_PATH
-                      MOCK_TRACEFILE_INPUT
-                      FILE_FOR_COVERAGE_PATH
-                      UNEXECUTED_FILE_FOR_COVERAGE_PATH
-                      COVERAGE_FILES
-                      "${CMAKE_UNIT_DIRECTORY}/CMakeUnitRunner.cmake"
-                      "${CMAKE_UNIT_DIRECTORY}/CMakeTraceToLCov.cmake"
-                      "${CMAKE_UNIT_DIRECTORY}/CMakeUnit.cmake")
+cmake_unit_init (VARIABLES
+                 CMAKE_MODULE_PATH
+                 MOCK_TRACEFILE_INPUT
+                 FILE_FOR_COVERAGE_PATH
+                 UNEXECUTED_FILE_FOR_COVERAGE_PATH
+                 COVERAGE_FILES
+                 "${CMAKE_UNIT_DIRECTORY}/CMakeUnitRunner.cmake"
+                 "${CMAKE_UNIT_DIRECTORY}/CMakeTraceToLCov.cmake"
+                 "${CMAKE_UNIT_DIRECTORY}/CMakeUnit.cmake")
 
-add_cmake_test (TargetExists)
-add_cmake_test (StringContains)
-add_cmake_test (VariableIs)
-add_cmake_test (VariableIsEmpty)
-add_cmake_test (CommandExecutesWithSuccess)
-add_cmake_test (TargetIsLinkedTo)
-add_cmake_test (ItemHasPropertyWithValue)
-add_cmake_test (ItemHasPropertyWithValueEmpty)
-add_cmake_test (ItemHasPropertyWithValueGlobal)
-add_cmake_test (ItemHasPropertyContainingValue)
-add_cmake_test (ItemHasPropertyContainingValueEmpty)
-add_cmake_test (ItemHasPropertyContainingValueGlobal)
-add_cmake_test (FileExists)
-add_cmake_test (FileContainsSubstring)
-add_cmake_test (FileHasLineMatching)
-add_cmake_test (ListContainsValue)
-add_cmake_test (ListContainsValueEmpty)
+cmake_unit_config_test (TargetExists)
+cmake_unit_config_test (StringContains)
+cmake_unit_config_test (VariableIs)
+cmake_unit_config_test (VariableIsEmpty)
+cmake_unit_config_test (CommandExecutesWithSuccess)
+cmake_unit_config_test (TargetIsLinkedTo)
+cmake_unit_config_test (ItemHasPropertyWithValue)
+cmake_unit_config_test (ItemHasPropertyWithValueEmpty)
+cmake_unit_config_test (ItemHasPropertyWithValueGlobal)
+cmake_unit_config_test (ItemHasPropertyContainingValue)
+cmake_unit_config_test (ItemHasPropertyContainingValueEmpty)
+cmake_unit_config_test (ItemHasPropertyContainingValueGlobal)
+cmake_unit_config_test (FileExists)
+cmake_unit_config_test (FileContainsSubstring)
+cmake_unit_config_test (FileHasLineMatching)
+cmake_unit_config_test (ListContainsValue)
+cmake_unit_config_test (ListContainsValueEmpty)
 
 # Tests for CMakeUnitRunner
-add_cmake_test (CoverageFileClobberedOnBootstrap)
-add_cmake_test (InitialCacheWrittenAfterTestAdded)
-add_cmake_test (InitialCacheContainsForwardedVariables)
-add_cmake_test (DriverScriptWrittenAfterTestAdded)
+cmake_unit_config_test (CoverageFileClobberedOnBootstrap)
+cmake_unit_config_test (InitialCacheWrittenAfterTestAdded)
+cmake_unit_config_test (InitialCacheContainsForwardedVariables)
+cmake_unit_config_test (DriverScriptWrittenAfterTestAdded)
 
 # Test adding CMake test and error behaviour
-add_cmake_build_test (CMakeTestAddedWhereSetupScriptExists
-                      CMakeTestAddedWhereSetupScriptExistsVerify)
-add_cmake_build_test (CMakeTestNotAddedWhenSetupScriptDoesntExist
-                      CMakeTestNotAddedWhenSetupScriptDoesntExistVerify
-                      ALLOW_CONFIGURE_FAIL)
-add_cmake_build_test (CMakeBuildTestAddedWhereVerifyScriptExists
-                      CMakeBuildTestAddedWhereVerifyScriptExistsVerify)
-add_cmake_build_test (CMakeBuildTestNotAddedWhenVerifyScriptDoesntExist
-                      CMakeBuildTestNotAddedWhenVerifyScriptDoesntExistVerify
-                      ALLOW_CONFIGURE_FAIL)
-add_cmake_build_test (CMakeBuildTestErrorOnConfigureFail
-                      CMakeBuildTestErrorOnConfigureFailVerify
-                      ALLOW_TEST_FAIL)
-add_cmake_build_test (CMakeBuildTestNoErrorOnConfigureFailWhereFailAllowed
-                      CMakeBuildTestNoErrorOnConfigureFailWhereFailAllowedVerify)
-add_cmake_build_test (CMakeBuildTestErrorOnBuildFail
-                      CMakeBuildTestErrorOnBuildFailVerify
-                      ALLOW_TEST_FAIL)
-add_cmake_build_test (CMakeBuildTestErrorOnTestFail
-                      CMakeBuildTestErrorOnTestFailVerify
-                      ALLOW_TEST_FAIL)
-add_cmake_build_test (CMakeBuildTestNoErrorOnTestFailWhereFailAllowed
-                      CMakeBuildTestNoErrorOnTestFailWhereFailAllowedVerify
-                      ALLOW_TEST_FAIL)
-add_cmake_build_test (CMakeBuildTestErrorOnVerifyFail
-                      CMakeBuildTestErrorOnVerifyFailVerify
-                      ALLOW_TEST_FAIL)
+cmake_unit_build_test (CMakeTestAddedWhereSetupScriptExists
+                       CMakeTestAddedWhereSetupScriptExistsVerify)
+cmake_unit_build_test (CMakeTestNotAddedWhenSetupScriptDoesntExist
+                       CMakeTestNotAddedWhenSetupScriptDoesntExistVerify
+                       ALLOW_CONFIGURE_FAIL)
+cmake_unit_build_test (CMakeBuildTestAddedWhereVerifyScriptExists
+                       CMakeBuildTestAddedWhereVerifyScriptExistsVerify)
+cmake_unit_build_test (CMakeBuildTestNotAddedWhenVerifyScriptDoesntExist
+                       CMakeBuildTestNotAddedWhenVerifyScriptDoesntExistVerify
+                       ALLOW_CONFIGURE_FAIL)
+cmake_unit_build_test (CMakeBuildTestErrorOnConfigureFail
+                       CMakeBuildTestErrorOnConfigureFailVerify
+                       ALLOW_TEST_FAIL)
+cmake_unit_build_test (CMakeBuildTestNoErrorOnConfigureFailIfFailAllowed
+                       CMakeBuildTestNoErrorOnConfigureFailIfFailAllowedVerify)
+cmake_unit_build_test (CMakeBuildTestErrorOnBuildFail
+                       CMakeBuildTestErrorOnBuildFailVerify
+                       ALLOW_TEST_FAIL)
+cmake_unit_build_test (CMakeBuildTestErrorOnTestFail
+                       CMakeBuildTestErrorOnTestFailVerify
+                       ALLOW_TEST_FAIL)
+cmake_unit_build_test (CMakeBuildTestNoErrorOnTestFailWhereFailAllowed
+                       CMakeBuildTestNoErrorOnTestFailWhereFailAllowedVerify
+                       ALLOW_TEST_FAIL)
+cmake_unit_build_test (CMakeBuildTestErrorOnVerifyFail
+                       CMakeBuildTestErrorOnVerifyFailVerify
+                       ALLOW_TEST_FAIL)
 
 # Test that certain steps are not run where ALLOW_FAIL is specified
-add_cmake_build_test (CMakeBuildTestBuildStepNotRunIfConfigureCanFail
-                      CMakeBuildTestBuildStepNotRunIfConfigureCanFailVerify)
-add_cmake_build_test (CMakeBuildTestTestStepNotRunIfBuildCanFail
-                      CMakeBuildTestTestStepNotRunIfBuildCanFailVerify)
+cmake_unit_build_test (CMakeBuildTestBuildStepNotRunIfConfigureCanFail
+                       CMakeBuildTestBuildStepNotRunIfConfigureCanFailVerify)
+cmake_unit_build_test (CMakeBuildTestTestStepNotRunIfBuildCanFail
+                       CMakeBuildTestTestStepNotRunIfBuildCanFailVerify)
 
 # Custom target, clean step
-add_cmake_build_test (CMakeBuildTestWithCustomTarget
-                      CMakeBuildTestWithCustomTargetVerify)
-add_cmake_build_test (CMakeBuildTestCleanStepAlwaysRuns
-                      CMakeBuildTestCleanStepAlwaysRunsVerify)
-add_cmake_build_test (CMakeBuildTestCleanStepNotRunOnNoClean
-                      CMakeBuildTestCleanStepNotRunOnNoCleanVerify)
+cmake_unit_build_test (CMakeBuildTestWithCustomTarget
+                       CMakeBuildTestWithCustomTargetVerify)
+cmake_unit_build_test (CMakeBuildTestCleanStepAlwaysRuns
+                       CMakeBuildTestCleanStepAlwaysRunsVerify)
+cmake_unit_build_test (CMakeBuildTestCleanStepNotRunOnNoClean
+                       CMakeBuildTestCleanStepNotRunOnNoCleanVerify)
 
 # Convert warnings to errors
-add_cmake_build_test (CMakeBuildTestWarningsAreErrors
-                      CMakeBuildTestWarningsAreErrorsVerify
-                      ALLOW_TEST_FAIL)
-add_cmake_build_test (CMakeBuildTestWarningsNotErrorsWhereWErrorDisabled
-                      CMakeBuildTestWarningsNotErrorsWhereWErrorDisabledVerify)
+cmake_unit_build_test (CMakeBuildTestWarningsAreErrors
+                       CMakeBuildTestWarningsAreErrorsVerify
+                       ALLOW_TEST_FAIL)
+cmake_unit_build_test (CMakeBuildTestWarningsNotErrorsWhereWErrorDisabled
+                       CMakeBuildTestWarningsNotErrorsWhereWErrorDisabledVerify)
 
 # Tracefile recording
-add_cmake_build_test (CMakeTestFilesRecordedInTracefileAcrossTests
-                      CMakeTestFilesRecordedInTracefileAcrossTestsVerify)
+cmake_unit_build_test (CMakeTestFilesRecordedInTracefileAcrossTests
+                       CMakeTestFilesRecordedInTracefileAcrossTestsVerify)
 
 # Verbose output
-add_cmake_build_test (CMakeTestsHaveVerboseOutput
-                      CMakeTestsHaveVerboseOutputVerify)
-add_cmake_build_test (PreserveContentsOfCMakeErrorsInConfigureOutput
-                      PreserveContentsOfCMakeErrorsInConfigureOutputVerify)
+cmake_unit_build_test (CMakeTestsHaveVerboseOutput
+                       CMakeTestsHaveVerboseOutputVerify)
+cmake_unit_build_test (PreserveContentsOfCMakeErrorsInConfigureOutput
+                       PreserveContentsOfCMakeErrorsInConfigureOutputVerify)
 
 # Source file and executable generation
-add_cmake_test (SourceFileCreatedBeforeBuildExists)
-add_cmake_test (SourceFileCreatedBeforeBuildWithCustomName)
-add_cmake_test (SourceFileCreatedBeforeBuildWithDefines)
-add_cmake_test (SourceFileCreatedBeforeBuildWithIncludes)
-add_cmake_test (SourceFileCreatedBeforeBuildWithIncludesInsideIncludeDir)
-add_cmake_test (SourceFileCreatedBeforeBuildHasPrependedContents)
-add_cmake_test (SourceFileCreatedBeforeBuildWithFunctionDecls)
-add_cmake_test (SourceFileCreatedBeforeBuildWithFunctionDefinitions)
-add_cmake_test (SourceFileCreatedBeforeBuildNoFunctionDefinitionsIfHeader)
-add_cmake_test (SourceFileCreatedBeforeBuildHeaderGuardsIfHeader)
+cmake_unit_config_test (SourceFileCreatedBeforeBuildExists)
+cmake_unit_config_test (SourceFileCreatedBeforeBuildWithCustomName)
+cmake_unit_config_test (SourceFileCreatedBeforeBuildWithDefines)
+cmake_unit_config_test (SourceFileCreatedBeforeBuildWithIncludes)
+cmake_unit_config_test (SourceFileCreatedBeforeBuildWithIncludesInsideIncDir)
+cmake_unit_config_test (SourceFileCreatedBeforeBuildHasPrependedContents)
+cmake_unit_config_test (SourceFileCreatedBeforeBuildWithFunctionDecls)
+cmake_unit_config_test (SourceFileCreatedBeforeBuildWithFunctionDefinitions)
+cmake_unit_config_test (SourceFileCreatedBeforeBuildNoFunctionDefsIfHeader)
+cmake_unit_config_test (SourceFileCreatedBeforeBuildHeaderGuardsIfHeader)
 
 # Generated source files
-add_cmake_build_test (SourceFileGeneratedDuringBuildExists
-                      SourceFileGeneratedDuringBuildExistsVerify)
-add_cmake_build_test (GeneratedAndCreatedSourceFilesEqual
-                      GeneratedAndCreatedSourceFilesEqualVerify)
+cmake_unit_build_test (SourceFileGeneratedDuringBuildExists
+                       SourceFileGeneratedDuringBuildExistsVerify)
+cmake_unit_build_test (GeneratedAndCreatedSourceFilesEqual
+                       GeneratedAndCreatedSourceFilesEqualVerify)
 
 # Superficial Executables and Libraries
-add_cmake_build_test (CreateSimpleExecutable
-                      CreateSimpleExecutableVerify)
-add_cmake_build_test (CreateSimpleLibrary
-                      CreateSimpleLibraryVerify)
+cmake_unit_build_test (CreateSimpleExecutable
+                       CreateSimpleExecutableVerify)
+cmake_unit_build_test (CreateSimpleLibrary
+                       CreateSimpleLibraryVerify)
 
 # CFG_INT_DIR
-add_cmake_build_test (ExportImportCfgIntDir
-                      ExportImportCfgIntDirVerify)
+cmake_unit_build_test (ExportImportCfgIntDir
+                       ExportImportCfgIntDirVerify)
 
 # Tests for CMakeTraceToLCov
-add_cmake_test (LinesStartingWithCommentNotExecutable)
-add_cmake_test (LinesWithNoContentNotExecutable)
-add_cmake_test (LinesStartingWithEndNotExecutable)
-add_cmake_test (LinesUntilCloseBraceNotExecutable)
-add_cmake_test (LinesUntilCloseBraceWithInterleavedCommentsNotExecutable)
-add_cmake_test (SemicolonsDontBreakLines)
-add_cmake_test (SlashNDoesntBreakLines)
-add_cmake_test (AllFilesSpecifiedInTraceFileHaveCoverage)
-add_cmake_test (OtherLinesExecutable)
-add_cmake_test (HitLinesHaveNonZeroDACounter)
-add_cmake_test (MissedLinesHaveNonZeroDACounter)
+cmake_unit_config_test (LinesStartingWithCommentNotExecutable)
+cmake_unit_config_test (LinesWithNoContentNotExecutable)
+cmake_unit_config_test (LinesStartingWithEndNotExecutable)
+cmake_unit_config_test (LinesUntilCloseBracketNotExecutable)
+cmake_unit_config_test (InterleavedCommentsUntilCloseBracketNotExecutable)
+cmake_unit_config_test (SemicolonsDontBreakLines)
+cmake_unit_config_test (SlashNDoesntBreakLines)
+cmake_unit_config_test (AllFilesSpecifiedInTraceFileHaveCoverage)
+cmake_unit_config_test (OtherLinesExecutable)
+cmake_unit_config_test (HitLinesHaveNonZeroDACounter)
+cmake_unit_config_test (MissedLinesHaveNonZeroDACounter)

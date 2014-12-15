@@ -6,14 +6,14 @@
 
 include (CMakeUnit)
 
-cmake_unit_escape_string ("${CMAKE_CTEST_COMMAND}" ESCAPED_CMAKE_CTEST_COMMAND)
+cmake_unit_escape_string ("${CMAKE_CTEST_COMMAND}" ESCAPED_CTEST_COMMAND)
 
 set (TEST_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/TEST.output")
-assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "^.*CMake Error.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "^.*${ESCAPED_CMAKE_CTEST_COMMAND}.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "^.*failed.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "^.*1.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "^.*CMake Error.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "^.*${ESCAPED_CTEST_COMMAND}.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "^.*failed.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "^.*1.*$")

@@ -33,5 +33,5 @@ file (WRITE "${TEST_FILE}"
       "                   SOURCES \"${GENERATED_FILE}\")\n")
 file (WRITE "${TEST_VERIFY_FILE}" "")
 
-bootstrap_cmake_unit (VARIABLES CMAKE_MODULE_PATH)
-add_cmake_build_test (${TEST_NAME} ${TEST_NAME_VERIFY})
+cmake_unit_init (VARIABLES CMAKE_MODULE_PATH)
+cmake_unit_build_test (${TEST_NAME} ${TEST_NAME_VERIFY})

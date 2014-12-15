@@ -1,6 +1,7 @@
 # /tests/ItemHasPropertyContainingValueGlobal.cmake
 #
-# Check the _item_has_property_with_value matcher with GLOBAL properties.
+# Check the _cmake_unit_item_has_property_with_value matcher with GLOBAL
+# properties.
 #
 # See LICENCE.md for Copyright information
 
@@ -17,27 +18,24 @@ set_property (GLOBAL
               PROPERTY GLOBAL_PROPERTY
               ${GLOBAL_PROPERTY_OTHER_VALUE})
 
-_item_has_property_containing_value (GLOBAL GLOBAL
-                                     GLOBAL_PROPERTY
-                                     STRING
-                                     EQUAL
-                                     ${GLOBAL_PROPERTY_VALUE}
-                                     EXPECT_EQUAL)
+_cmake_unit_item_has_property_containing_value (GLOBAL GLOBAL
+                                                GLOBAL_PROPERTY
+                                                STRING EQUAL
+                                                ${GLOBAL_PROPERTY_VALUE}
+                                                EXPECT_EQUAL)
 
-_item_has_property_containing_value (GLOBAL GLOBAL
-                                     GLOBAL_PROPERTY
-                                     STRING
-                                     EQUAL
-                                     "something_else"
-                                     EXPECT_NOT_EQUAL)
+_cmake_unit_item_has_property_containing_value (GLOBAL GLOBAL
+                                                GLOBAL_PROPERTY
+                                                STRING EQUAL
+                                                "something_else"
+                                                EXPECT_NOT_EQUAL)
 
-_item_has_property_containing_value (GLOBAL GLOBAL
-                                     GLOBAL_NON_EXISTENT_PROPERTY
-                                     STRING
-                                     EQUAL
-                                     ${GLOBAL_PROPERTY_VALUE}
-                                     EXPECT_DOESNT_EXIST)
+_cmake_unit_item_has_property_containing_value (GLOBAL GLOBAL
+                                                GLOBAL_NON_EXISTENT_PROPERTY
+                                                STRING EQUAL
+                                                ${GLOBAL_PROPERTY_VALUE}
+                                                EXPECT_DOESNT_EXIST)
 
-assert_true (${EXPECT_EQUAL})
-assert_false (${EXPECT_NOT_EQUAL})
-assert_false (${EXPECT_DOESNT_EXIST})
+cmake_unit_assert_true (${EXPECT_EQUAL})
+cmake_unit_assert_false (${EXPECT_NOT_EQUAL})
+cmake_unit_assert_false (${EXPECT_DOESNT_EXIST})

@@ -10,4 +10,4 @@ include (CMakeUnit)
 
 cmake_unit_create_source_file_before_build ()
 
-assert_file_exists ("${CMAKE_CURRENT_SOURCE_DIR}/Source.cpp")
+cmake_unit_assert_file_exists ("${CMAKE_CURRENT_SOURCE_DIR}/Source.cpp")

@@ -8,8 +8,8 @@
 # what CMake knows about targets and properties set up.
 #
 # Most of the assertions take the form
-#  - assert_invariant
-#  - assert_not_invariant
+#  - cmake_unit_assert_invariant
+#  - cmake_unit_assert_not_invariant
 #
 # Usually the assertions would use the same determination
 # as thier backend.
@@ -73,11 +73,12 @@ function (_cmake_unit_make_dummy_print_message_target TARGET_RETURN)
 
     string (RANDOM TARGET_NAME)
     string (REPLACE ";" " " STRINGIFIED_COMMAND "${MAKE_DUMMY_COMMAND}")
+    set (CMAKE_ECHO_COMMAND_ARGS ${CMAKE_COMMAND_ARGS} -E echo)
 
     add_custom_target (${TARGET_NAME}
                        COMMAND
-                       ${CMAKE_COMMAND} -E echo
-                       ${STRINGIFIED_COMMAND}
+                       ${CMAKE_ECHO_COMMAND_ARGS}
+                       ${STRINGIFIED_COMMAND} # NOLINT:correctness/quotes
                        VERBATIM)
 
     set (${TARGET_RETURN} ${TARGET_NAME} PARENT_SCOPE)
@@ -86,9 +87,10 @@ endfunction ()
 
 # Wraps add_custom_command to print out the COMMAND line on generators that
 # wont print that even when verbose mode is enabled.
-function (add_custom_command)
-
-    set (INSIDE_ADD_CUSTOM_COMMAND_WRAPPER TRUE)
+#
+# This function must be named add_custom_command, so we are disabling
+# structure/namespace here
+function (add_custom_command) # NOLINT:structure/namespace
 
     set (CMAKE_UNIT_ACC_MULTIVAR_ARGS COMMAND DEPENDS)
     cmake_parse_arguments (ACC
@@ -112,7 +114,9 @@ function (add_custom_command)
 
     endif ()
 
-    _add_custom_command (${ARGN} DEPENDS ${CMAKE_UNIT_ACC_DEPENDS})
+    # Obviously, the private function must be accessed
+    _add_custom_command (${ARGN} # NOLINT:access/other_private
+                         DEPENDS ${CMAKE_UNIT_ACC_DEPENDS})
 
 endfunction ()
 
@@ -221,10 +225,9 @@ function (_cmake_unit_get_created_source_file_contents CONTENTS_RETURN
                 # DIR, so put the rest of it in angle brackets
                 if ("${INCLUDE_BEGIN}" STREQUAL "${DIR}")
 
-                    math (EXPR INCLUDE_END_START
-                          "${DIR_LENGTH} + 1")
-                    string (SUBSTRING "${INCLUDE}"
-                            ${INCLUDE_END_START} -1 INCLUDE_END)
+                    math (EXPR INCLUDE_END_START "${DIR_LENGTH} + 1")
+                    string (SUBSTRING "${INCLUDE}" ${INCLUDE_END_START} -1
+                            INCLUDE_END)
                     list (APPEND CONTENTS
                           "#include <${INCLUDE_END}>")
                     set (INCLUDED_AT_GLOBAL_SCOPE TRUE)
@@ -411,7 +414,6 @@ endfunction ()
 function (_cmake_unit_create_source_for_simple_target NAME
                                                       SOURCE_LOCATION_RETURN)
 
-    get_filename_component (BASENAME "${NAME}" NAME)
     string (RANDOM SUFFIX)
     set (SOURCE_LOCATION "${NAME}${SUFFIX}.cpp")
     cmake_unit_create_source_file_before_build (NAME "${SOURCE_LOCATION}"
@@ -487,13 +489,13 @@ function (cmake_unit_get_target_location_from_exports EXPORTS
     # cannot do so whilst in script mode) and then prints the location
     # on the stderr. We'll capture this and return it.
     set (DETERMINE_LOCATION_DIRECTORY
-         ${CMAKE_CURRENT_BINARY_DIR}/determine_location_for_${TARGET})
+         "${CMAKE_CURRENT_BINARY_DIR}/determine_location_for_${TARGET}")
     set (DETERMINE_LOCATION_BINARY_DIRECTORY
-         ${DETERMINE_LOCATION_DIRECTORY}/build)
+         "${DETERMINE_LOCATION_DIRECTORY}/build")
     set (DETERMINE_LOCATION_CAPTURE
-         ${DETERMINE_LOCATION_BINARY_DIRECTORY}/Capture)
+         "${DETERMINE_LOCATION_BINARY_DIRECTORY}/Capture")
     set (DETERMINE_LOCATION_CMAKELISTS_TXT_FILE
-         ${DETERMINE_LOCATION_DIRECTORY}/CMakeLists.txt)
+         "${DETERMINE_LOCATION_DIRECTORY}/CMakeLists.txt")
     set (DETERMINE_LOCATION_CMAKELISTS_TXT
          "include (${EXPORTS})\n"
          "get_property (LOCATION TARGET ${TARGET} PROPERTY LOCATION)\n"
@@ -503,27 +505,28 @@ function (cmake_unit_get_target_location_from_exports EXPORTS
             DETERMINE_LOCATION_CMAKELISTS_TXT
             "${DETERMINE_LOCATION_CMAKELISTS_TXT}")
 
-    file (MAKE_DIRECTORY ${DETERMINE_LOCATION_DIRECTORY})
-    file (MAKE_DIRECTORY ${DETERMINE_LOCATION_BINARY_DIRECTORY})
-    file (WRITE ${DETERMINE_LOCATION_CMAKELISTS_TXT_FILE}
+    file (MAKE_DIRECTORY "${DETERMINE_LOCATION_DIRECTORY}")
+    file (MAKE_DIRECTORY "${DETERMINE_LOCATION_BINARY_DIRECTORY}")
+    file (WRITE "${DETERMINE_LOCATION_CMAKELISTS_TXT_FILE}"
           "${DETERMINE_LOCATION_CMAKELISTS_TXT}")
 
     set (DETERMINE_LOCATION_OUTPUT_LOG
-         ${DETERMINE_LOCATION_BINARY_DIRECTORY}/DetermineLocationOutput.txt)
+         "${DETERMINE_LOCATION_BINARY_DIRECTORY}/DetermineLocationOutput.txt")
     set (DETERMINE_LOCATION_ERROR_LOG
-         ${DETERMINE_LOCATION_BINARY_DIRECTORY}/DetermineLocationError.txt)
+         "${DETERMINE_LOCATION_BINARY_DIRECTORY}/DetermineLocationError.txt")
 
-    execute_process (COMMAND ${CMAKE_COMMAND} -Wno-dev
-                     ${DETERMINE_LOCATION_DIRECTORY}
+    execute_process (COMMAND "${CMAKE_COMMAND}" -Wno-dev
+                     "${DETERMINE_LOCATION_DIRECTORY}"
                      OUTPUT_FILE ${DETERMINE_LOCATION_OUTPUT_LOG}
                      ERROR_FILE ${DETERMINE_LOCATION_ERROR_LOG}
                      RESULT_VARIABLE RESULT
-                     WORKING_DIRECTORY ${DETERMINE_LOCATION_BINARY_DIRECTORY})
+                     WORKING_DIRECTORY "${DETERMINE_LOCATION_BINARY_DIRECTORY}")
 
     if (NOT RESULT EQUAL 0)
 
-        message (FATAL_ERROR "Error whilst getting location of ${TARGET}\n"
-                             "See ${DETERMINE_LOCATION_ERROR_LOG} for details")
+        message (FATAL_ERROR
+                 "Error whilst getting location of ${TARGET}\n"
+                 "See ${DETERMINE_LOCATION_ERROR_LOG} for details")
 
     endif ()
 
@@ -548,9 +551,10 @@ function (cmake_unit_export_cfg_int_dir LOCATION)
     file (WRITE ${WRITE_TO_OUTPUT_FILE_SCRIPT}
           "${WRITE_TO_OUTPUT_FILE_SCRIPT_CONTENTS}")
     add_custom_command (OUTPUT ${LOCATION}
-                        COMMAND ${CMAKE_COMMAND}
-                        -DINTDIR=${CMAKE_CFG_INTDIR}
-                        -P ${WRITE_TO_OUTPUT_FILE_SCRIPT})
+                        COMMAND "${CMAKE_COMMAND}"
+                                -DINTDIR=${CMAKE_CFG_INTDIR}
+                                -P
+                                ${WRITE_TO_OUTPUT_FILE_SCRIPT})
     add_custom_target (write_cfg_int_dir_${LOCATION_NAME} ALL
                        SOURCES ${LOCATION})
 
@@ -568,12 +572,12 @@ endfunction ()
 # LOCATION_RETURN: Variable to store CMAKE_CFG_INTDIR value into.
 function (cmake_unit_import_cfg_int_dir OUTPUT_FILE LOCATION_RETURN)
 
-    file (READ ${OUTPUT_FILE} LOCATION)
+    file (READ "${OUTPUT_FILE}" LOCATION)
     set (${LOCATION_RETURN} "${LOCATION}" PARENT_SCOPE)
 
 endfunction ()
 
-function (assert_true VARIABLE)
+function (cmake_unit_assert_true VARIABLE)
 
     if (NOT VARIABLE)
 
@@ -584,7 +588,7 @@ function (assert_true VARIABLE)
 
 endfunction ()
 
-function (assert_false VARIABLE)
+function (cmake_unit_assert_false VARIABLE)
 
     if (VARIABLE)
 
@@ -595,7 +599,7 @@ function (assert_false VARIABLE)
 
 endfunction ()
 
-function (_target_exists TARGET_NAME RESULT_VARIABLE)
+function (_cmake_unit_target_exists TARGET_NAME RESULT_VARIABLE)
 
     set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
@@ -607,13 +611,13 @@ function (_target_exists TARGET_NAME RESULT_VARIABLE)
 
 endfunction ()
 
-# assert_target_exists
+# cmake_unit_assert_target_exists
 #
 # Throws a non-fatal error if the target specified
 # by TARGET_NAME is not a target known by CMake.
-function (assert_target_exists TARGET_NAME)
+function (cmake_unit_assert_target_exists TARGET_NAME)
 
-    _target_exists (${TARGET_NAME} RESULT)
+    _cmake_unit_target_exists (${TARGET_NAME} RESULT)
 
     if (NOT RESULT)
 
@@ -625,13 +629,13 @@ function (assert_target_exists TARGET_NAME)
 endfunction ()
 
 
-# assert_target_does_not_exist
+# cmake_unit_assert_target_does_not_exist
 #
 # Throws a non-fatal error if the target specified
 # by TARGET_NAME is a target known by CMake.
-function (assert_target_does_not_exist TARGET_NAME)
+function (cmake_unit_assert_target_does_not_exist TARGET_NAME)
 
-    _target_exists (${TARGET_NAME} RESULT)
+    _cmake_unit_target_exists (${TARGET_NAME} RESULT)
 
     if (RESULT)
 
@@ -642,7 +646,7 @@ function (assert_target_does_not_exist TARGET_NAME)
 
 endfunction ()
 
-function (_string_contains MAIN_STRING SUBSTRING RESULT_VARIABLE)
+function (_cmake_unit_string_contains MAIN_STRING SUBSTRING RESULT_VARIABLE)
 
     set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
@@ -656,13 +660,13 @@ function (_string_contains MAIN_STRING SUBSTRING RESULT_VARIABLE)
 
 endfunction ()
 
-# assert_string_contains
+# cmake_unit_assert_string_contains
 #
 # Throws a non-fatal error if the string SUBSTRING
 # is not a substring of MAIN_STRING.
-function (assert_string_contains MAIN_STRING SUBSTRING)
+function (cmake_unit_assert_string_contains MAIN_STRING SUBSTRING)
 
-    _string_contains (${MAIN_STRING} ${SUBSTRING} RESULT)
+    _cmake_unit_string_contains (${MAIN_STRING} ${SUBSTRING} RESULT)
 
     if (NOT RESULT)
 
@@ -673,13 +677,13 @@ function (assert_string_contains MAIN_STRING SUBSTRING)
 
 endfunction ()
 
-# assert_string_does_not_contain
+# cmake_unit_assert_string_does_not_contain
 #
 # Throws a non-fatal error if the string SUBSTRING
 # is a substring of MAIN_STRING.
-function (assert_string_does_not_contain MAIN_STRING SUBSTRING)
+function (cmake_unit_assert_string_does_not_contain MAIN_STRING SUBSTRING)
 
-    _string_contains (${MAIN_STRING} ${SUBSTRING} RESULT)
+    _cmake_unit_string_contains (${MAIN_STRING} ${SUBSTRING} RESULT)
 
     if (RESULT)
 
@@ -690,7 +694,11 @@ function (assert_string_does_not_contain MAIN_STRING SUBSTRING)
 
 endfunction ()
 
-function (_variable_is VARIABLE TYPE COMPARATOR VALUE RESULT_VARIABLE)
+function (_cmake_unit_variable_is VARIABLE
+                                  TYPE
+                                  COMPARATOR
+                                  VALUE
+                                  RESULT_VARIABLE)
 
     set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
@@ -744,7 +752,7 @@ function (_variable_is VARIABLE TYPE COMPARATOR VALUE RESULT_VARIABLE)
 
 endfunction ()
 
-# assert_variable_is
+# cmake_unit_assert_variable_is
 #
 # Used to check if one VARIABLE is equal, greater than
 # or less than another VALUE. The variable TYPE must
@@ -758,9 +766,13 @@ endfunction ()
 # A fatal error will be thrown when passing an unrecognized
 # type. A non-fatal error will be thrown if the COMPARATOR
 # operation fails between VARIABLE and VALUE
-function (assert_variable_is VARIABLE TYPE COMPARATOR VALUE)
+function (cmake_unit_assert_variable_is VARIABLE TYPE COMPARATOR VALUE)
 
-    _variable_is (${VARIABLE} ${TYPE} ${COMPARATOR} "${VALUE}" RESULT)
+    _cmake_unit_variable_is (${VARIABLE}
+                             ${TYPE}
+                             ${COMPARATOR}
+                             "${VALUE}"
+                             RESULT)
 
     if (NOT RESULT)
 
@@ -772,7 +784,7 @@ function (assert_variable_is VARIABLE TYPE COMPARATOR VALUE)
 
 endfunction ()
 
-# assert_variable_is_not
+# cmake_unit_assert_variable_is_not
 #
 # Used to check if one VARIABLE is not equal, greater than
 # or less than another VALUE. The variable TYPE must
@@ -786,9 +798,13 @@ endfunction ()
 # A fatal error will be thrown when passing an unrecognized
 # type. A non-fatal error will be thrown if the COMPARATOR
 # operation succeeds between VARIABLE and VALUE
-function (assert_variable_is_not VARIABLE TYPE COMPARATOR VALUE)
+function (cmake_unit_assert_variable_is_not VARIABLE TYPE COMPARATOR VALUE)
 
-    _variable_is (${VARIABLE} ${TYPE} ${COMPARATOR} "${VALUE}" RESULT)
+    _cmake_unit_variable_is (${VARIABLE}
+                             ${TYPE}
+                             ${COMPARATOR}
+                             "${VALUE}"
+                             RESULT)
 
     if (RESULT)
 
@@ -800,12 +816,12 @@ function (assert_variable_is_not VARIABLE TYPE COMPARATOR VALUE)
 
 endfunction ()
 
-# assert_variable_matches_regex
+# cmake_unit_assert_variable_matches_regex
 #
 # The variable VARIABLE will be coerced into a string
 # matched against the REGEX provided. Throws a non-fatal
 # error if VARIABLE does not match REGEX.
-function (assert_variable_matches_regex VARIABLE REGEX)
+function (cmake_unit_assert_variable_matches_regex VARIABLE REGEX)
 
     if (NOT ${VARIABLE} MATCHES ${REGEX})
 
@@ -816,12 +832,12 @@ function (assert_variable_matches_regex VARIABLE REGEX)
 
 endfunction ()
 
-# assert_variable_does_not_match_regex
+# cmake_unit_assert_variable_does_not_match_regex
 #
 # The variable VARIABLE will be coerced into a string
 # matched against the REGEX provided. Throws a non-fatal
 # error if VARIABLE does matches REGEX.
-function (assert_variable_does_not_match_regex VARIABLE REGEX)
+function (cmake_unit_assert_variable_does_not_match_regex VARIABLE REGEX)
 
     if (${VARIABLE} MATCHES ${REGEX})
 
@@ -832,12 +848,12 @@ function (assert_variable_does_not_match_regex VARIABLE REGEX)
 
 endfunction ()
 
-# assert_variable_is_defined
+# cmake_unit_assert_variable_is_defined
 #
 # Throws a non-fatal error if the variable specified by VARIABLE
 # is not defined. Note that the variable name itself and not
 # its value must be passed to this function.
-function (assert_variable_is_defined VARIABLE)
+function (cmake_unit_assert_variable_is_defined VARIABLE)
 
     if (NOT DEFINED ${VARIABLE})
 
@@ -848,12 +864,12 @@ function (assert_variable_is_defined VARIABLE)
 
 endfunction ()
 
-# assert_variable_is_not_defined
+# cmake_unit_assert_variable_is_not_defined
 #
 # Throws a non-fatal error if the variable specified by VARIABLE
 # is defined. Note that the variable name itself and not
 # its value must be passed to this function.
-function (assert_variable_is_not_defined VARIABLE)
+function (cmake_unit_assert_variable_is_not_defined VARIABLE)
 
     if (DEFINED ${VARIABLE})
 
@@ -864,9 +880,9 @@ function (assert_variable_is_not_defined VARIABLE)
 
 endfunction ()
 
-function (_command_executes_with_success RESULT_VARIABLE
-                                         ERROR_VARIABLE
-                                         CODE_VARIABLE)
+function (_cmake_unit_command_executes_with_success RESULT_VARIABLE
+                                                    ERROR_VARIABLE
+                                                    CODE_VARIABLE)
 
     set (COMMAND_EXECUTES_WITH_SUCCESS_MULTIVAR_ARGS COMMAND)
     cmake_parse_arguments (COMMAND_EXECUTES_WITH_SUCCESS
@@ -877,8 +893,10 @@ function (_command_executes_with_success RESULT_VARIABLE
 
     set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
-    execute_process (COMMAND
-                     ${COMMAND_EXECUTES_WITH_SUCCESS_COMMAND}
+    set (COMMAND_TO_RUN
+         ${COMMAND_EXECUTES_WITH_SUCCESS_COMMAND}) # NOLINT:correctness/quotes
+
+    execute_process (COMMAND ${COMMAND_TO_RUN}
                      RESULT_VARIABLE RESULT
                      ERROR_VARIABLE ERROR)
 
@@ -893,7 +911,7 @@ function (_command_executes_with_success RESULT_VARIABLE
 
 endfunction ()
 
-# assert_command_executes_with_success
+# cmake_unit_assert_command_executes_with_success
 #
 # Throws a non-fatal error if the command and argument
 # list specified by COMMAND does not execute with
@@ -902,9 +920,9 @@ endfunction ()
 # as opposed to the command and argument list itself.
 #
 # COMMAND: Command to execute
-function (assert_command_executes_with_success)
+function (cmake_unit_assert_command_executes_with_success)
 
-    _command_executes_with_success (RESULT ERROR CODE ${ARGN})
+    _cmake_unit_command_executes_with_success (RESULT ERROR CODE ${ARGN})
 
     if (NOT RESULT)
 
@@ -916,16 +934,16 @@ function (assert_command_executes_with_success)
 
 endfunction ()
 
-# assert_command_does_not_execute_with_success
+# cmake_unit_assert_command_does_not_execute_with_success
 #
 # Throws a non-fatal error if the command and argument
 # list specified by COMMAND executes with
 # success. Note that the name of the variable containing
 # the command and the argument list must be provided
 # as opposed to the command and argument list itself.
-function (assert_command_does_not_execute_with_success)
+function (cmake_unit_assert_command_does_not_execute_with_success)
 
-    _command_executes_with_success (RESULT ERROR CODE ${ARGN})
+    _cmake_unit_command_executes_with_success (RESULT ERROR CODE ${ARGN})
 
     if (RESULT)
 
@@ -937,7 +955,7 @@ function (assert_command_does_not_execute_with_success)
 
 endfunction ()
 
-function (_lib_found_in_libraries LIBRARY RESULT_VARIABLE)
+function (_cmake_unit_lib_found_in_libraries LIBRARY RESULT_VARIABLE)
 
     set (LIB_FOUND_IN_LIBRARIES_MULTIVAR_ARGS LIBRARIES)
 
@@ -959,7 +977,7 @@ function (_lib_found_in_libraries LIBRARY RESULT_VARIABLE)
 
 endfunction ()
 
-function (_print_all_target_libraries TARGET)
+function (_cmake_unit_print_all_target_libraries TARGET)
 
     get_property (INTERFACE_LIBRARIES
                   TARGET ${TARGET}
@@ -968,23 +986,23 @@ function (_print_all_target_libraries TARGET)
                   TARGET ${TARGET}
                   PROPERTY LINK_LIBRARIES)
 
-    foreach (_lib ${INTERFACE_LIBRARIES})
+    foreach (LIB ${INTERFACE_LIBRARIES})
 
-        message (STATUS "Part of link interface: " ${_lib})
+        message (STATUS "Part of link interface: ${LIB}")
 
     endforeach ()
 
-    foreach (_lib ${LINK_LIBRARIES})
+    foreach (LIB ${LINK_LIBRARIES})
 
-        message (STATUS "Link library: " ${_lib})
+        message (STATUS "Link library: ${LIB}")
 
     endforeach ()
 
 endfunction ()
 
-function (_target_is_linked_to TARGET_NAME
-                               LIBRARY
-                               RESULT_VARIABLE)
+function (_cmake_unit_target_is_linked_to TARGET_NAME
+                                          LIBRARY
+                                          RESULT_VARIABLE)
 
     get_property (INTERFACE_LIBS
                   TARGET ${TARGET_NAME}
@@ -993,10 +1011,10 @@ function (_target_is_linked_to TARGET_NAME
                   TARGET ${TARGET_NAME}
                   PROPERTY LINK_LIBRARIES)
 
-    _lib_found_in_libraries (${LIBRARY} FOUND_IN_INTERFACE
-                             LIBRARIES ${INTERFACE_LIBS})
-    _lib_found_in_libraries (${LIBRARY} FOUND_IN_LINK
-                             LIBRARIES ${LINK_LIBS})
+    _cmake_unit_lib_found_in_libraries (${LIBRARY} FOUND_IN_INTERFACE
+                                        LIBRARIES ${INTERFACE_LIBS})
+    _cmake_unit_lib_found_in_libraries (${LIBRARY} FOUND_IN_LINK
+                                        LIBRARIES ${LINK_LIBS})
 
     if (FOUND_IN_INTERFACE OR FOUND_IN_LINK)
 
@@ -1010,38 +1028,38 @@ function (_target_is_linked_to TARGET_NAME
 
 endfunction ()
 
-# assert_target_is_linked_to
+# cmake_unit_assert_target_is_linked_to
 #
 # Throws a non-fatal error if the target specified by
 # TARGET_NAME is not linked to a library which matches
 # the name LIBRARY. Note that this function does regex
 # matching under the hood, matching a whole line which
 # contains anything matching LIBRARY.
-function (assert_target_is_linked_to TARGET_NAME LIBRARY)
+function (cmake_unit_assert_target_is_linked_to TARGET_NAME LIBRARY)
 
-    _target_is_linked_to (${TARGET_NAME} ${LIBRARY} RESULT LIBRARIES)
+    _cmake_unit_target_is_linked_to (${TARGET_NAME} ${LIBRARY} RESULT LIBRARIES)
 
     if (NOT RESULT)
 
         message (SEND_ERROR
                  "Expected ${LIBRARY} to be a link-library to ${TARGET_NAME}")
 
-        _print_all_target_libraries (${TARGET_NAME})
+        _cmake_unit_print_all_target_libraries (${TARGET_NAME})
 
     endif ()
 
 endfunction ()
 
-# assert_target_is_not_linked_to
+# cmake_unit_assert_target_is_not_linked_to
 #
 # Throws a non-fatal error if the target specified by
 # TARGET_NAME is linked to a library which matches
 # the name LIBRARY. Note that this function does regex
 # matching under the hood, matching a whole line which
 # contains anything matching LIBRARY.
-function (assert_target_is_not_linked_to TARGET_NAME LIBRARY)
+function (cmake_unit_assert_target_is_not_linked_to TARGET_NAME LIBRARY)
 
-    _target_is_linked_to (${TARGET_NAME} ${LIBRARY} RESULT LIBRARIES)
+    _cmake_unit_target_is_linked_to (${TARGET_NAME} ${LIBRARY} RESULT LIBRARIES)
 
     if (RESULT)
 
@@ -1049,19 +1067,19 @@ function (assert_target_is_not_linked_to TARGET_NAME LIBRARY)
                  "Expected ${LIBRARY} not to be a link-library "
                  "to ${TARGET_NAME}")
 
-        _print_all_target_libraries (${TARGET_NAME})
+        _cmake_unit_print_all_target_libraries (${TARGET_NAME})
 
     endif ()
 
 endfunction ()
 
-function (_item_has_property_with_value ITEM_TYPE
-                                        ITEM
-                                        PROPERTY
-                                        PROPERTY_TYPE
-                                        COMPARATOR
-                                        VALUE
-                                        RESULT_VARIABLE)
+function (_cmake_unit_item_has_property_with_value ITEM_TYPE
+                                                   ITEM
+                                                   PROPERTY
+                                                   PROPERTY_TYPE
+                                                   COMPARATOR
+                                                   VALUE
+                                                   RESULT_VARIABLE)
 
     # GLOBAL scope is special, in that case we don't really
     # have an item, so we need to get rid of it.
@@ -1071,39 +1089,38 @@ function (_item_has_property_with_value ITEM_TYPE
 
     endif ()
 
-    get_property (_property_value
-                  ${ITEM_TYPE} ${ITEM}
+    get_property (_PROPERTY_VALUE ${ITEM_TYPE} ${ITEM}
                   PROPERTY ${PROPERTY})
 
-    _variable_is (_property_value
-                  ${PROPERTY_TYPE}
-                  ${COMPARATOR}
-                  "${VALUE}"
-                  RESULT)
+    _cmake_unit_variable_is (_PROPERTY_VALUE
+                             ${PROPERTY_TYPE}
+                             ${COMPARATOR}
+                             "${VALUE}"
+                             RESULT)
 
     set (${RESULT_VARIABLE} ${RESULT} PARENT_SCOPE)
 
 endfunction ()
 
-# assert_has_property_with_value
+# cmake_unit_assert_has_property_with_value
 #
 # Throws a non-fatal error if the ITEM with ITEM_TYPE specified does not
 # have a PROPERTY of PROPERTY_TYPE which satisfies COMPARATOR with
 # the VALUE specified.
-function (assert_has_property_with_value ITEM_TYPE
-                                         ITEM
-                                         PROPERTY
-                                         PROPERTY_TYPE
-                                         COMPARATOR
-                                         VALUE)
+function (cmake_unit_assert_has_property_with_value ITEM_TYPE
+                                                    ITEM
+                                                    PROPERTY
+                                                    PROPERTY_TYPE
+                                                    COMPARATOR
+                                                    VALUE)
 
-    _item_has_property_with_value (${ITEM_TYPE}
-                                   ${ITEM}
-                                   ${PROPERTY}
-                                   ${PROPERTY_TYPE}
-                                   ${COMPARATOR}
-                                   "${VALUE}"
-                                   RESULT)
+    _cmake_unit_item_has_property_with_value (${ITEM_TYPE}
+                                              ${ITEM}
+                                              ${PROPERTY}
+                                              ${PROPERTY_TYPE}
+                                              ${COMPARATOR}
+                                              "${VALUE}"
+                                              RESULT)
 
     if (NOT RESULT)
 
@@ -1115,26 +1132,26 @@ function (assert_has_property_with_value ITEM_TYPE
 
 endfunction ()
 
-# assert_does_not_have_property_with_value
+# cmake_unit_assert_does_not_have_property_with_value
 #
 # Throws a non-fatal error if the ITEM with ITEM_TYPE specified
 # has a PROPERTY of PROPERTY_TYPE which satisfies COMPARATOR with
 # the VALUE specified.
-function (assert_does_not_have_property_with_value ITEM_TYPE
-                                                   ITEM
-                                                   PROPERTY
-                                                   PROPERTY_TYPE
-                                                   COMPARATOR
-                                                   VALUE)
+function (cmake_unit_assert_does_not_have_property_with_value ITEM_TYPE
+                                                              ITEM
+                                                              PROPERTY
+                                                              PROPERTY_TYPE
+                                                              COMPARATOR
+                                                              VALUE)
 
 
-    _item_has_property_with_value (${ITEM_TYPE}
-                                   ${ITEM}
-                                   ${PROPERTY}
-                                   ${PROPERTY_TYPE}
-                                   ${COMPARATOR}
-                                   ${VALUE}
-                                   RESULT)
+    _cmake_unit_item_has_property_with_value (${ITEM_TYPE}
+                                              ${ITEM}
+                                              ${PROPERTY}
+                                              ${PROPERTY_TYPE}
+                                              ${COMPARATOR}
+                                              ${VALUE}
+                                              RESULT)
 
     if (RESULT)
 
@@ -1146,22 +1163,22 @@ function (assert_does_not_have_property_with_value ITEM_TYPE
 
 endfunction ()
 
-function (_list_contains_value LIST_VARIABLE
-                               TYPE
-                               COMPARATOR
-                               VALUE
-                               RESULT_VARIABLE)
+function (_cmake_unit_list_contains_value LIST_VARIABLE
+                                          TYPE
+                                          COMPARATOR
+                                          VALUE
+                                          RESULT_VARIABLE)
 
     set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
     foreach (LIST_VALUE ${${LIST_VARIABLE}})
 
-        set (_child_value ${LIST_VALUE})
-        _variable_is (_child_value
-                      ${TYPE}
-                      ${COMPARATOR}
-                      "${VALUE}"
-                      RESULT)
+        set (_CHILD_VALUE ${LIST_VALUE})
+        _cmake_unit_variable_is (_CHILD_VALUE
+                                 ${TYPE}
+                                 ${COMPARATOR}
+                                 "${VALUE}"
+                                 RESULT)
 
         if (RESULT)
 
@@ -1173,21 +1190,21 @@ function (_list_contains_value LIST_VARIABLE
 
 endfunction ()
 
-# assert_list_contains_value
+# cmake_unit_assert_list_contains_value
 #
 # Throws a non-fatal error if the list specified by LIST_VARIABLE
 # does not contain a value which satisfies COMPARATOR with
 # VALUE
-function (assert_list_contains_value LIST_VARIABLE
-                                     TYPE
-                                     COMPARATOR
-                                     VALUE)
+function (cmake_unit_assert_list_contains_value LIST_VARIABLE
+                                                TYPE
+                                                COMPARATOR
+                                                VALUE)
 
-    _list_contains_value (${LIST_VARIABLE}
-                          ${TYPE}
-                          ${COMPARATOR}
-                          ${VALUE}
-                          RESULT)
+    _cmake_unit_list_contains_value (${LIST_VARIABLE}
+                                     ${TYPE}
+                                     ${COMPARATOR}
+                                     ${VALUE}
+                                     RESULT)
 
     if (NOT RESULT)
 
@@ -1198,20 +1215,20 @@ function (assert_list_contains_value LIST_VARIABLE
 
 endfunction ()
 
-# assert_list_contains_value
+# cmake_unit_assert_list_contains_value
 #
 # Throws a non-fatal error if the list specified by LIST_VARIABLE
 # contains a value which satisfies COMPARATOR with VALUE
-function (assert_list_does_not_contain_value LIST_VARIABLE
-                                             TYPE
-                                             COMPARATOR
-                                             VALUE)
+function (cmake_unit_assert_list_does_not_contain_value LIST_VARIABLE
+                                                        TYPE
+                                                        COMPARATOR
+                                                        VALUE)
 
-    _list_contains_value (${LIST_VARIABLE}
-                          ${TYPE}
-                          ${COMPARATOR}
-                          ${VALUE}
-                          RESULT)
+    _cmake_unit_list_contains_value (${LIST_VARIABLE}
+                                     ${TYPE}
+                                     ${COMPARATOR}
+                                     ${VALUE}
+                                     RESULT)
 
     if (RESULT)
 
@@ -1222,13 +1239,13 @@ function (assert_list_does_not_contain_value LIST_VARIABLE
 
 endfunction ()
 
-function (_item_has_property_containing_value ITEM_TYPE
-                                              ITEM
-                                              PROPERTY
-                                              PROPERTY_TYPE
-                                              COMPARATOR
-                                              VALUE
-                                              RESULT_VARIABLE)
+function (_cmake_unit_item_has_property_containing_value ITEM_TYPE
+                                                         ITEM
+                                                         PROPERTY
+                                                         PROPERTY_TYPE
+                                                         COMPARATOR
+                                                         VALUE
+                                                         RESULT_VARIABLE)
 
     set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
@@ -1240,15 +1257,14 @@ function (_item_has_property_containing_value ITEM_TYPE
 
     endif ()
 
-    get_property (_property_values
-                  ${ITEM_TYPE} ${ITEM}
+    get_property (_PROPERTY_VALUES ${ITEM_TYPE} ${ITEM}
                   PROPERTY ${PROPERTY})
 
-    _list_contains_value (_property_values
-                          ${PROPERTY_TYPE}
-                          ${COMPARATOR}
-                          "${VALUE}"
-                          RESULT)
+    _cmake_unit_list_contains_value (_PROPERTY_VALUES
+                                     ${PROPERTY_TYPE}
+                                     ${COMPARATOR}
+                                     "${VALUE}"
+                                     RESULT)
 
     if (RESULT)
 
@@ -1258,25 +1274,25 @@ function (_item_has_property_containing_value ITEM_TYPE
 
 endfunction ()
 
-# assert_has_property_containing_value
+# cmake_unit_assert_has_property_containing_value
 #
 # Throws a non-fatal error if the ITEM with ITEM_TYPE specified does not
 # have a PROPERTY of PROPERTY_TYPE of which one of the items in the property
 # value's list satisfies COMPARATOR
-function (assert_has_property_containing_value ITEM_TYPE
-                                               ITEM
-                                               PROPERTY
-                                               PROPERTY_TYPE
-                                               COMPARATOR
-                                               VALUE)
+function (cmake_unit_assert_has_property_containing_value ITEM_TYPE
+                                                          ITEM
+                                                          PROPERTY
+                                                          PROPERTY_TYPE
+                                                          COMPARATOR
+                                                          VALUE)
 
-    _item_has_property_containing_value (${ITEM_TYPE}
-                                         ${ITEM}
-                                         ${PROPERTY}
-                                         ${PROPERTY_TYPE}
-                                         ${COMPARATOR}
-                                         ${VALUE}
-                                         RESULT)
+    _cmake_unit_item_has_property_containing_value (${ITEM_TYPE}
+                                                    ${ITEM}
+                                                    ${PROPERTY}
+                                                    ${PROPERTY_TYPE}
+                                                    ${COMPARATOR}
+                                                    ${VALUE}
+                                                    RESULT)
 
     if (NOT RESULT)
 
@@ -1288,25 +1304,25 @@ function (assert_has_property_containing_value ITEM_TYPE
 
 endfunction ()
 
-# assert_does_not_have_property_containing_value
+# cmake_unit_assert_does_not_have_property_containing_value
 #
 # Throws a non-fatal error if the ITEM with ITEM_TYPE specified does not
 # have a PROPERTY of PROPERTY_TYPE of which one of the items in the property
 # value's list satisfies COMPARATOR
-function (assert_does_not_have_property_containing_value ITEM_TYPE
-                                                         ITEM
-                                                         PROPERTY
-                                                         PROPERTY_TYPE
-                                                         COMPARATOR
-                                                         VALUE)
+function (cmake_unit_assert_does_not_have_property_containing_value ITEM_TYPE
+                                                                    ITEM
+                                                                    PROPERTY
+                                                                    PROP_TYPE
+                                                                    COMPARATOR
+                                                                    VALUE)
 
-    _item_has_property_containing_value (${ITEM_TYPE}
-                                         ${ITEM}
-                                         ${PROPERTY}
-                                         ${PROPERTY_TYPE}
-                                         ${COMPARATOR}
-                                         ${VALUE}
-                                         RESULT)
+    _cmake_unit_item_has_property_containing_value (${ITEM_TYPE}
+                                                    ${ITEM}
+                                                    ${PROPERTY}
+                                                    ${PROP_TYPE}
+                                                    ${COMPARATOR}
+                                                    ${VALUE}
+                                                    RESULT)
 
     if (RESULT)
 
@@ -1319,11 +1335,11 @@ function (assert_does_not_have_property_containing_value ITEM_TYPE
 
 endfunction ()
 
-function (_file_exists FILE RESULT_VARIABLE)
+function (_cmake_unit_file_exists FILE RESULT_VARIABLE)
 
     set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-    if (NOT EXISTS ${FILE})
+    if (NOT EXISTS "${FILE}")
 
         set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
@@ -1331,13 +1347,13 @@ function (_file_exists FILE RESULT_VARIABLE)
 
 endfunction ()
 
-# assert_file_exists:
+# cmake_unit_assert_file_exists:
 #
 # Throws a non-fatal error if the file specified by FILE
 # does not exist on the filesystem
-function (assert_file_exists FILE)
+function (cmake_unit_assert_file_exists FILE)
 
-    _file_exists (${FILE} RESULT)
+    _cmake_unit_file_exists ("${FILE}" RESULT)
 
     if (NOT RESULT)
 
@@ -1347,13 +1363,13 @@ function (assert_file_exists FILE)
 
 endfunction ()
 
-# assert_file_does_not_exist:
+# cmake_unit_assert_file_does_not_exist:
 #
 # Throws a non-fatal error if the file specified by FILE
 # exists the filesystem
-function (assert_file_does_not_exist FILE)
+function (cmake_unit_assert_file_does_not_exist FILE)
 
-    _file_exists (${FILE} RESULT)
+    _cmake_unit_file_exists ("${FILE}" RESULT)
 
     if (RESULT)
 
@@ -1363,11 +1379,11 @@ function (assert_file_does_not_exist FILE)
 
 endfunction ()
 
-function (_file_contains_substring FILE SUBSTRING RESULT_VARIABLE)
+function (_cmake_unit_file_contains_substring FILE SUBSTRING RESULT_VARIABLE)
 
-    file (READ ${FILE} CONTENTS)
+    file (READ "${FILE}" CONTENTS)
 
-    _string_contains (${CONTENTS} ${SUBSTRING} RESULT)
+    _cmake_unit_string_contains (${CONTENTS} ${SUBSTRING} RESULT)
 
     # PARENT_SCOPE only propogates up one level so we need to
     # propogate the result here too
@@ -1375,44 +1391,45 @@ function (_file_contains_substring FILE SUBSTRING RESULT_VARIABLE)
 
 endfunction ()
 
-# assert_file_contains:
+# cmake_unit_assert_file_contains:
 #
 # Throws a non-fatal error if the file specified by FILE
 # does not contain the substring SUBSTRING
-function (assert_file_contains FILE SUBSTRING)
+function (cmake_unit_assert_file_contains FILE SUBSTRING)
 
-    _file_contains_substring (${FILE} ${SUBSTRING} RESULT)
+    _cmake_unit_file_contains_substring ("${FILE}" ${SUBSTRING} RESULT)
 
     if (NOT RESULT)
 
-        message (SEND_ERROR "The file ${FILE} does not contain the string "
-                 " ${SUBSTRING}")
+        message (SEND_ERROR
+                 "The file ${FILE} does not contain the string ${SUBSTRING}")
 
     endif ()
 
 endfunction ()
 
-# assert_file_does_not_contain:
+# cmake_unit_assert_file_does_not_contain:
 #
 # Throws a non-fatal error if the file specified by FILE
 # contains the substring SUBSTRING
-function (assert_file_does_not_contain FILE SUBSTRING)
+function (cmake_unit_assert_file_does_not_contain FILE SUBSTRING)
 
-    _file_contains_substring (${FILE} ${SUBSTRING} RESULT)
+    _cmake_unit_file_contains_substring ("${FILE}" ${SUBSTRING} RESULT)
 
     if (RESULT)
 
-        message (SEND_ERROR "The file ${FILE} contains the string ${SUBSTRING}")
+        message (SEND_ERROR
+                 "The file ${FILE} contains the string ${SUBSTRING}")
 
     endif ()
 
 endfunction ()
 
-function (_file_has_line_matching FILE PATTERN RESULT_VARIABLE)
+function (_cmake_unit_file_has_line_matching FILE PATTERN RESULT_VARIABLE)
 
     set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
-    file (READ ${FILE} CONTENTS)
+    file (READ "${FILE}" CONTENTS)
 
     # Split the string into individual lines
     string (REGEX REPLACE ";" "\\\;" CONTENTS "${CONTENTS}")
@@ -1432,35 +1449,35 @@ function (_file_has_line_matching FILE PATTERN RESULT_VARIABLE)
 
 endfunction ()
 
-# assert_file_has_line_matching
+# cmake_unit_assert_file_has_line_matching
 #
 # Throws a non-fatal error if the file specified by FILE
 # does not have a line that matches PATTERN
-function (assert_file_has_line_matching FILE PATTERN)
+function (cmake_unit_assert_file_has_line_matching FILE PATTERN)
 
-    _file_has_line_matching (${FILE} ${PATTERN} RESULT)
+    _cmake_unit_file_has_line_matching ("${FILE}" ${PATTERN} RESULT)
 
     if (NOT RESULT)
 
-        message (SEND_ERROR "The file ${FILE} does not have "
-                 "a line matching ${PATTERN}")
+        message (SEND_ERROR
+                 "The file ${FILE} does not have a line matching ${PATTERN}")
 
     endif ()
 
 endfunction ()
 
-# assert_file_does_not_have_line_matching
+# cmake_unit_assert_file_does_not_have_line_matching
 #
 # Throws a non-fatal error if the file specified by FILE
 # has a line that matches PATTERN
-function (assert_file_does_not_have_line_matching FILE PATTERN)
+function (cmake_unit_assert_file_does_not_have_line_matching FILE PATTERN)
 
-    _file_has_line_matching (${FILE} ${PATTERN} RESULT)
+    _cmake_unit_file_has_line_matching ("${FILE}" ${PATTERN} RESULT)
 
     if (RESULT)
 
-        message (SEND_ERROR "The file ${FILE} has "
-                 "a line matching ${PATTERN}")
+        message (SEND_ERROR
+                 "The file ${FILE} has a line matching ${PATTERN}")
 
     endif ()
 

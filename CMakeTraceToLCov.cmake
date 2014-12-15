@@ -33,7 +33,7 @@ file (STRINGS "${TRACEFILE}" TRACEFILE_CONTENTS)
 # Open the file and read it for "executable lines"
 # An executable line is any line that is not all whitespace or does not
 # begin with a comment (#)
-function (determine_executable_lines FILE)
+function (cmake_unit_determine_executable_lines FILE)
 
     # First see if we've already read this file
     list (FIND _ALL_COVERAGE_FILES "${FILE}" FILE_INDEX)
@@ -130,7 +130,8 @@ function (determine_executable_lines FILE)
             string (FIND "${LINE_STRIPPED_WITH_NO_COMMENTS}" "("
                     OPEN_BRACKET_INDEX)
             string (FIND "${LINE_STRIPPED_WITH_NO_COMMENTS}" ")"
-                    LAST_CLOSE_BRACKET_INDEX REVERSE)
+                    LAST_CLOSE_BRACKET_INDEX
+                    REVERSE)
 
             # Get the length of the line and the position of the last close
             # bracket index + 1. This way, if the close-bracket is the last
@@ -158,8 +159,7 @@ function (determine_executable_lines FILE)
 
                 endif ()
 
-            endif (IN_OPENED_BRACKET_REGION OR
-                   NOT OPEN_BRACKET_INDEX EQUAL -1)
+            endif ()
 
             # Finally look at the disqualifications and if none match
             # then append this line to EXECUTABLE_LINES
@@ -169,9 +169,7 @@ function (determine_executable_lines FILE)
 
                 list (APPEND EXECUTABLE_LINES ${LINE_COUNTER})
 
-            endif (NOT DISQUALIFIED_DUE_TO_MATCH AND
-                   NOT DISQUALIFIED_DUE_TO_IN_OPEN_BRACKET_REGION AND
-                   NOT DISQUALIFIED_BECAUSE_LINE_ONLY_WHITESPACE)
+            endif ()
 
             math (EXPR NEXT_LINE_INDEX "${NEXT_LINE_INDEX} + 1")
 
@@ -199,9 +197,9 @@ foreach (LINE ${TRACEFILE_CONTENTS})
     if ("${LINE}" MATCHES "FILE.*$")
 
         # Get the filename
-        string (LENGTH "FILE:" HEADER_LENGTH)
-        string (SUBSTRING "${LINE}" ${HEADER_LENGTH} -1 FILEPATH)
-        determine_executable_lines ("${FILEPATH}")
+        string (LENGTH "FILE:" FILENAME_HDR_LENGTH)
+        string (SUBSTRING "${LINE}" ${FILENAME_HDR_LENGTH} -1 FILEPATH)
+        cmake_unit_determine_executable_lines ("${FILEPATH}")
 
     endif ()
 
@@ -231,8 +229,7 @@ foreach (LINE ${TRACEFILE_CONTENTS})
 
         math (EXPR "${HIT_VARIABLE}" "${${HIT_VARIABLE}} + 1")
 
-    endif (NOT "${LINE}" MATCHES "TEST.*$" AND
-           NOT "${LINE}" MATCHES "FILE.*$")
+    endif ()
 
 endforeach ()
 
@@ -243,15 +240,16 @@ foreach (FILE ${_ALL_COVERAGE_FILES})
     # Find the relative path - this allows us to run
     # CMakeTraceToLCov from the top of the source directory and get
     # relative paths, which is useful for online tools like coveralls
-    string (LENGTH "${CMAKE_CURRENT_SOURCE_DIR}/" SOURCE_DIR_PATH_LENGTH)
-    string (SUBSTRING "${FILE}" ${SOURCE_DIR_PATH_LENGTH} -1
+    string (LENGTH "${CMAKE_CURRENT_SOURCE_DIR}/" SOURCEDIR_LENGTH)
+    string (SUBSTRING "${FILE}" ${SOURCEDIR_LENGTH} -1
             RELATIVE_PATH_TO_FILE)
 
     if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${RELATIVE_PATH_TO_FILE}")
 
-        message (FATAL_ERROR "Couldn't find ${RELATIVE_PATH_TO_FILE} relative "
-                             " to ${CMAKE_CURRENT_SOURCE_DIR}. Are you running "
-                             " this script from the toplevel source directory?")
+        message (FATAL_ERROR
+                 "Couldn't find ${RELATIVE_PATH_TO_FILE} relative "
+                 " to ${CMAKE_CURRENT_SOURCE_DIR}. Are you running "
+                 " this script from the toplevel source directory?")
 
     endif ()
 
@@ -264,9 +262,9 @@ foreach (FILE ${_ALL_COVERAGE_FILES})
     # SOURCE_FILE_HITS will be appended to the file later, prevent lots of
     # calls to fwrite
     set (SOURCE_FILE_HITS)
-    foreach (EXECUTABLE_LINE ${_${FILE}_EXECUTABLE_LINES})
+    foreach (EXECUTABLE_LINE "${_${FILE}_EXECUTABLE_LINES}")
 
-        set (HIT_VARIABLE _${FILE}_HIT_${EXECUTABLE_LINE})
+        set (HIT_VARIABLE "_${FILE}_HIT_${EXECUTABLE_LINE}")
         if (NOT "${${HIT_VARIABLE}}")
 
             list (APPEND SOURCE_FILE_HITS
