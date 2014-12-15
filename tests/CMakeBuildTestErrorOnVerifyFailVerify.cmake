@@ -9,15 +9,15 @@ include (CMakeUnit)
 cmake_unit_escape_string ("${CMAKE_COMMAND}" ESCAPED_CMAKE_COMMAND)
 
 set (TEST_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/TEST.output")
-assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "^.*CMake Error.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "^.*${ESCAPED_CMAKE_COMMAND}.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "^.*-P.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "^.*SampleTestVerify.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "^.*failed.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "^.*1.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "^.*CMake Error.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "^.*${ESCAPED_CMAKE_COMMAND}.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "^.*-P.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "^.*SampleTestVerify.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "^.*failed.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "^.*1.*$")

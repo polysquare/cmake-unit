@@ -10,5 +10,6 @@ include (CMakeUnit)
 
 cmake_unit_create_source_file_before_build (INCLUDES my_include.h)
 
-assert_file_has_line_matching ("${CMAKE_CURRENT_SOURCE_DIR}/Source.cpp"
-                               "^.include \"my_include.h\"$")
+set (SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/Source.cpp")
+cmake_unit_assert_file_has_line_matching ("${SOURCE_FILE}"
+                                          "^.include \"my_include.h\"$")

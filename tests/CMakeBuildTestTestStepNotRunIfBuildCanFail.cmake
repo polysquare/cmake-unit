@@ -12,6 +12,6 @@ file (WRITE "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME_VERIFY}.cmake" "")
 include (CMakeUnit)
 include (CMakeUnitRunner)
 
-bootstrap_cmake_unit ()
-add_cmake_build_test (${TEST_NAME} ${TEST_NAME_VERIFY}
-                      ALLOW_BUILD_FAIL)
+cmake_unit_init ()
+cmake_unit_build_test (${TEST_NAME} ${TEST_NAME_VERIFY}
+                       ALLOW_BUILD_FAIL)

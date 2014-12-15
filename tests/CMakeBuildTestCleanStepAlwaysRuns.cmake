@@ -14,6 +14,6 @@ include (CMakeUnitRunner)
 
 # Put something in the build directory before the test runs
 file (MAKE_DIRECTORY
-      ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}/build/check_file)
+      "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}/build/check_file")
 
-add_cmake_build_test (${TEST_NAME} ${TEST_NAME_VERIFY})
+cmake_unit_build_test (${TEST_NAME} ${TEST_NAME_VERIFY})

@@ -8,4 +8,4 @@
 include (CMakeUnit)
 
 cmake_unit_create_simple_executable (executable)
-export (TARGETS executable FILE ${CMAKE_CURRENT_BINARY_DIR}/exports.cmake)
+export (TARGETS executable FILE "${CMAKE_CURRENT_BINARY_DIR}/exports.cmake")

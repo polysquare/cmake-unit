@@ -11,4 +11,4 @@ include (CMakeUnit)
 file (SHA512 "${CMAKE_CURRENT_SOURCE_DIR}/CustomSource.cpp" CREATED_HASH)
 file (SHA512 "${CMAKE_CURRENT_BINARY_DIR}/CustomSource.cpp" GENERATED_HASH)
 
-assert_variable_is (CREATED_HASH STRING EQUAL "${GENERATED_HASH}")
+cmake_unit_assert_variable_is (CREATED_HASH STRING EQUAL "${GENERATED_HASH}")

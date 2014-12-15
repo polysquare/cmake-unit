@@ -13,11 +13,12 @@ include (CMakeUnit)
 include (CMakeUnitRunner)
 
 set (VARIABLE "test_value")
-bootstrap_cmake_unit (VARIABLES VARIABLE)
+cmake_unit_init (VARIABLES VARIABLE)
 
-add_cmake_test (${TEST_NAME})
+cmake_unit_config_test (${TEST_NAME})
 
 set (INITIAL_CACHE_FILE
-     ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}/initial_cache.cmake)
-assert_file_has_line_matching ("${INITIAL_CACHE_FILE}"
-                               "^.*set .*VARIABLE.*test_value.*CACHE.*$")
+     "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}/initial_cache.cmake")
+set (INITIAL_CACHE_REGEX "^.*set .*VARIABLE.*test_value.*CACHE.*$")
+cmake_unit_assert_file_has_line_matching ("${INITIAL_CACHE_FILE}"
+                                          "${INITIAL_CACHE_REGEX}")

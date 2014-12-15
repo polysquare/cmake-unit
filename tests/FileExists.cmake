@@ -1,15 +1,15 @@
 # /tests/FileExists.cmake
 #
-# Check the _file_exists matcher.
+# Check the _cmake_unit_file_exists matcher.
 #
 # See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 
-file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/File "")
+file (WRITE "${CMAKE_CURRENT_BINARY_DIR}/File" "")
 
-_file_exists (${CMAKE_CURRENT_BINARY_DIR}/File EXISTING_FILE)
-_file_exists (${CMAKE_CURRENT_BINARY_DIR}/NotFile NOT_EXISTING_FILE)
+_cmake_unit_file_exists ("${CMAKE_CURRENT_BINARY_DIR}/File" FILE_EXISTS)
+_cmake_unit_file_exists ("${CMAKE_CURRENT_BINARY_DIR}/NotFile" NOT_FILE_EXISTS)
 
-assert_true (${EXISTING_FILE})
-assert_false (${NOT_EXISTING_FILE})
+cmake_unit_assert_true ("${FILE_EXISTS}")
+cmake_unit_assert_false ("${NOT_FILE_EXISTS}")
