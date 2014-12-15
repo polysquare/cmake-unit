@@ -10,6 +10,7 @@
 include (CMakeUnit)
 include (RunCMakeTraceToLCovOnCoveredFileCommon)
 
-assert_file_has_line_matching ("${LCOV_OUTPUT}" "^SF:.*FileForCoverage.*$")
-assert_file_has_line_matching ("${LCOV_OUTPUT}"
-                               "^SF:.*UnexecutedFileForCoverage.*$")
+cmake_unit_assert_file_has_line_matching ("${LCOV_OUTPUT}"
+                                          "^SF:.*FileForCoverage.*$")
+cmake_unit_assert_file_has_line_matching ("${LCOV_OUTPUT}"
+                                          "^SF:.*UnexecutedFileForCoverage.*$")

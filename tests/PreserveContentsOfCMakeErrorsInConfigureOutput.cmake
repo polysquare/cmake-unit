@@ -14,5 +14,5 @@ file (WRITE "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}.cmake"
       "message (FATAL_ERROR \"Fatal Error\\nOn Multiple Lines\")\n")
 file (WRITE "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}Verify.cmake" "")
 
-add_cmake_build_test ("${TEST_NAME}" "${TEST_NAME}Verify"
-                      ALLOW_CONFIGURE_FAIL)
+cmake_unit_build_test ("${TEST_NAME}" "${TEST_NAME}Verify"
+                       ALLOW_CONFIGURE_FAIL)

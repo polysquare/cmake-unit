@@ -6,4 +6,4 @@
 
 include (CMakeUnit)
 
-assert_file_exists ("${CMAKE_CURRENT_BINARY_DIR}/Source.cpp")
+cmake_unit_assert_file_exists ("${CMAKE_CURRENT_BINARY_DIR}/Source.cpp")

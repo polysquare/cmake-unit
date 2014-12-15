@@ -11,5 +11,6 @@ include (CMakeUnit)
 
 cmake_unit_create_source_file_before_build (FUNCTIONS custom_function)
 
-assert_file_has_line_matching ("${CMAKE_CURRENT_SOURCE_DIR}/Source.cpp"
-                               "^int custom_function ...$")
+set (SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/Source.cpp")
+cmake_unit_assert_file_has_line_matching ("${SOURCE_FILE}"
+                                          "^int custom_function ...$")

@@ -7,5 +7,7 @@
 include (CMakeUnit)
 
 set (TEST_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/TEST.output")
-assert_file_does_not_have_line_matching ("${TEST_OUTPUT}" "^.*CMake Error.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}" "^.*CMake Warning.*$")
+cmake_unit_assert_file_does_not_have_line_matching ("${TEST_OUTPUT}"
+                                                    "^.*CMake Error.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "^.*CMake Warning.*$")

@@ -11,4 +11,4 @@ include (CMakeUnit)
 cmake_unit_generate_source_file_during_build (GENERATED_DURING_TARGET)
 
 # File should not exist yet
-assert_file_does_not_exist ("${CMAKE_CURRENT_SOURCE_DIR}/Source.cpp")
+cmake_unit_assert_file_does_not_exist ("${CMAKE_CURRENT_SOURCE_DIR}/Source.cpp")

@@ -13,5 +13,5 @@ cmake_unit_get_target_location_from_exports ("${EXPORTS_FILE}"
                                              executable
                                              LOCATION)
 
-assert_file_exists ("${LOCATION}")
-assert_command_executes_with_success (COMMAND "${LOCATION}")
+cmake_unit_assert_file_exists ("${LOCATION}")
+cmake_unit_assert_command_executes_with_success (COMMAND "${LOCATION}")

@@ -1,19 +1,19 @@
 # /tests/ListContainsValue.cmake
 #
-# Check the _list_contains_value matcher.
+# Check the _cmake_unit_list_contains_value matcher.
 #
 # See LICENCE.md for Copyright information
 
 include (CMakeUnit)
 
 set (LIST
-     value
-     other_value)
+     v
+     ov)
 
-_list_contains_value (LIST STRING EQUAL "value" CONTAINS_VALUE)
-_list_contains_value (LIST STRING EQUAL "other_value" CONTAINS_OTHER_VALUE)
-_list_contains_value (LIST STRING EQUAL "does_not_contain" DOESNT_CONTAIN)
+_cmake_unit_list_contains_value (LIST STRING EQUAL "v" CONTAINS_VALUE)
+_cmake_unit_list_contains_value (LIST STRING EQUAL "ov" CONTAINS_OTHER_VALUE)
+_cmake_unit_list_contains_value (LIST STRING EQUAL "not_in" DOESNT_CONTAIN)
 
-assert_true (${CONTAINS_VALUE})
-assert_true (${CONTAINS_OTHER_VALUE})
-assert_false (${DOESNT_CONTAIN})
+cmake_unit_assert_true (${CONTAINS_VALUE})
+cmake_unit_assert_true (${CONTAINS_OTHER_VALUE})
+cmake_unit_assert_false (${DOESNT_CONTAIN})

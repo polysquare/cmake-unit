@@ -8,7 +8,8 @@
 include (CMakeUnit)
 
 set (TEST_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/TEST.output")
-assert_file_has_line_matching ("${TEST_OUTPUT}" "^.*CMake Error.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}" "^.*Fatal Error.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}" "^.*On Multiple Lines.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}" "^.*Call Stack.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}" "^.*CMake Error.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}" "^.*Fatal Error.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "^.*On Multiple Lines.*$")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}" "^.*Call Stack.*$")

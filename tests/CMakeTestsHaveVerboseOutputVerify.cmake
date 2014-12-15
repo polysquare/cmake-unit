@@ -12,12 +12,12 @@ cmake_unit_escape_string ("${CMAKE_COMMAND}" ESCAPED_CMAKE_COMMAND)
 
 set (TEST_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/TEST.output")
 
-set (FIRST_CUSTOM_COMMAND_CMAKE_REGEX
+set (FIRST_CUSTOM_COMMAND_REGEX
      "^.*${ESCAPED_CMAKE_COMMAND}.*-E touch .*FirstCommand.cpp.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "${FIRST_CUSTOM_COMMAND_CMAKE_REGEX}")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "${FIRST_CUSTOM_COMMAND_REGEX}")
 
-set (SECOND_CUSTOM_COMMAND_CMAKE_REGEX
+set (SECOND_CUSTOM_COMMAND_REGEX
      "^.*${ESCAPED_CMAKE_COMMAND}.*-E touch .*SecondCommand.cpp.*$")
-assert_file_has_line_matching ("${TEST_OUTPUT}"
-                               "${SECOND_CUSTOM_COMMAND_CMAKE_REGEX}")
+cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
+                                          "${SECOND_CUSTOM_COMMAND_REGEX}")

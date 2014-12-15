@@ -7,5 +7,5 @@
 include (CMakeUnit)
 
 set (FILE_THAT_SHOULD_NOT_EXIST
-     ${CMAKE_CURRENT_BINARY_DIR}/SampleTest/build/check_file)
-assert_file_exists (${FILE_THAT_SHOULD_NOT_EXIST})
+     "${CMAKE_CURRENT_BINARY_DIR}/SampleTest/build/check_file")
+cmake_unit_assert_file_exists (${FILE_THAT_SHOULD_NOT_EXIST})
