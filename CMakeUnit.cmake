@@ -213,7 +213,7 @@ function (_cmake_unit_get_created_source_file_contents CONTENTS_RETURN
     endif ()
 
     # Header guards (if header)
-    if ("${SOURCE_TYPE}" STREQUAL "HEADER")
+    if (SOURCE_TYPE STREQUAL "HEADER")
 
         get_filename_component (HEADER_BASENAME "${GET_CREATED_NAME}" NAME)
         string (REPLACE "." "_" HEADER_BASENAME "${HEADER_BASENAME}")
@@ -744,31 +744,37 @@ function (_cmake_unit_variable_is VARIABLE
 
     set (${RESULT_VARIABLE} FALSE PARENT_SCOPE)
 
-    if ("${TYPE}" MATCHES "STRING")
+    # Prevent automatic deference of arguments which are intended to be
+    # values and not variables
+    set (STRING_TYPE "STRING")
+    set (INTEGER_TYPE "INTEGER")
+    set (BOOL_TYPE "BOOL")
 
-        if ("${${VARIABLE}}" STR${COMPARATOR} "${VALUE}")
+    if (TYPE MATCHES "${STRING_TYPE}")
 
-            set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
-
-        endif ()
-
-    elseif ("${TYPE}" MATCHES "INTEGER")
-
-        if ("${${VARIABLE}}" ${COMPARATOR} ${VALUE})
+        if ("${${VARIABLE}}" STR${COMPARATOR} VALUE)
 
             set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
         endif ()
 
-    elseif ("${TYPE}" MATCHES "BOOL")
+    elseif (TYPE MATCHES "${INTEGER_TYPE}")
 
-        if ("${COMPARATOR}" STREQUAL "EQUAL")
+        if ("${${VARIABLE}}" ${COMPARATOR} VALUE)
 
-            if (${${VARIABLE}} AND ${VALUE})
+            set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
+
+        endif ()
+
+    elseif (TYPE MATCHES "${BOOL_TYPE}")
+
+        if (COMPARATOR STREQUAL "EQUAL")
+
+            if (${${VARIABLE}} AND VALUE)
 
                 set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
-            elseif (NOT ${${VARIABLE}} AND NOT ${VALUE})
+            elseif (NOT ${${VARIABLE}} AND NOT VALUE)
 
                 set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
