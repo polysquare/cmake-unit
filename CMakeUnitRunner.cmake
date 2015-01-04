@@ -18,6 +18,12 @@
 # much longer to execute and should be used sparingly.
 #
 # See LICENCE.md for Copyright information
+if (_CMAKE_UNIT_RUNNER_INCLUDED)
+
+    return ()
+
+endif ()
+set (_CMAKE_UNIT_RUNNER_INCLUDED TRUE)
 
 include (CMakeParseArguments)
 include (CMakeUnit)
@@ -192,10 +198,24 @@ function (_cmake_unit_discover_functions_in NAMESPACE RETURN_LIST)
 
 endfunction ()
 
-function (cmake_unit_discover_tests_in NAMESPACE RETURN_LIST)
+function (_cmake_unit_discover_tests_in NAMESPACE RETURN_LIST)
 
-    _cmake_unit_discover_functions_in ("${NAMESPACE}_test" TESTS_LIST)
-    set (${RETURN_LIST} ${TESTS_LIST} PARENT_SCOPE)
+    # Check the cache global property _CMAKE_UNIT_DISCOVERED_TESTS_${NAMESPACE}
+    # first. If there's no value, then discover tests and save them in the
+    # cache.
+    get_property (DISCOVERED_TESTS
+                  GLOBAL PROPERTY "_CMAKE_UNIT_DISCOVERED_TESTS_${NAMESPACE}")
+
+    if (NOT DISCOVERED_TESTS)
+
+        _cmake_unit_discover_functions_in ("${NAMESPACE}_test" DISCOVERED_TESTS)
+        set_property (GLOBAL PROPERTY
+                      "_CMAKE_UNIT_DISCOVERED_TESTS_${NAMESPACE}"
+                      ${DISCOVERED_TESTS})
+
+    endif ()
+
+    set (${RETURN_LIST} ${DISCOVERED_TESTS} PARENT_SCOPE)
 
 endfunction ()
 
@@ -204,8 +224,11 @@ function (cmake_unit_init)
     cmake_parse_arguments (CMAKE_UNIT_INIT
                            ""
                            ""
-                           "TESTS;COVERAGE_FILES"
+                           "NAMESPACE;COVERAGE_FILES"
                            ${ARGN})
+
+    _cmake_unit_discover_tests_in (${CMAKE_UNIT_INIT_NAMESPACE}
+                                   CMAKE_UNIT_INIT_TESTS)
 
     if (CMAKE_UNIT_LOG_COVERAGE)
 
@@ -287,6 +310,47 @@ function (_cmake_unit_spacify RETURN_SPACED)
 
 endfunction ()
 
+# Gets a set_property line in a script which contains the forwarded
+# version of our GLOBAL property GLOBAL
+function (_cmake_unit_forwarded_script_prop_line RETURN_LINE PROPERTY)
+
+    get_property (VALUE GLOBAL PROPERTY "${PROPERTY}")
+    _cmake_unit_spacify (SPACIFIED_VALUE LIST ${VALUE})
+    set (${RETURN_LINE}
+         "set_property (GLOBAL PROPERTY ${PROPERTY} ${SPACIFIED_VALUE})\n"
+         PARENT_SCOPE)
+
+endfunction ()
+
+# Generates a header common to all child scripts.
+function (_cmake_unit_get_child_invocation_script_header HEADER_RETURN)
+
+    # Get the cached dispatch table names for TEST_NAME and forward them
+    # on to the child script. The list must be converted into a space
+    # separated string.
+    set (CACHED_DISPATCH_TABLE_PROPERTY
+         "_CMAKE_UNIT_DISPATCH_CONFIGURE_DISPATCH_FOR_${TEST_NAME}")
+    _cmake_unit_forwarded_script_prop_line (DISPATCH_TABLE_PROP_LINE
+                                            ${CACHED_DISPATCH_TABLE_PROPERTY})
+
+    # Get the list of tests for this namespace. The namespace is every character
+    # before the word "_test" in the TEST_NAME
+    string (FIND "${TEST_NAME}" "_test" TEST_MARKER_INDEX)
+    string (SUBSTRING "${TEST_NAME}" 0 ${TEST_MARKER_INDEX} NAMESPACE)
+    set (CACHED_DISCOVERED_TESTS_PROPERTY
+         "_CMAKE_UNIT_DISCOVERED_TESTS_${NAMESPACE}")
+    _cmake_unit_forwarded_script_prop_line (DISCOVERED_TESTS_PROP_LINE
+                                            ${CACHED_DISCOVERED_TESTS_PROPERTY})
+
+    set (${HEADER_RETURN}
+         "set (_CMAKE_UNIT_ACTIVE_TEST ${TEST_NAME})\n"
+         "set (CMAKE_GENERATOR \"${CMAKE_GENERATOR}\")\n"
+         ${DISPATCH_TABLE_PROP_LINE}
+         ${DISCOVERED_TESTS_PROP_LINE}
+         PARENT_SCOPE)
+
+endfunction ()
+
 function (_cmake_unit_preconfigure_test)
 
     cmake_parse_arguments (PRECONFIGURE_TEST
@@ -306,9 +370,11 @@ function (_cmake_unit_preconfigure_test)
 
     _cmake_unit_spacify (COVERAGE_FILES LIST ${COVERAGE_FILES_LIST})
 
+    _cmake_unit_get_child_invocation_script_header (COMMON_PROLOGUE)
+
     file (WRITE "${DRIVER_SCRIPT}"
           "set (_CMAKE_UNIT_PHASE CLEAN)\n"
-          "set (_CMAKE_UNIT_ACTIVE_TEST ${TEST_NAME})\n"
+          ${COMMON_PROLOGUE}
           "set (CMAKE_GENERATOR \"${CMAKE_GENERATOR}\")\n"
           "set (CMAKE_UNIT_LOG_COVERAGE ${CMAKE_UNIT_LOG_COVERAGE}\n"
           "     CACHE BOOL \"\" FORCE)\n"
@@ -515,13 +581,15 @@ function (cmake_unit_invoke_configure)
 
     endif ()
 
+    _cmake_unit_get_child_invocation_script_header (COMMON_PROLOGUE)
+
     # Write out CMakeLists.txt. This is a special case where we re-include
     # everything, this time in project-processing mode
     file (WRITE "${TEST_CMAKELISTS_TXT}"
           "cmake_minimum_required (VERSION 2.8 FATAL_ERROR)\n"
           "project (${TEST_NAME} ${INVOKE_CONFIGURE_LANGUAGES})\n"
           "set (_CMAKE_UNIT_PHASE CONFIGURE)\n"
-          "set (_CMAKE_UNIT_ACTIVE_TEST ${TEST_NAME})\n"
+          ${COMMON_PROLOGUE}
           "include (CTest)\n"
           "enable_testing ()\n"
           "include (\"${CMAKE_CURRENT_LIST_FILE}\")\n")
@@ -931,6 +999,82 @@ function (_cmake_unit_get_override_table_for_allowed_failures RETURN_TABLE)
 
 endfunction ()
 
+function (_cmake_unit_compute_dispatch_table_for_test DISPATCH_TABLE_RETURN)
+
+    set (COMPUTE_DISPATCH_TABLE_SINGLEVAR_ARGS TEST_NAME)
+    set (COMPUTE_DISPATCH_TABLE_MULTIVAR_ARGS USER_OPTIONS)
+
+    cmake_parse_arguments (COMPUTE_DISPATCH_TABLE
+                           ""
+                           "${COMPUTE_DISPATCH_TABLE_SINGLEVAR_ARGS}"
+                           "${COMPUTE_DISPATCH_TABLE_MULTIVAR_ARGS}"
+                           ${ARGN})
+
+    # First look up this test name as part of the
+    # _CMAKE_UNIT_DISPATCH_CONFIGURE_DISPATCH_FOR_${TEST_NAME} property. If
+    # there's a value, then use that (as a cache) instead of recomputing it here
+    # as recomputing the value all the time is quite expensive. The value
+    # never changes between runs.
+    get_property (DISPATCH_TABLE
+                  GLOBAL PROPERTY
+                  "_CMAKE_UNIT_DISPATCH_CONFIGURE_DISPATCH_FOR_${TEST_NAME}")
+
+    if (NOT DISPATCH_TABLE)
+
+        # This is the default dispatch table for each phase if the user
+        # does not override what to do with
+        set (DEFAULT_DISPATCH
+             CLEAN cmake_unit_invoke_clean
+             INVOKE_CONFIGURE cmake_unit_invoke_configure
+             CONFIGURE _cmake_unit_no_op
+             INVOKE_BUILD cmake_unit_invoke_build
+             INVOKE_TEST cmake_unit_invoke_test
+             VERIFY _cmake_unit_no_op)
+
+        set (OVERRIDABLE ${_CMAKE_UNIT_OVERRIDABLE_PHASES})
+        set (USER_ARGN ${COMPUTE_DISPATCH_TABLE_USER_OPTIONS})
+
+        _cmake_unit_override_func_table (OVERRIDDEN_DISPATCH
+                                         OVERRIDABLE_ENTRIES ${OVERRIDABLE}
+                                         CURRENT_DISPATCH ${DEFAULT_DISPATCH}
+                                         USER_OPTIONS ${USER_ARGN})
+
+        _cmake_unit_get_override_table_for_allowed_failures (ALLOWED_FAIL_TABLE
+                                                             USER_OPTIONS
+                                                             ${USER_ARGN})
+
+        _cmake_unit_override_func_table (OVERRIDDEN_DISPATCH
+                                         OVERRIDABLE_ENTRIES ${OVERRIDABLE}
+                                         CURRENT_DISPATCH ${OVERRIDDEN_DISPATCH}
+                                         USER_OPTIONS ${ALLOWED_FAIL_TABLE})
+
+        set (DISPATCH_TABLE
+             ${OVERRIDDEN_DISPATCH}
+             PRECONFIGURE _cmake_unit_preconfigure_test
+             COVERAGE _cmake_unit_coverage)
+
+        # Set the _CMAKE_UNIT_DISPATCH_CONFIGURE_DISPATCH_FOR_${TEST_NAME}
+        # property.
+        set_property (GLOBAL PROPERTY
+                      "_CMAKE_UNIT_DISPATCH_CONFIGURE_DISPATCH_FOR_${TEST_NAME}"
+                      ${DISPATCH_TABLE})
+
+    endif ()
+
+    set (${DISPATCH_TABLE_RETURN} ${DISPATCH_TABLE} PARENT_SCOPE)
+
+endfunction ()
+
+# Variables we implicitly dereference indicating the next phase after
+# a current one.
+set (_CMAKE_UNIT_PHASE_AFTER_CLEAN # NOLINT:unused/private_var
+     INVOKE_CONFIGURE)
+set (_CMAKE_UNIT_PHASE_AFTER_INVOKE_CONFIGURE # NOLINT:unused/private_var
+     INVOKE_BUILD)
+set (_CMAKE_UNIT_PHASE_AFTER_INVOKE_BUILD # NOLINT:unused/private_var
+     INVOKE_TEST)
+set (_CMAKE_UNIT_PHASE_AFTER_INVOKE_TEST VERIFY) # NOLINT:unused/private_var
+set (_CMAKE_UNIT_PHASE_AFTER_VERIFY COVERAGE) # NOLINT:unused/private_var
 
 function (_cmake_unit_configure_test_internal)
 
@@ -951,35 +1095,9 @@ function (_cmake_unit_configure_test_internal)
                            "${CMAKE_UNIT_OVERRIDABLE_PHASES}"
                            ${ARGN})
 
-    # This is the default dispatch table for each phase if the user
-    # does not override what to do with
-    set (DEFAULT_DISPATCH
-         CLEAN cmake_unit_invoke_clean
-         INVOKE_CONFIGURE cmake_unit_invoke_configure
-         CONFIGURE _cmake_unit_no_op
-         INVOKE_BUILD cmake_unit_invoke_build
-         INVOKE_TEST cmake_unit_invoke_test
-         VERIFY _cmake_unit_no_op)
-
-    set (OVERRIDABLE_PHASES ${_CMAKE_UNIT_OVERRIDABLE_PHASES})
-
-    _cmake_unit_override_func_table (OVERRIDDEN_DISPATCH
-                                     OVERRIDABLE_ENTRIES ${OVERRIDABLE_PHASES}
-                                     CURRENT_DISPATCH ${DEFAULT_DISPATCH}
-                                     USER_OPTIONS ${ARGN})
-
-    _cmake_unit_get_override_table_for_allowed_failures (ALLOWED_FAIL_TABLE
-                                                         USER_OPTIONS ${ARGN})
-
-    _cmake_unit_override_func_table (OVERRIDDEN_DISPATCH
-                                     OVERRIDABLE_ENTRIES ${OVERRIDABLE_PHASES}
-                                     CURRENT_DISPATCH ${OVERRIDDEN_DISPATCH}
-                                     USER_OPTIONS ${ALLOWED_FAIL_TABLE})
-
-    set (CMAKE_UNIT_TEST_DISPATCH
-         ${OVERRIDDEN_DISPATCH}
-         PRECONFIGURE _cmake_unit_preconfigure_test
-         COVERAGE _cmake_unit_coverage)
+    _cmake_unit_compute_dispatch_table_for_test (CMAKE_UNIT_TEST_DISPATCH
+                                                 TEST_NAME "${TEST_NAME}"
+                                                 USER_OPTIONS ${ARGN})
 
     # Get the function for this phase
     _cmake_unit_get_func_for_phase (PHASE_FUNCTION
@@ -1011,31 +1129,11 @@ function (_cmake_unit_configure_test_internal)
                                OUTPUT_FILE "${TEST_BINARY_DIR}/${PHASE}.output"
                                ERROR_FILE "${TEST_BINARY_DIR}/${PHASE}.error")
 
-    # The use of the @ before the phase name is a hack here to
-    # allow us to continue using cmake_parse_arguments, even though the
-    # (ostensible) variable names are actually part of the names
-    # being matched
-    set (CMAKE_UNIT_NEXT_PHASE_TABLE
-         CLEAN @INVOKE_CONFIGURE
-         INVOKE_CONFIGURE @INVOKE_BUILD
-         INVOKE_BUILD @INVOKE_TEST
-         INVOKE_TEST @VERIFY
-         VERIFY @COVERAGE)
+    # Implicitly dereference _CMAKE_UNIT_PHASE_AFTER_${PHASE} and if there's
+    # a phase to go to, recursively call this function and enter the next phase.
+    set (NEXT_PHASE "${_CMAKE_UNIT_PHASE_AFTER_${PHASE}}")
+    if (NEXT_PHASE)
 
-    cmake_parse_arguments (CMAKE_UNIT_NEXT_PHASE_FOR
-                           ""
-                           ""
-                           "${CMAKE_UNIT_PHASES}"
-                           ${CMAKE_UNIT_NEXT_PHASE_TABLE})
-
-
-    if (CMAKE_UNIT_NEXT_PHASE_FOR_${PHASE})
-
-        # Remove first @ from next phase name
-        string (SUBSTRING ${CMAKE_UNIT_NEXT_PHASE_FOR_${PHASE}} 1 -1 NEXT_PHASE)
-
-        # Sets with local scope, but since we are calling the function
-        # recursively, it will have the appearance of global scope
         set (_CMAKE_UNIT_PHASE ${NEXT_PHASE})
         _cmake_unit_configure_test_internal (${ARGN})
 

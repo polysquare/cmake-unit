@@ -160,9 +160,7 @@ function (_cmake_unit_test_gen_discover_from_contents)
           "set (NEXT_TESTS)\n"
           "set (CMAKE_UNIT_PARENT_BINARY_DIR\n"
           "     \"${CMAKE_CURRENT_BINARY_DIR}\")\n"
-          "cmake_unit_discover_tests_in (\"${GEN_DISCOVER_NAMESPACE}\"\n"
-          "                              NEXT_TESTS)\n"
-          "cmake_unit_init (TESTS \${NEXT_TESTS}\n"
+          "cmake_unit_init (NAMESPACE \"${GEN_DISCOVER_NAMESPACE}\"\n"
           "                 ${INIT_OPTIONS})\n")
 
     file (WRITE "${AUX_CMAKELISTS_FILE}"
@@ -2275,8 +2273,7 @@ function (cmake_unit_test_missed_lines_have_non_zero_d_a_counter)
 
 endfunction ()
 
-cmake_unit_discover_tests_in ("cmake_unit" ALL_TESTS)
-cmake_unit_init (TESTS ${ALL_TESTS}
+cmake_unit_init (NAMESPACE "cmake_unit"
                  COVERAGE_FILES
                  "${CMAKE_UNIT_DIRECTORY}/CMakeUnitRunner.cmake"
                  "${CMAKE_UNIT_DIRECTORY}/CMakeTraceToLCov.cmake"
