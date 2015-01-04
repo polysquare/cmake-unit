@@ -186,22 +186,16 @@ options you specify.
 
 #### Discovering tests and running them ####
 
-Tests can be discovered by using the `cmake_unit_discover_tests_in` function.
-Namespace should be set to the namespace that your tests live in (each test
-function name is prefixed by its namespace). RETURN_LIST is a variable that
-stores the discovered test names. You can add further tests to this list
-if they're not trivial to auto-discover (for instance, they are
-table-generated).
-
 `cmake_unit_init` is what handles the registration and running of each
-discovered test function. It takes a list of test function names as the
-value to its `TESTS` keyword argument. It also takes a list of files considered
-to be candidates for code coverage as `COVERAGE_FILES`.
+discovered test function. It takes a namespace as the argument to the keyword
+NAMESPACE. This is the name each test is prefixed with (followed by _test).
+Any function matching the pattern ^${namespace}_test_.*$ will be automatically
+registered. It also takes a list of files considered to be candidates for
+code coverage as `COVERAGE_FILES`.
 
 As an example, see the following:
 
-    cmake_unit_discover_tests_in (namespace ALL_TESTS)
-    cmake_unit_init (TESTS ${ALL_TESTS}
+    cmake_unit_init (NAMESPACE namespace
                      COVERAGE_FILES "${PROJECT_DIR}/Module.cmake")
 
 ### CMakeUnit ###
