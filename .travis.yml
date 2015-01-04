@@ -19,7 +19,7 @@ before_install:
 script:
   - mkdir -p tests/build
   - pushd tests/build
-  - cmake .. -Wdev --warn-uninitialized -G "${CMAKE_GENERATOR}" -DCMAKE_UNIT_LOG_COVERAGE=1
+  - cmake .. -Wdev --warn-uninitialized -G "${CMAKE_GENERATOR}" -DCMAKE_UNIT_LOG_COVERAGE=1 -DCMAKE_UNIT_COVERAGE_FILE=coverage.trace
   - ctest --output-on-failure
   - popd
   # Find all errors except:
@@ -38,8 +38,8 @@ script:
   # Lint files for polysquare cmake style guide.
   # access/other_private is disabled on .cmake files as the tests use private functions for now.
   - find . -type f -name "*.cmake" -not -path "./tests/build/*" -not -name "*FileForCoverage.cmake" | xargs polysquare-cmake-linter --blacklist access/other_private --namespace cmake_unit --indent 4
-  - find . -type f -name "CMakeLists.txt" -not -path "./tests/build/*" | xargs polysquare-cmake-linter --namespace cmake_unit --indent 4
+  - find . -type f -name "CMakeLists.txt" -not -path "./tests/build/*" | xargs polysquare-cmake-linter --blacklist access/other_private --namespace cmake_unit --indent 4
 after_success:
-  - cmake -DTRACEFILE=tests/build/CMakeUnitTests.trace -DLCOV_OUTPUT=tests/build/coverage.info -P CMakeTraceToLCov.cmake
+  - cmake -DTRACEFILE=tests/build/coverage.trace -DLCOV_OUTPUT=tests/build/coverage.info -P CMakeTraceToLCov.cmake
   - coveralls-lcov tests/build/coverage.info
   - popd

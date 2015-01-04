@@ -39,30 +39,170 @@ three files.
 ### CMakeUnitRunner ###
 
 `CMakeUnitRunner` contains the main "runner" script for loading and executing
-test scripts.  Include this file in the `CMakeLists.txt` which is in the same
-directory as your test scripts.
+test scripts.  Include this file in the `CMakeLists.txt`.
 
-`cmake_unit_init` must be called before calling either `cmake_unit_config_test`
-or `cmake_unit_build_test`.  This performs some initial internal intialization
-for the test system.  `cmake_unit_init` has two multi-variable argument lists:
- 1.  `VARIABLES`: A list of variables whose current value at the time of the
-call to `cmake_unit_init` will be available in each test's configure and verify
-stages
- 2.  `COVERAGE_FILES`: A list of absolute paths to files which should be
-considered candidates for code coverage reporting.  If a file is not specified
-here, no coverage statistics will be reocorded for it.
+Tests are defined inline as functions. They are automatically discovered by
+cmake-unit and the name of the function must be in the format of
+`${your_namespace}_test_{test_name}`. Within each test function are
+function definitions used to control each "phase" of the test's build. After
+these functions are called, a call to `cmake_unit_configure_test` ties all
+the phases functions together into a single test.
 
-`cmake_unit_config_test` create a CTest test which will load the specified
-script (with the `.cmake` extension removed) as though it were an actual CMake
-project, so that you have full access to the cache.  From here, you can include
-your other macros and set up a small project in order to exercise them.  Your
-project will not be built, only configured.
+Test functions are subdivided into "phases", each phase having its own
+script that can be run in place of the default. Usually you will want to
+override the CONFIGURE or VERIFY phases in order to provide your own
+project set-up and verification scripts. The build of each project goes
+through the following phases, in order:
 
-`cmake_unit_build_test` is the slightly more heavyweight version of
-`cmake_unit_config_test`.  It takes both the name of a script to perform the
-configure step and the name of a script which is executed *as a script* (not as
-a project) after the build completes.  This can be used to check that a project
-was built in the expected way.
+* `PRECONFIGURE`
+* `CLEAN`
+* `INVOKE_CONFIGURE`
+* `CONFIGURE`
+* `INVOKE_BUILD`
+* `INVOKE_TEST`
+* `VERIFY`
+* `COVERAGE`
+
+For each phase, a name of a function can be provided which will "override"
+the default function called for that phase. Some phases are called within
+different CMake invocations, so you shouldn't assume that state can be
+shared between the phase functions.
+
+The name of each phase is a keyword argument to `cmake_unit_configure_test`.
+Following the phase name, further options can be specified for each phase.
+Some common options are:
+
+* `COMMAND`: The name of a function to run when this phase is encountered.
+* `ALLOW_FAIL`: A keyword specifying that this phase is permitted to fail
+                (and further, that no phase after this one should be run).
+
+#### The `PRECONFIGURE` phase ####
+
+This is the first phase that is run for the test. It cannot be overridden.
+It does some initial setup for the test itself, including writing out
+a special driver script which will be used to invoke this test at CTest time.
+
+#### The `CLEAN` phase ####
+
+This phase is responsible for cleaning the build directory of the test. By
+default, it calls `cmake_unit_invoke_clean`, which just removes the test
+project's `CMAKE_BINARY_DIR`.
+
+#### The `INVOKE_CONFIGURE` phase ####
+
+This phase is responsible for writing out a stub `CMakeLists.txt` and jumping
+invoking `cmake` on the resulting project folder. By default it will call
+`cmake_unit_invoke_configure. The written out `CMakeLists.txt` will do some
+setup for the test project, including calling the `project` command.
+
+`cmake_unit_invoke_configure` will not configure any languages by default. This
+is to prevent unecessary overhead when testing on platforms where configuring
+language support is quite slow (for instance, Visual Studio and XCode). Instead
+of overriding the command, usually the only action you will need to take if
+you need language support is to set the `LANGUAGES` option (eg, to `C CXX`).
+
+#### The `CONFIGURE` phase ####
+
+This phase is responsible for actually configuring the project. Any commands
+run inside this phase are effectively run as though CMake was configuring
+a project by processing a `CMakeLists.txt`, so the full range of commands
+are available. Usually you will want to override the `COMMAND` and configure
+your project as required (or make assertions).
+
+#### The `INVOKE_BUILD` phase ####
+
+This phase is responsible for invoking `cmake --build`. Usually the `COMMAND`
+will not need to be overridden, but if the build can fail or if the project
+should not be built at all, then `ALLOW_FAIL` or `COMMAND NONE` should be
+specified respectively.
+
+The `TARGET` option allows you to specify a custom target to build instead
+of the default one.
+
+#### The `INVOKE_TEST` phase ####
+
+This phase is responsible for invoking `ctest`. Usually the `COMMAND` will
+not need to be overridden, unless you need to invoke `ctest`in a special way.
+
+#### The `VERIFY` phase ####
+
+This phase is responsible for verifying that the configure, build and test
+steps went the way you expected. It is executed after the final step of the
+configure-build-test cycle is completed for this project.
+
+You can inspect the standard output and error of each of these steps. Use the
+`cmake_unit_get_log_for` command in order to fetch the path to these log files.
+
+#### The `COVERAGE` phase ####
+
+This phase is responsible for collecting tracefile output and turning it into
+line-coverage statistics. It is not overridable.
+
+#### An example of a test ####
+
+Here is an example of how a test looks in practice:
+
+    function (namespace_test_one)
+
+        function (_namespace_configure)
+
+            cmake_unit_create_simple_library (library SHARED FUNCTIONS function)
+            cmake_unit_create_simple_executable (executable)
+            target_link_libraries (executable library)
+
+            cmake_unit_assert_target_is_linked_to (executable library)
+
+        endfunction ()
+
+        function (_namespace_verify)
+
+            cmake_unit_get_log_for (INVOKE_BUILD OUTPUT BUILD_OUTPUT)
+
+            cmake_unit_assert_file_has_line_matching ("${BUILD_OUTPUT}"
+                                                      "^.*executable.*$")
+
+        endfunction ()
+
+        cmake_unit_configure_test (INVOKE_CONFIGURE LANGUAGES C CXX
+                                   CONFIGURE COMMAND _namespace_configure
+                                   VERIFY COMMAND _namespace_verify)
+
+    endfunction ()
+
+The `_namespace_configure` and `_namespace_verify` functions are defined within
+the `namespace_test_one` function. They are passed to the `COMMAND` keyword for
+the `CONFIGURE` and `VERIFY` phases on `cmake_unit_configure_test`.
+
+`LANGUAGES C CXX` is passed to `INVOKE_CONFIGURE`. This ensures that compilers
+are tested and CMake is set up to build and link C and C++ binary code.
+
+#### Shortcut to skip the build phase ####
+
+If there's no need to build and test the test project, or to verify it, you
+can use `cmake_unit_configure_config_only_test` in place of
+`cmake_unit_configure_test`. This will pass `INVOKE_BUILD COMMAND NONE` and
+`INVOKE_TEST COMMAND NONE` to `cmake_unit_configure_test` along with whatever
+options you specify.
+
+#### Discovering tests and running them ####
+
+Tests can be discovered by using the `cmake_unit_discover_tests_in` function.
+Namespace should be set to the namespace that your tests live in (each test
+function name is prefixed by its namespace). RETURN_LIST is a variable that
+stores the discovered test names. You can add further tests to this list
+if they're not trivial to auto-discover (for instance, they are
+table-generated).
+
+`cmake_unit_init` is what handles the registration and running of each
+discovered test function. It takes a list of test function names as the
+value to its `TESTS` keyword argument. It also takes a list of files considered
+to be candidates for code coverage as `COVERAGE_FILES`.
+
+As an example, see the following:
+
+    cmake_unit_discover_tests_in (namespace ALL_TESTS)
+    cmake_unit_init (TESTS ${ALL_TESTS}
+                     COVERAGE_FILES "${PROJECT_DIR}/Module.cmake")
 
 ### CMakeUnit ###
 
@@ -109,6 +249,30 @@ a value and type specified which matches the provided comparator.
 * `assert_file_contains`, `assert_file_does_not_contain`: Asserts that a file
 contains the substring specified.
 
+#### Overridable Phase Functions ####
+
+Each of these functions is a default for a phase of a cmake-unit test's build
+cycle. If they are overriden, they can be "chained up" to. `CALLER_ARGN` will
+be passed implicitly.
+
+##### `cmake_unit_clean` #####
+
+Cleans the project `BINARY_DIRECTORY` (as specified in `CALLER_ARGN`).
+
+##### `cmake_unit_invoke_configure` #####
+
+Creates a `CMakeLists.txt` for this project which does some initial setup and
+then jumps to the function defined for `CONFIGURE`. `cmake` is invoked on a
+build directory for the folder containing the created `CMakeLists.txt`.
+
+##### `cmake_unit_invoke_build` #####
+
+Invokes `cmake --build` on this project.
+
+##### `cmake_unit_invoke_test` #####
+
+Invokes `ctest -C Debug` on this project.
+
 #### Utility Functions ####
 
 `cmake-unit` also provides a few utility functions to make writing tests easier.
@@ -118,6 +282,14 @@ contains the substring specified.
 ###### `cmake_unit_escape_string` ######
 
 Escape all characters from INPUT and store in OUTPUT_VARIABLE
+
+##### Test data #####
+
+###### `cmake_unit_get_dirs` ######
+
+Reliably returns the binary and source directories for this test. You should
+use this instead of `CMAKE_CURRENT_SOURCE_DIR` and `CMAKE_CURRENT_BINARY_DIR`
+where possible, as it will be correct in every phase.
 
 ##### Source File Generation #####
 
@@ -257,6 +429,12 @@ to export the `CMAKE_CFG_INTDIR` property.
 * `OUTPUT_FILE`: Filename to read `CMAKE_CFG_INTDIR` variable from.
 * `LOCATION_RETURN`: Variable to store `CMAKE_CFG_INTDIR` value into.
 
+###### `cmake_unit_get_log_for` ######
+
+Gets the `LOG_TYPE` log for `PHASE` and stores it in the variable specified
+in `LOG_FILE_RETURN`. The returned log is a path to a file. Valid values
+for the `LOG_TYPE` parameter are  `ERROR` and `OUTPUT`.
+
 ### CMakeTraceToLCov ###
 
 `CMakeTraceToLCov` is a script that converts a tracefile generated by using
@@ -280,84 +458,35 @@ The following issues are known at the time of writing
  * polysquare/cmake-unit#57 : Coverage file paths may not contain square
                               brackets ([])
 
-## Example ##
+## Technical Implementation Notes ##
 
-Here is an example using an assumed `CustomTool` macro that you might want to
-test.  We assume that it contains a function called `custom_tool_run_on_source`
-which runs an executable called `custom-tool` at build time.  We also assume
-that `cmake-unit` is checked out as a submodule in the root directory of your
-project and that you have a directory called `test` in the root directory of
-your project.
+`cmake-unit` uses some clever hacks under the hood in order to achieve its
+"streamlined" test definition syntax.
 
-First you should create a `CMakeLists.txt`.  This must contain a small amount of
-boilerplate to include everything and bootstrap cmake-unit:
+### Calling arbitrary functions ###
 
-    project (CustomToolTests)
-    cmake_minimum_required (VERSION 2.8)
+Test auto-discovery, dynamic test loading and custom phase specification is
+all achieved through the ability to call arbitrary functions. CMake doesn't
+offer any syntax to do so, but there is a back door using a debugging feature
+called [`variable_watch`](http://www.cmake.org/cmake/help/v3.1/command/variable_watch.html?highlight=variable_watch).
 
-    get_filename_component (CUSTOM_TOOL_DIRECTORY
-                            "${CMAKE_CURRENT_SOURCE_DIR}/.."
-                            ABSOLUTE)
-    set (CMAKE_UNIT_DIRECTORY ("${CUSTOM_TOOL_DIRECTORY}/cmake-unit")
+Obviously, `variable_watch` provides its own arguments to the called function,
+which is not entirely what we want. However, CMake makes it relatively easy to
+establish a kind of "calling convention" for these called functions. Usage of
+keyword arguments with [`CMakeParseArguments`](http://www.cmake.org/cmake/help/v3.1/module/CMakeParseArguments.html?highlight=cmakeparsearguments)
+is pretty common for most modules. We defined a variable called `CALLER_ARGN`
+which functions just like `ARGN` would in a normal function call. All arguments
+are passed as keywords.
 
-    set (CMAKE_MODULE_PATH
-         "${CMAKE_UNIT_DIRECTORY}"
-         "${CUSTOM_TOOL_DIRECTORY}"
-         ${CMAKE_MODULE_PATH})
+`variable_watch` can only be used to register a callback for one variable at a
+time, so if a function is to be called multiple times, then a register needs
+to be maintained mapping function names to variable names.
 
-    include (CMakeUnitRunner)
+All of this is encapsulated within the `_cmake_unit_call_function` command. It
+is hoped that eventually this can become part of the core CMake syntax.
 
-    cmake_unit_init (VARIABLES CMAKE_MODULE_PATH
-                          COVERAGE_FILES
-                          "${CUSTOM_TOOL_DIRECTORY}/CustomTool.cmake")
+### Discovering test functions ###
 
-This code will set up CMake module paths, include `CMakeUnitRunner` and tell
-`cmake-unit` that `CMAKE_MODULE_PATH` should be "forwarded" with its current
-value to the tests and that execution of `CustomTool.cmake` should be watched in
-order to log coverage.
-
-Next, you'll want to create some tests.  These tests should be created in the
-same directory as the `CMakeLists.txt`.  We'll call our test
-`CustomToolRunsOnCode` and create a `CustomToolRunsOnCode.cmake` and
-`CustomToolRunsOnCodeVerify.cmake`.
-
-We'll add the test to our `CMakeLists.txt`
-
-    cmake_unit_build_test (CustomToolRunsOnCode
-                          CustomToolRunsOnCodeVerify)
-
-This is what is known as a "build test".  Build tests include the first named
-file during the configure phase, then build and test the project.  Each step
-will have its standard output logged to `STEP.output` and `STEP.error` in the
-`CMAKE_CURRENT_BINARY_DIR`.  `STEP` can be either one of `CONFIGURE`, `BUILD`,
-`TEST` and `VERIFY`.
-
-During the configure phase, you have complete access to all CMake commands.  You
-can create targets, add custom commands and even add tests.
-
-For this configure phase, we'll generate a source file and then run our tool
-over it:
-
-    include (CMakeUnit)
-    include (CustomTool)
-
-    cmake_unit_generate_source_file_during_build (TARGET
-                                                  NAME CustomSource.cpp
-                                                  DEFINES CUSTOM_DEFINE
-                                                  INCLUDES vector
-                                                  FUNCTIONS custom_function)
-    custom_tool_run_on_source (${TARGET}
-                               "${CMAKE_CURRENT_SOURCE_DIR}/CustomSource.cpp")
-
- During the verify phase, the script will only run in CMake 'script mode'.
- Certain commands associated with configuring and building projects will be
- unavailable.
-
- For this verify phase, we'll read the build output to make sure our
- `custom-tool` actually ran on `CustomSource.cpp`
-
-     include (CMakeUnit)
-
-     set (BUILD_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/BUILD.output")
-     cmake_unit_assert_file_has_line_matching ("${BUILD_OUTPUT}"
-                                    "^.*custom-tool.*CustomSource.cpp.*$")
+Test function discovery is by using the "hidden" `COMMANDS` property of
+`GLOBAL` scope. This provides a list of all defined commands at the time
+of retrieving the property.
