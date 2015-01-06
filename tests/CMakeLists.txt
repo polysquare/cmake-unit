@@ -33,8 +33,7 @@ get_filename_component (CMAKE_UNIT_DIRECTORY
                         ABSOLUTE)
 
 set (CMAKE_MODULE_PATH
-     "${CMAKE_UNIT_DIRECTORY}"
-     "${CMAKE_MODULE_PATH}")
+     "${CMAKE_UNIT_DIRECTORY}")
 
 # Set up variables to forward
 set (MOCK_TRACEFILE_INPUT
@@ -1983,7 +1982,7 @@ macro (_cmake_unit_test_run_trace_to_lcov)
          "${CMAKE_CURRENT_SOURCE_DIR}/FileForCoverage.cmake")
     file (READ "${FILE_FOR_COVERAGE_PATH}" FILE_FOR_COVERAGE_CONTENTS)
     file (WRITE "${FILE_FOR_COVERAGE_LOCAL_PATH}" "${FILE_FOR_COVERAGE_CONTENTS}")
-    
+
     set (UNEXECUTED_FILE_FOR_COVERAGE_LOCAL_PATH
          "${CMAKE_CURRENT_SOURCE_DIR}/UnexecutedFileForCoverage.cmake")
     file (READ "${UNEXECUTED_FILE_FOR_COVERAGE_PATH}"
@@ -1991,16 +1990,16 @@ macro (_cmake_unit_test_run_trace_to_lcov)
     file (WRITE
           "${UNEXECUTED_FILE_FOR_COVERAGE_LOCAL_PATH}"
           "${UNEXECUTED_FILE_FOR_COVERAGE_CONTENTS}")
-    
+
     set (MOCK_TRACEFILE_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/MockTracefile.trace")
     configure_file ("${MOCK_TRACEFILE_INPUT}"
                     "${MOCK_TRACEFILE_OUTPUT}"
                     @ONLY)
-    
+
     set (TRACEFILE "${MOCK_TRACEFILE_OUTPUT}" CACHE STRING "" FORCE)
     set (LCOV_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/mock_test_coverage.lcov"
          CACHE STRING "" FORCE)
-    
+
     include (CMakeTraceToLCov)
 
 endmacro ()

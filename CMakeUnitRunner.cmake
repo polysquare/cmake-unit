@@ -299,6 +299,7 @@ function (_cmake_unit_spacify RETURN_SPACED)
                            "LIST"
                            ${ARGN})
 
+    set (SPACIFIED "")
     foreach (ELEMENT ${SPACIFY_LIST})
 
         set (SPACIFIED "${SPACIFIED}${ELEMENT} ")
@@ -1039,6 +1040,7 @@ function (_cmake_unit_compute_dispatch_table_for_test DISPATCH_TABLE_RETURN)
                                          CURRENT_DISPATCH ${DEFAULT_DISPATCH}
                                          USER_OPTIONS ${USER_ARGN})
 
+        set (ALLOWED_FAIL_TABLE)
         _cmake_unit_get_override_table_for_allowed_failures (ALLOWED_FAIL_TABLE
                                                              USER_OPTIONS
                                                              ${USER_ARGN})
@@ -1067,6 +1069,7 @@ endfunction ()
 
 # Variables we implicitly dereference indicating the next phase after
 # a current one.
+set (_CMAKE_UNIT_PHASE_AFTER_PRECONFIGURE) # NOLINT:unused/private_var
 set (_CMAKE_UNIT_PHASE_AFTER_CLEAN # NOLINT:unused/private_var
      INVOKE_CONFIGURE)
 set (_CMAKE_UNIT_PHASE_AFTER_INVOKE_CONFIGURE # NOLINT:unused/private_var
@@ -1092,7 +1095,7 @@ function (_cmake_unit_configure_test_internal)
     cmake_parse_arguments (CMAKE_UNIT_CONFIGURE_TEST
                            ""
                            "${CMAKE_UNIT_CONFIGURE_TEST_SINGLEVAR_ARGS}"
-                           "${CMAKE_UNIT_OVERRIDABLE_PHASES}"
+                           "${_CMAKE_UNIT_OVERRIDABLE_PHASES}"
                            ${ARGN})
 
     _cmake_unit_compute_dispatch_table_for_test (CMAKE_UNIT_TEST_DISPATCH
@@ -1106,6 +1109,7 @@ function (_cmake_unit_configure_test_internal)
                                     DISPATCH_TABLE ${CMAKE_UNIT_TEST_DISPATCH})
 
     # Get the arguments to pass to this phase, as a list
+    set (PHASE_ARGUMENTS)
     _cmake_unit_get_arguments_for_phase (PHASE_ARGUMENTS
                                          PHASE ${_CMAKE_UNIT_PHASE}
                                          PHASES ${CMAKE_UNIT_PHASES}
