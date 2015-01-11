@@ -43,22 +43,25 @@ set (CMAKE_POLICY_CACHE_DEFINITIONS
      "-DCMAKE_POLICY_DEFAULT_CMP0042=NEW"
      "-DCMAKE_POLICY_DEFAULT_CMP0025=NEW")
 
-option (CMAKE_UNIT_LOG_COVERAGE OFF
-        "Log line hits to ${CMAKE_PROJECT_NAME}.trace")
 option (CMAKE_UNIT_NO_DEV_WARNINGS OFF
         "Turn off developer warnings")
 option (CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS OFF
         "Turn off uninitialized variable usage warnings")
 
-if (CMAKE_UNIT_LOG_COVERAGE)
+if (CMAKE_UNIT_COVERAGE_FILE)
 
     set (CMAKE_UNIT_COVERAGE_FILE
          "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}.trace"
-         CACHE STRING "")
+         CACHE STRING "File where coverage data will be stored")
 
 endif ()
 
+# Whether or not we are testing cmake-unit itself.
+set (_CMAKE_UNIT_INTERNAL_TESTING OFF CACHE BOOL "")
+mark_as_advanced (_CMAKE_UNIT_INTERNAL_TESTING)
+
 set (_RUNNER_LIST_DIR "${CMAKE_CURRENT_LIST_DIR}")
+set (_RUNNER_LIST_FILE "${CMAKE_CURRENT_LIST_FILE}")
 
 # _cmake_unit_runner_assert
 #
@@ -230,7 +233,7 @@ function (cmake_unit_init)
     _cmake_unit_discover_tests_in (${CMAKE_UNIT_INIT_NAMESPACE}
                                    CMAKE_UNIT_INIT_TESTS)
 
-    if (CMAKE_UNIT_LOG_COVERAGE)
+    if (CMAKE_UNIT_COVERAGE_FILE)
 
         # Escape characters out of filenames that will cause problems when
         # attempting to regex match them later
@@ -343,8 +346,14 @@ function (_cmake_unit_get_child_invocation_script_header HEADER_RETURN)
     _cmake_unit_forwarded_script_prop_line (DISCOVERED_TESTS_PROP_LINE
                                             ${CACHED_DISCOVERED_TESTS_PROPERTY})
 
+    _cmake_unit_spacify (SPACIFIED_MODULE_PATH LIST "${CMAKE_MODULE_PATH}")
+
     set (${HEADER_RETURN}
+         "set (CMAKE_MODULE_PATH \"${_RUNNER_LIST_DIR}\"\n"
+         "     ${SPACIFIED_MODULE_PATH})\n"
          "set (_CMAKE_UNIT_ACTIVE_TEST ${TEST_NAME})\n"
+         "set (CMAKE_UNIT_COVERAGE_FILE \"${CMAKE_UNIT_COVERAGE_FILE}\"\n"
+         "     CACHE STRING \"\" FORCE)\n"
          "set (CMAKE_GENERATOR \"${CMAKE_GENERATOR}\")\n"
          ${DISPATCH_TABLE_PROP_LINE}
          ${DISCOVERED_TESTS_PROP_LINE}
@@ -362,6 +371,7 @@ function (_cmake_unit_preconfigure_test)
 
     set (TEST_NAME "${PRECONFIGURE_TEST_TEST_NAME}")
     set (DRIVER_SCRIPT "${PRECONFIGURE_TEST_SOURCE_DIR}/Driver.cmake")
+    set (COVERAGE_SCRIPT "${PRECONFIGURE_TEST_SOURCE_DIR}/Coverage.cmake")
 
     file (MAKE_DIRECTORY "${PRECONFIGURE_TEST_SOURCE_DIR}")
     file (MAKE_DIRECTORY "${PRECONFIGURE_TEST_BINARY_DIR}")
@@ -373,14 +383,11 @@ function (_cmake_unit_preconfigure_test)
 
     _cmake_unit_get_child_invocation_script_header (COMMON_PROLOGUE)
 
+    # Driver.cmake writs some initial variable definitions
     file (WRITE "${DRIVER_SCRIPT}"
           "set (_CMAKE_UNIT_PHASE CLEAN)\n"
           ${COMMON_PROLOGUE}
           "set (CMAKE_GENERATOR \"${CMAKE_GENERATOR}\")\n"
-          "set (CMAKE_UNIT_LOG_COVERAGE ${CMAKE_UNIT_LOG_COVERAGE}\n"
-          "     CACHE BOOL \"\" FORCE)\n"
-          "set (CMAKE_UNIT_COVERAGE_FILE \"${CMAKE_UNIT_COVERAGE_FILE}\"\n"
-          "     CACHE STRING \"\" FORCE)\n"
           "set (CMAKE_UNIT_NO_DEV_WARNINGS ${CMAKE_UNIT_NO_DEV_WARNINGS}\n"
           "     CACHE BOOL \"\" FORCE)\n"
           "set (CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS\n"
@@ -391,14 +398,59 @@ function (_cmake_unit_preconfigure_test)
           "              ${COVERAGE_FILES})\n"
           "include (\"${CMAKE_CURRENT_LIST_FILE}\")\n")
 
+    # Coverage.cmake is intended to wrap Driver.cmake and write trace data
+    # into CMAKE_UNIT_COVERAGE_FILE
+    _cmake_unit_spacify (POLICY_CACHE_DEFS_SPACIFIED
+                         LIST ${CMAKE_POLICY_CACHE_DEFINITIONS})
+    set (DRIVER_OUTPUT_LOG "${CMAKE_CURRENT_BINARY_DIR}/DRIVER.output")
+    set (DRIVER_ERROR_LOG "${CMAKE_CURRENT_BINARY_DIR}/DRIVER.error")
+
+    set (TRACE_OPTION)
+    if (CMAKE_UNIT_COVERAGE_FILE AND
+        _CMAKE_UNIT_INTERNAL_TESTING)
+
+        set (TRACE_OPTION "--trace")
+
+    endif ()
+
+    get_filename_component (ABSOLUTE_COVERAGE_FILE_PATH
+                            "${CMAKE_UNIT_COVERAGE_FILE}"
+                            ABSOLUTE)
+
+    # Working around a bug in cmakelint
+    set (END "end")
+    file (WRITE "${COVERAGE_SCRIPT}"
+          ${COMMON_PROLOGUE}
+          "set (_CMAKE_UNIT_PHASE UTILITY)\n"
+          "include (\"${_RUNNER_LIST_FILE}\")\n"
+          "_cmake_unit_invoke_command (COMMAND \"${CMAKE_COMMAND}\"\n"
+          "                                    ${POLICY_CACHE_DEFS_SPACIFIED}\n"
+          "                                    -P ${DRIVER_SCRIPT}\n"
+          "                                    ${TRACE_OPTION}\n"
+          "                            OUTPUT_FILE \"${DRIVER_OUTPUT_LOG}\"\n"
+          "                            ERROR_FILE \"${DRIVER_ERROR_LOG}\"\n"
+          "                            PHASE DRIVER)\n"
+          "set (LOG_COVERAGE \"${CMAKE_UNIT_COVERAGE_FILE}\")\n"
+          "if (LOG_COVERAGE)\n"
+          "    file (STRINGS \"${DRIVER_ERROR_LOG}\" TRACE_LINES)\n"
+          "    _cmake_unit_filter_trace_lines (FILTERED_LINES\n"
+          "                                    TEST_NAME \"${TEST_NAME}\"\n"
+          "                                    TRACE_LINES \${TRACE_LINES}\n"
+          "                                    COVERAGE_FILES\n"
+          "                                    ${COVERAGE_FILES})\n"
+          "    file (APPEND \"${ABSOLUTE_COVERAGE_FILE_PATH}\"\n"
+          "          \${FILTERED_LINES})\n"
+          "${END}if ()\n")
+
     # The test step invokes the script at the INVOKE_CONFIGURE
     # phase, which will then move on to the other phases once its done.
     add_test ("${TEST_NAME}"
               "${CMAKE_COMMAND}"
               ${CMAKE_POLICY_CACHE_DEFINITIONS}
               -P
-              "${DRIVER_SCRIPT}"
-              WORKING_DIRECTORY "${PRECONFIGURE_TEST_BINARY_DIR}")
+              "${COVERAGE_SCRIPT}"
+              WORKING_DIRECTORY
+              "${PRECONFIGURE_TEST_BINARY_DIR}")
 
 endfunction ()
 
@@ -444,38 +496,34 @@ function (_cmake_unit_print_lines_for_log PHASE
 
     file (STRINGS "${LOG_FILE}" LINES)
 
-    # Only print contents of FATAL_ERROR, SEND_ERROR and WARNING for
-    # the configure step. Otherwise too much will be printed, especially
-    # when trace mode is enabled
-    if (PHASE STREQUAL INVOKE_CONFIGURE AND LOG_TYPE STREQUAL ERROR)
+    set (FILTER_PRINTED_LINES OFF)
+    if (PHASE STREQUAL INVOKE_CONFIGURE OR
+        PHASE STREQUAL DRIVER)
 
-        set (IN_CMAKE_ERROR_OR_WARNING OFF)
+        set (FILTER_PRINTED_LINES ON)
+
+    endif ()
+
+    # Print error lines to stderr and output lines to stdout, mimicing the
+    # same format for each
+    if (LOG_TYPE STREQUAL "ERROR")
+
+        set (MESSAGE_INITIAL_ARGS " -- ")
+
+    elseif (LOG_TYPE STREQUAL "OUTPUT")
+
+        set (MESSAGE_INITIAL_ARGS STATUS)
+
+    endif ()
+
+    # Attempt to filter out trace-file like lines
+    if (FILTER_PRINTED_LINES AND LOG_TYPE STREQUAL ERROR)
 
         foreach (LINE ${LINES})
 
-            if (LINE MATCHES "CMake (Error|Warning).*$")
+            if (NOT LINE MATCHES "^.+\\([0-9]+\\):  .+$")
 
-                set (IN_CMAKE_ERROR_OR_WARNING ON)
-
-            elseif (IN_CMAKE_ERROR_OR_WARNING AND
-                    LINE MATCHES "^Call Stack.*$")
-
-                set (IN_CMAKE_ERROR_OR_WARNING ON)
-
-            elseif (IN_CMAKE_ERROR_OR_WARNING AND
-                    LINE MATCHES "^  .*$")
-
-                set (IN_CMAKE_ERROR_OR_WARNING ON)
-
-            else ()
-
-                set (IN_CMAKE_ERROR_OR_WARNING OFF)
-
-            endif ()
-
-            if (IN_CMAKE_ERROR_OR_WARNING)
-
-                message (STATUS "${PHASE} ERROR ${LINE}")
+                message (${MESSAGE_INITIAL_ARGS} "${PHASE} ERROR ${LINE}")
 
             endif ()
 
@@ -485,7 +533,7 @@ function (_cmake_unit_print_lines_for_log PHASE
 
         foreach (LINE ${LINES})
 
-            message (STATUS "${PHASE} ${LOG_TYPE} ${LINE}")
+            message (${MESSAGE_INITIAL_ARGS} "${PHASE} ${LOG_TYPE} ${LINE}")
 
         endforeach ()
 
@@ -514,17 +562,20 @@ function (_cmake_unit_invoke_command)
                            "COMMAND"
                            ${ARGN})
 
-    _cmake_unit_forward_arguments (INVOKE_COMMAND FORWARD_TO_EXECUTE_PROCESS
-                                   SINGLEVAR_ARGS WORKING_DIRECTORY
-                                                  OUTPUT_FILE
-                                                  ERROR_FILE)
-
     _cmake_unit_spacify (SPACIFIED_COMMAND LIST ${INVOKE_COMMAND_COMMAND})
     message (STATUS "Running ${SPACIFIED_COMMAND}")
 
     execute_process (COMMAND ${INVOKE_COMMAND_COMMAND}
-                     ${FORWARD_TO_EXECUTE_PROCESS}
-                     RESULT_VARIABLE RESULT)
+                     OUTPUT_VARIABLE COMMAND_OUTPUT
+                     ERROR_VARIABLE COMMAND_ERROR
+                     RESULT_VARIABLE RESULT
+                     WORKING_DIRECTORY "${INVOKE_COMMAND_WORKING_DIRECTORY}")
+
+    # We need to write the log files after and not during execution as there's
+    # chance we could run a command which wipes out the directory holding the
+    # log files
+    file (WRITE "${INVOKE_COMMAND_OUTPUT_FILE}" "${COMMAND_OUTPUT}")
+    file (WRITE "${INVOKE_COMMAND_ERROR_FILE}" "${COMMAND_ERROR}")
 
     # Print the contents of each logfile, if they exist
     set (LOG_TYPES OUTPUT ERROR)
@@ -606,7 +657,7 @@ function (cmake_unit_invoke_configure)
          "-DCMAKE_UNIT_PARENT_BINARY_DIR:PATH=${CMAKE_CURRENT_BINARY_DIR}")
 
     # When coverage is being logged pass the --trace switch
-    if (CMAKE_UNIT_LOG_COVERAGE)
+    if (CMAKE_UNIT_COVERAGE_FILE)
 
         set (TRACE_OPTION "--trace")
 
@@ -652,6 +703,7 @@ function (cmake_unit_invoke_configure)
 
             if (LINE MATCHES "^CMake Warning.*")
 
+                message (STATUS "${LINE}")
                 message (SEND_ERROR
                          "CMake Warnings were present!")
 
@@ -732,9 +784,60 @@ function (cmake_unit_invoke_test)
 
 endfunction ()
 
+function (_cmake_unit_filter_trace_lines FILTERED_LINES)
+
+    cmake_parse_arguments (FILTER_COVERAGE
+                           ""
+                           "TEST_NAME"
+                           "TRACE_LINES;COVERAGE_FILES"
+                           ${ARGN})
+
+    set (COVERAGE_FILE_CONTENTS "")
+    list (APPEND COVERAGE_FILE_CONTENTS "TEST:${TEST_NAME}\n")
+    foreach (FILE ${FILTER_COVERAGE_COVERAGE_FILES})
+
+        list (APPEND COVERAGE_FILE_CONTENTS "FILE:${FILE}\n")
+
+    endforeach ()
+
+    foreach (LINE ${FILTER_COVERAGE_TRACE_LINES})
+
+        # Search for lines matching a trace pattern
+        foreach (FILE ${COVERAGE_FILES})
+
+            if (LINE MATCHES "^${FILE}\\([0-9]*\\):.*$")
+
+                # Once we've found a matching line, strip out the
+                # rest of the mostly useless information.  Find the
+                # first ":" after the filename and then write out
+                # the string until that semicolon is reached
+                string (LENGTH "${FILE}" F_LEN)
+                string (SUBSTRING "${LINE}" "${F_LEN}" -1 AFTER_FILE_STRING)
+
+                # Match ):. This prevents drive letters on Windows
+                # causing problems
+                string (FIND "${AFTER_FILE_STRING}" "):" DEL_IDX)
+                math (EXPR COLON_INDEX_IN_LINE "${F_LEN} + ${DEL_IDX} + 1")
+                string (SUBSTRING "${LINE}" 0 ${COLON_INDEX_IN_LINE}
+                        FILENAME_AND_LINE)
+
+                list (APPEND
+                      COVERAGE_FILE_CONTENTS
+                      "${FILENAME_AND_LINE}\n")
+
+            endif ()
+
+        endforeach ()
+
+    endforeach ()
+
+    set (${FILTERED_LINES} ${COVERAGE_FILE_CONTENTS} PARENT_SCOPE)
+
+endfunction ()
+
 function (_cmake_unit_coverage)
 
-    if (NOT CMAKE_UNIT_LOG_COVERAGE)
+    if (NOT CMAKE_UNIT_COVERAGE_FILE)
 
         return ()
 
@@ -746,60 +849,34 @@ function (_cmake_unit_coverage)
                            ""
                            ${CALLER_ARGN})
 
-    get_property (COVERAGE_FILES
-                  GLOBAL PROPERTY _CMAKE_UNIT_COVERAGE_LOGGING_FILES)
+    # Only INVOKE_CONFIGURE and DRIVER can be observed
+    set (ERROR_FILES_WITH_TRACE_CONTENTS INVOKE_CONFIGURE DRIVER)
 
-    set (COVERAGE_FILE_CONTENTS "")
-    list (APPEND COVERAGE_FILE_CONTENTS "TEST:${TEST_NAME}\n")
-    foreach (FILE ${COVERAGE_FILES})
+    foreach (ERROR_FILE ${ERROR_FILES_WITH_TRACE_CONTENTS})
 
-        list (APPEND COVERAGE_FILE_CONTENTS "FILE:${FILE}\n")
+        set (ERROR_LOG_FILE "${COVERAGE_PHASE_BINARY_DIR}/${ERROR_FILE}.error")
+
+        if (EXISTS "${ERROR_LOG_FILE}")
+
+            file (STRINGS "${ERROR_LOG_FILE}"
+                  INVOKE_CONFIGURE_ERROR)
+
+            get_property (COVERAGE_FILES
+                          GLOBAL PROPERTY _CMAKE_UNIT_COVERAGE_LOGGING_FILES)
+
+            _cmake_unit_filter_trace_lines (COVERAGE_FILE_CONTENTS
+                                            TEST_NAME
+                                            "${COVERAGE_PHASE_TEST_NAME}"
+                                            TRACE_LINES
+                                            "${INVOKE_CONFIGURE_ERROR}"
+                                            COVERAGE_FILES ${COVERAGE_FILES})
+
+            file (APPEND "${CMAKE_UNIT_COVERAGE_FILE}"
+                  ${COVERAGE_FILE_CONTENTS})
+
+        endif ()
 
     endforeach ()
-
-    # Only INVOKE_CONFIGURE can be observed
-    set (INVOKE_CONFIGURE_ERROR_LOG_FILE
-         "${COVERAGE_PHASE_BINARY_DIR}/INVOKE_CONFIGURE.error")
-
-    if (EXISTS "${INVOKE_CONFIGURE_ERROR_LOG_FILE}")
-
-        file (STRINGS "${INVOKE_CONFIGURE_ERROR_LOG_FILE}"
-              INVOKE_CONFIGURE_ERROR_LINES)
-
-        foreach (LINE ${INVOKE_CONFIGURE_ERROR_LINES})
-
-            # Search for lines matching a trace pattern
-            foreach (FILE ${COVERAGE_FILES})
-
-                if (LINE MATCHES "^${FILE}\\([0-9]*\\):.*$")
-
-                    # Once we've found a matching line, strip out the
-                    # rest of the mostly useless information.  Find the
-                    # first ":" after the filename and then write out
-                    # the string until that semicolon is reached
-                    string (LENGTH "${FILE}" F_LEN)
-                    string (SUBSTRING "${LINE}" "${F_LEN}" -1 AFTER_FILE_STRING)
-
-                    # Match ):. This prevents drive letters on Windows
-                    # causing problems
-                    string (FIND "${AFTER_FILE_STRING}" "):" DEL_IDX)
-                    math (EXPR COLON_INDEX_IN_LINE "${F_LEN} + ${DEL_IDX} + 1")
-                    string (SUBSTRING "${LINE}" 0 ${COLON_INDEX_IN_LINE}
-                            FILENAME_AND_LINE)
-
-                    list (APPEND
-                          COVERAGE_FILE_CONTENTS
-                          "${FILENAME_AND_LINE}\n")
-
-                endif ()
-
-            endforeach ()
-
-        endforeach ()
-
-    endif ()
-
-    file (APPEND "${CMAKE_UNIT_COVERAGE_FILE}" ${COVERAGE_FILE_CONTENTS})
 
 endfunction ()
 

@@ -159,6 +159,7 @@ function (_cmake_unit_test_gen_discover_from_contents)
           "set (NEXT_TESTS)\n"
           "set (CMAKE_UNIT_PARENT_BINARY_DIR\n"
           "     \"${CMAKE_CURRENT_BINARY_DIR}\")\n"
+          "set (_CMAKE_UNIT_INTERNAL_TESTING ON CACHE BOOL \"\" FORCE)\n"
           "cmake_unit_init (NAMESPACE \"${GEN_DISCOVER_NAMESPACE}\"\n"
           "                 ${INIT_OPTIONS})\n")
 

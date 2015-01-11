@@ -1,7 +1,8 @@
 language: cpp
 sudo: false
 cache:
-- ~/container
+  directories:
+    - ~/container
 env:
 - CMAKE_GENERATOR="Unix Makefiles" CMAKE_VERSION="master"
 - CMAKE_GENERATOR="Ninja" CMAKE_VERSION="master"
@@ -9,6 +10,7 @@ env:
 - CMAKE_GENERATOR="Ninja" CMAKE_VERSION="3.0.2"
 - CMAKE_GENERATOR="Unix Makefiles" CMAKE_VERSION="2.8.12"
 - CMAKE_GENERATOR="Ninja" CMAKE_VERSION="2.8.12"
+- CMAKE_GENERATOR="Unix Makefiles" CMAKE_VERSION="master" COVERAGE=ON
 before_install:
 # Setup python so that we can install packages on pip.
 - wget public-travis-scripts.polysquare.org/setup-lang.sh
