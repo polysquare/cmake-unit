@@ -524,6 +524,7 @@ endfunction ()
 # TARGET: Name of TARGET as it will be found in the EXPORTS file
 # LOCATION_RETURN: Variable to write target's LOCATION property into.
 function (cmake_unit_get_target_location_from_exports EXPORTS
+                                                      BINARY_DIR
                                                       TARGET
                                                       LOCATION_RETURN)
 
@@ -531,7 +532,7 @@ function (cmake_unit_get_target_location_from_exports EXPORTS
     # cannot do so whilst in script mode) and then prints the location
     # on the stderr. We'll capture this and return it.
     set (DETERMINE_LOCATION_DIRECTORY
-         "${CMAKE_CURRENT_BINARY_DIR}/determine_location_for_${TARGET}")
+         "${BINARY_DIR}/dle_${TARGET}")
     set (DETERMINE_LOCATION_BINARY_DIRECTORY
          "${DETERMINE_LOCATION_DIRECTORY}/build")
     set (DETERMINE_LOCATION_CAPTURE
@@ -539,9 +540,9 @@ function (cmake_unit_get_target_location_from_exports EXPORTS
     set (DETERMINE_LOCATION_CMAKELISTS_TXT_FILE
          "${DETERMINE_LOCATION_DIRECTORY}/CMakeLists.txt")
     set (DETERMINE_LOCATION_CMAKELISTS_TXT
-         "include (${EXPORTS})\n"
+         "include (\"${EXPORTS}\")\n"
          "get_property (LOCATION TARGET ${TARGET} PROPERTY LOCATION)\n"
-         "file (WRITE ${DETERMINE_LOCATION_CAPTURE} \"\${LOCATION}\")\n")
+         "file (WRITE \"${DETERMINE_LOCATION_CAPTURE}\" \"\${LOCATION}\")\n")
 
     string (REPLACE ";" ""
             DETERMINE_LOCATION_CMAKELISTS_TXT
@@ -587,16 +588,16 @@ endfunction ()
 function (cmake_unit_export_cfg_int_dir LOCATION)
 
     get_filename_component (LOCATION_NAME "${LOCATION}" NAME)
-    set (WRITE_TO_OUTPUT_FILE_SCRIPT ${LOCATION}.write.cmake)
+    set (WRITE_TO_OUTPUT_SCRIPT_FILE "${LOCATION}.write.cmake")
     set (WRITE_TO_OUTPUT_FILE_SCRIPT_CONTENTS
-         "file (WRITE ${LOCATION} \"\${INTDIR}\")\n")
-    file (WRITE ${WRITE_TO_OUTPUT_FILE_SCRIPT}
+         "file (WRITE \"${LOCATION}\" \"\${INTDIR}\")\n")
+    file (WRITE "${WRITE_TO_OUTPUT_SCRIPT_FILE}"
           "${WRITE_TO_OUTPUT_FILE_SCRIPT_CONTENTS}")
     add_custom_command (OUTPUT ${LOCATION}
                         COMMAND "${CMAKE_COMMAND}"
                                 -DINTDIR=${CMAKE_CFG_INTDIR}
                                 -P
-                                ${WRITE_TO_OUTPUT_FILE_SCRIPT})
+                                "${WRITE_TO_OUTPUT_SCRIPT_FILE}")
     add_custom_target (write_cfg_int_dir_${LOCATION_NAME} ALL
                        SOURCES ${LOCATION})
 
