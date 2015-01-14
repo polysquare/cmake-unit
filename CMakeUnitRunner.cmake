@@ -402,8 +402,8 @@ function (_cmake_unit_preconfigure_test)
     # into CMAKE_UNIT_COVERAGE_FILE
     _cmake_unit_spacify (POLICY_CACHE_DEFS_SPACIFIED
                          LIST ${CMAKE_POLICY_CACHE_DEFINITIONS})
-    set (DRIVER_OUTPUT_LOG "${CMAKE_CURRENT_BINARY_DIR}/DRIVER.output")
-    set (DRIVER_ERROR_LOG "${CMAKE_CURRENT_BINARY_DIR}/DRIVER.error")
+    set (DRIVER_OUTPUT_LOG "${PRECONFIGURE_TEST_BINARY_DIR}/DRIVER.output")
+    set (DRIVER_ERROR_LOG "${PRECONFIGURE_TEST_BINARY_DIR}/DRIVER.error")
 
     set (TRACE_OPTION)
     if (CMAKE_UNIT_COVERAGE_FILE AND
@@ -425,7 +425,7 @@ function (_cmake_unit_preconfigure_test)
           "include (\"${_RUNNER_LIST_FILE}\")\n"
           "_cmake_unit_invoke_command (COMMAND \"${CMAKE_COMMAND}\"\n"
           "                                    ${POLICY_CACHE_DEFS_SPACIFIED}\n"
-          "                                    -P ${DRIVER_SCRIPT}\n"
+          "                                    -P \"${DRIVER_SCRIPT}\"\n"
           "                                    ${TRACE_OPTION}\n"
           "                            OUTPUT_FILE \"${DRIVER_OUTPUT_LOG}\"\n"
           "                            ERROR_FILE \"${DRIVER_ERROR_LOG}\"\n"
@@ -508,7 +508,7 @@ function (_cmake_unit_print_lines_for_log PHASE
     # same format for each
     if (LOG_TYPE STREQUAL "ERROR")
 
-        set (MESSAGE_INITIAL_ARGS " -- ")
+        set (MESSAGE_INITIAL_ARGS "-- ")
 
     elseif (LOG_TYPE STREQUAL "OUTPUT")
 
@@ -858,8 +858,7 @@ function (_cmake_unit_coverage)
 
         if (EXISTS "${ERROR_LOG_FILE}")
 
-            file (STRINGS "${ERROR_LOG_FILE}"
-                  INVOKE_CONFIGURE_ERROR)
+            file (STRINGS "${ERROR_LOG_FILE}" ERROR_LOG)
 
             get_property (COVERAGE_FILES
                           GLOBAL PROPERTY _CMAKE_UNIT_COVERAGE_LOGGING_FILES)
@@ -868,10 +867,14 @@ function (_cmake_unit_coverage)
                                             TEST_NAME
                                             "${COVERAGE_PHASE_TEST_NAME}"
                                             TRACE_LINES
-                                            "${INVOKE_CONFIGURE_ERROR}"
+                                            "${ERROR_LOG}"
                                             COVERAGE_FILES ${COVERAGE_FILES})
 
-            file (APPEND "${CMAKE_UNIT_COVERAGE_FILE}"
+            get_filename_component (ABSOLUTE_COVERAGE_FILE_PATH
+                                    "${CMAKE_UNIT_COVERAGE_FILE}"
+                                    ABSOLUTE)
+
+            file (APPEND "${ABSOLUTE_COVERAGE_FILE_PATH}"
                   ${COVERAGE_FILE_CONTENTS})
 
         endif ()
