@@ -870,11 +870,8 @@ function (_cmake_unit_coverage)
                                             "${ERROR_LOG}"
                                             COVERAGE_FILES ${COVERAGE_FILES})
 
-            get_filename_component (ABSOLUTE_COVERAGE_FILE_PATH
-                                    "${CMAKE_UNIT_COVERAGE_FILE}"
-                                    ABSOLUTE)
-
-            file (APPEND "${ABSOLUTE_COVERAGE_FILE_PATH}"
+            # Use relative path
+            file (APPEND "${CMAKE_UNIT_COVERAGE_FILE}"
                   ${COVERAGE_FILE_CONTENTS})
 
         endif ()
