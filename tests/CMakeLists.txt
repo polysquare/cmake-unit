@@ -153,7 +153,14 @@ function (_cmake_unit_test_gen_discover_from_contents)
          ${GEN_DISCOVER_CONTENTS})
 
     set (INIT_OPTIONS "${GEN_DISCOVER_INIT_OPTIONS}")
-    string (REPLACE ";" " " INIT_OPTIONS "${INIT_OPTIONS}")
+
+    # Ensure everything in INIT_OPTIONS is quoted so that
+    # there is no ambiguity when we insert it into the
+    # AuxCMakeLists.txt script later.
+    foreach (OPTION ${INIT_OPTIONS})
+        list (APPEND QUOTED_INIT_OPTIONS "\"${OPTION}\"")
+    endforeach ()
+    string (REPLACE ";" " " INIT_OPTIONS "${QUOTED_INIT_OPTIONS}")
 
     list (APPEND AUX_CMAKELISTS_FILE_CONTENTS
           "set (NEXT_TESTS)\n"
@@ -311,7 +318,7 @@ function (cmake_unit_test_cmake_build_test_error_on_build_fail)
         set (SOURCE "${SOURCE_DIR}/Source.cpp")
         file (WRITE "${SOURCE}" "invalid(")
 
-        set (CONFIGURE_SCRIPT "add_executable (exec ${SOURCE})\n")
+        set (CONFIGURE_SCRIPT "add_executable (exec \"${SOURCE}\")\n")
         _cmake_unit_test_gen_configure (NAMESPACE sample
                                         NAME one
                                         INVOKE_CONFIGURE OPTIONS
@@ -703,13 +710,7 @@ function (cmake_unit_test_cmake_test_files_recorded_in_tracefile_across_tests)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
 
-    set (COVERAGE_TRACEFILE "${BINARY_DIR}/coverage.trace")
-
     function (_cmake_unit_configure)
-
-        set (CMAKE_UNIT_LOG_COVERAGE ON CACHE BOOL "" FORCE)
-        set (CMAKE_UNIT_COVERAGE_FILE "${COVERAGE_TRACEFILE}"
-             CACHE STRING "" FORCE)
 
         set (EXCLUDED "${CMAKE_CURRENT_BINARY_DIR}/Excluded.cmake")
         set (INCLUDED "${CMAKE_CURRENT_BINARY_DIR}/Included.cmake")
@@ -728,9 +729,9 @@ function (cmake_unit_test_cmake_test_files_recorded_in_tracefile_across_tests)
               "message (STATUS \"Second Test Specific Script\")\n")
 
         set (TEST_ONE
-             "include (${EXCLUDED})\n"
-             "include (${INCLUDED})\n"
-             "include (${FIRST_TEST_SPECIFIC})\n")
+             "include (\"${EXCLUDED}\")\n"
+             "include (\"${INCLUDED}\")\n"
+             "include (\"${FIRST_TEST_SPECIFIC}\")\n")
 
         _cmake_unit_test_gen_configure_no_discover (TEST_ONE_CONTENTS
                                                     NAMESPACE sample
@@ -745,9 +746,9 @@ function (cmake_unit_test_cmake_test_files_recorded_in_tracefile_across_tests)
                                                               "${TEST_ONE}")
 
         set (TEST_TWO
-             "include (${EXCLUDED})\n"
-             "include (${INCLUDED})\n"
-             "include (${SECOND_TEST_SPECIFIC})\n")
+             "include (\"${EXCLUDED}\")\n"
+             "include (\"${INCLUDED}\")\n"
+             "include (\"${SECOND_TEST_SPECIFIC}\")\n")
 
         _cmake_unit_test_gen_configure_no_discover (TEST_TWO_CONTENTS
                                                     NAMESPACE sample
@@ -765,6 +766,8 @@ function (cmake_unit_test_cmake_test_files_recorded_in_tracefile_across_tests)
         set (END "end")
 
         set (CONTENTS_PROLOGUE
+             "set (CMAKE_UNIT_COVERAGE_FILE \"coverage.trace\"\n"
+             "     CACHE STRING \"\" FORCE)\n"
              "if (NOT CMAKE_SCRIPT_MODE_FILE)\n"
              "    project (SampleTests NONE)\n"
              "${END}if ()\n")
@@ -782,6 +785,8 @@ function (cmake_unit_test_cmake_test_files_recorded_in_tracefile_across_tests)
     endfunction ()
 
     function (_cmake_unit_verify)
+
+        set (COVERAGE_TRACEFILE "${BINARY_DIR}/coverage.trace")
 
         cmake_unit_assert_file_exists ("${COVERAGE_TRACEFILE}")
 
@@ -973,6 +978,7 @@ function (cmake_unit_test_create_simple_executable)
 
         set (EXPORTS_FILE "${BINARY_DIR}/exports.cmake")
         cmake_unit_get_target_location_from_exports ("${EXPORTS_FILE}"
+                                                     "${BINARY_DIR}"
                                                      executable
                                                      LOCATION)
 
@@ -1052,13 +1058,13 @@ function (cmake_unit_test_export_import_cfg_int_dir)
                 "${CMAKE_MODULE_PATH}")
         set (EXTERNAL_PROJECT_CMAKELISTS_TXT_CONTENT
              "cmake_minimum_required (VERSION 2.8)\n"
-             "set (CMAKE_MODULE_PATH ${STRINGIFIED_CMAKE_MODULE_PATH})\n"
+             "set (CMAKE_MODULE_PATH \"${STRINGIFIED_CMAKE_MODULE_PATH}\")\n"
              "include (CMakeUnit)\n"
              "cmake_unit_create_simple_executable (executable)\n"
              "export (TARGETS executable\n"
-             "        FILE ${EXTERNAL_PROJECT_EXPORTS})\n"
-             "set (CFG_INT_DIR_LOCATION ${BINARY_DIR}/CfgIntDir.txt)\n"
-             "cmake_unit_export_cfg_int_dir (\${CFG_INT_DIR_LOCATION})\n")
+             "        FILE \"${EXTERNAL_PROJECT_EXPORTS}\")\n"
+             "set (CFG_INT_DIR_LOCATION \"${BINARY_DIR}/CfgIntDir.txt\")\n"
+             "cmake_unit_export_cfg_int_dir (\"\${CFG_INT_DIR_LOCATION}\")\n")
 
         file (MAKE_DIRECTORY "${EXTERNAL_PROJECT_SOURCE_DIR}")
         file (MAKE_DIRECTORY "${EXTERNAL_PROJECT_BINARY_DIR}")
@@ -1079,6 +1085,7 @@ function (cmake_unit_test_export_import_cfg_int_dir)
         cmake_unit_import_cfg_int_dir ("${BINARY_DIR}/CfgIntDir.txt"
                                        CFG_INT_DIR)
         cmake_unit_get_target_location_from_exports ("${EXTERNAL_PROJECT_EXPORTS}"
+                                                     "${BINARY_DIR}"
                                                      executable
                                                      EXECUTABLE_LOCATION)
 
