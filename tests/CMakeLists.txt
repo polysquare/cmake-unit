@@ -766,7 +766,7 @@ function (cmake_unit_test_cmake_test_files_recorded_in_tracefile_across_tests)
         set (END "end")
 
         set (CONTENTS_PROLOGUE
-             "set (CMAKE_UNIT_COVERAGE_FILE \"coverage.trace\"\n"
+             "set (CMAKE_UNIT_COVERAGE_FILE \"${BINARY_DIR}/coverage.trace\"\n"
              "     CACHE STRING \"\" FORCE)\n"
              "if (NOT CMAKE_SCRIPT_MODE_FILE)\n"
              "    project (SampleTests NONE)\n"
