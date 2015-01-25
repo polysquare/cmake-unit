@@ -432,10 +432,10 @@ function (_cmake_unit_preconfigure_test)
           "                            PHASE DRIVER)\n"
           "set (LOG_COVERAGE \"${CMAKE_UNIT_COVERAGE_FILE}\")\n"
           "if (LOG_COVERAGE)\n"
-          "    file (STRINGS \"${DRIVER_ERROR_LOG}\" TRACE_LINES)\n"
           "    _cmake_unit_filter_trace_lines (FILTERED_LINES\n"
           "                                    TEST_NAME \"${TEST_NAME}\"\n"
-          "                                    TRACE_LINES \${TRACE_LINES}\n"
+          "                                    TRACE_FILE\n"
+          "                                    \"\${LOG_COVERAGE}\"\n"
           "                                    COVERAGE_FILES\n"
           "                                    ${COVERAGE_FILES})\n"
           "    file (APPEND \"${ABSOLUTE_COVERAGE_FILE_PATH}\"\n"
@@ -789,7 +789,7 @@ function (_cmake_unit_filter_trace_lines FILTERED_LINES)
     cmake_parse_arguments (FILTER_COVERAGE
                            ""
                            "TEST_NAME"
-                           "TRACE_LINES;COVERAGE_FILES"
+                           "TRACE_FILE;COVERAGE_FILES"
                            ${ARGN})
 
     set (COVERAGE_FILE_CONTENTS "")
@@ -800,6 +800,7 @@ function (_cmake_unit_filter_trace_lines FILTERED_LINES)
 
     endforeach ()
 
+    file (STRINGS "${FILTER_COVERAGE_TRACE_FILE}" FILTER_COVERAGE_TRACE_LINES)
     foreach (LINE ${FILTER_COVERAGE_TRACE_LINES})
 
         # Search for lines matching a trace pattern
@@ -858,16 +859,14 @@ function (_cmake_unit_coverage)
 
         if (EXISTS "${ERROR_LOG_FILE}")
 
-            file (STRINGS "${ERROR_LOG_FILE}" ERROR_LOG)
-
             get_property (COVERAGE_FILES
                           GLOBAL PROPERTY _CMAKE_UNIT_COVERAGE_LOGGING_FILES)
 
             _cmake_unit_filter_trace_lines (COVERAGE_FILE_CONTENTS
                                             TEST_NAME
                                             "${COVERAGE_PHASE_TEST_NAME}"
-                                            TRACE_LINES
-                                            "${ERROR_LOG}"
+                                            TRACE_FILE
+                                            "${ERROR_LOG_FILE}"
                                             COVERAGE_FILES ${COVERAGE_FILES})
 
             # Use relative path
