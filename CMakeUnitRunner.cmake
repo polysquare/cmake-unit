@@ -222,14 +222,74 @@ function (_cmake_unit_discover_tests_in NAMESPACE RETURN_LIST)
 
 endfunction ()
 
+# This is an optimisation on cmake_parse_arguments which should
+# help to reduce the number of times which it is called. Effectively,
+# it hashes its arguments and then checks to see if we've called
+# cmake_parse_arguments with this kind of hash. If we have, it uses
+# the cached values.
+function (_cmake_unit_parse_args_key PREFIX
+                                     OPTION_ARGS_STRING
+                                     SINGLEVAR_ARGS_STRING
+                                     MULTIVAR_ARGS_STRING
+                                     RETURN_KEY)
+
+    # First get the key for this argv set
+    string (MD5 CACHE_KEY "${ARGV}")
+
+    # Lookup to see if we've parsed arguments like these before
+    get_property (CACHE_KEY_IS_SET
+                  GLOBAL
+                  PROPERTY _CMAKE_UNIT_CACHED_${CACHE_KEY})
+    if (NOT CACHE_KEY_IS_SET)
+
+        # Cache key was not set. Parse arguments and then store the
+        # results in global properties.
+        cmake_parse_arguments (${PREFIX}
+                               "${OPTION_ARGS_STRING}"
+                               "${SINGLEVAR_ARGS_STRING}"
+                               "${MULTIVAR_ARGS_STRING}"
+                               ${ARGN})
+
+        set (VARIABLES ${OPTION_ARGS_STRING}
+                       ${SINGLEVAR_ARGS_STRING}
+                       ${MULTIVAR_ARGS_STRING})
+
+        foreach (VAR ${VARIABLES})
+
+            set_property (GLOBAL
+                          PROPERTY _CMAKE_UNIT_PARSE_CACHE_${CACHE_KEY}_${VAR}
+                          "${${PREFIX}_${VAR}}")
+
+        endforeach ()
+
+        set_property (GLOBAL
+                      PROPERTY _CMAKE_UNIT_CACHED_${CACHE_KEY}
+                      TRUE)
+
+    endif ()
+
+    set (${RETURN_KEY} ${CACHE_KEY} PARENT_SCOPE)
+
+endfunction ()
+
+function (_cmake_unit_fetch_parsed_arg CACHE_KEY PREFIX ARGUMENT)
+
+    get_property (VALUE GLOBAL
+                  PROPERTY _CMAKE_UNIT_PARSE_CACHE_${CACHE_KEY}_${ARGUMENT})
+    set (${PREFIX}_${ARGUMENT} "${VALUE}" PARENT_SCOPE)
+
+endfunction ()
+
 function (cmake_unit_init)
 
-    cmake_parse_arguments (CMAKE_UNIT_INIT
-                           ""
-                           ""
-                           "NAMESPACE;COVERAGE_FILES"
-                           ${ARGN})
+    _cmake_unit_parse_args_key (CMAKE_UNIT_INIT
+                                ""
+                                ""
+                                "NAMESPACE;COVERAGE_FILES"
+                                PARSE_KEY
+                                ${ARGN})
 
+    _cmake_unit_fetch_parsed_arg (${PARSE_KEY} CMAKE_UNIT_INIT NAMESPACE)
     _cmake_unit_discover_tests_in (${CMAKE_UNIT_INIT_NAMESPACE}
                                    CMAKE_UNIT_INIT_TESTS)
 
@@ -237,6 +297,8 @@ function (cmake_unit_init)
 
         # Escape characters out of filenames that will cause problems when
         # attempting to regex match them later
+        _cmake_unit_fetch_parsed_arg (${PARSE_KEY} CMAKE_UNIT_INIT
+                                      COVERAGE_FILES)
         foreach (COVERAGE_FILE ${CMAKE_UNIT_INIT_COVERAGE_FILES})
 
             cmake_unit_escape_string ("${COVERAGE_FILE}" ESCAPED_COVERAGE_FILE)
@@ -296,11 +358,8 @@ endfunction ()
 
 function (_cmake_unit_spacify RETURN_SPACED)
 
-    cmake_parse_arguments (SPACIFY
-                           ""
-                           ""
-                           "LIST"
-                           ${ARGN})
+    _cmake_unit_parse_args_key (SPACIFY "" "" "LIST" PARSE_KEY ${ARGN})
+    _cmake_unit_fetch_parsed_arg (${PARSE_KEY} SPACIFY LIST)
 
     set (SPACIFIED "")
     foreach (ELEMENT ${SPACIFY_LIST})
@@ -905,35 +964,53 @@ function (_cmake_unit_override_func_table RETURN_TABLE)
 
     # Parse first for a list of overridable entries, default options
     # for those entries and the user options passed to cmake_unit_configure_test
-    cmake_parse_arguments (OVERRIDE_TABLE_OPTION
-                           ""
-                           ""
-                           "OVERRIDABLE_ENTRIES;CURRENT_DISPATCH;USER_OPTIONS"
-                           ${ARGN})
+    set (OVERRIDE_TABLE_OPTION_MULTIVAR_ARGS OVERRIDABLE_ENTRIES
+                                             CURRENT_DISPATCH
+                                             USER_OPTIONS)
+    _cmake_unit_parse_args_key (OVERRIDE_TABLE_OPTION
+                                ""
+                                ""
+                                "${OVERRIDE_TABLE_OPTION_MULTIVAR_ARGS}"
+                                OVERRIDE_TABLE_OPTION_PARSE_KEY
+                                ${ARGN})
 
     # Now for each overridable entry, get the default option in its own variable
-    cmake_parse_arguments (POTENTIALLY_OVERRIDDEN
-                           ""
-                           ""
-                           "${OVERRIDE_TABLE_OPTION_OVERRIDABLE_ENTRIES}"
-                           ${OVERRIDE_TABLE_OPTION_CURRENT_DISPATCH})
-
-    cmake_parse_arguments (USER_SPECIFIED
-                           ""
-                           ""
-                           "${OVERRIDE_TABLE_OPTION_OVERRIDABLE_ENTRIES}"
-                           ${OVERRIDE_TABLE_OPTION_USER_OPTIONS})
+    _cmake_unit_fetch_parsed_arg (${OVERRIDE_TABLE_OPTION_PARSE_KEY}
+                                  OVERRIDE_TABLE_OPTION OVERRIDABLE_ENTRIES)
+    _cmake_unit_fetch_parsed_arg (${OVERRIDE_TABLE_OPTION_PARSE_KEY}
+                                  OVERRIDE_TABLE_OPTION CURRENT_DISPATCH)
+    _cmake_unit_fetch_parsed_arg (${OVERRIDE_TABLE_OPTION_PARSE_KEY}
+                                  OVERRIDE_TABLE_OPTION USER_OPTIONS)
+    _cmake_unit_parse_args_key (POTENTIALLY_OVERRIDDEN
+                                ""
+                                ""
+                                "${OVERRIDE_TABLE_OPTION_OVERRIDABLE_ENTRIES}"
+                                POTENTIALLY_OVERRIDDEN_PARSE_KEY
+                                ${OVERRIDE_TABLE_OPTION_CURRENT_DISPATCH})
+    _cmake_unit_parse_args_key (USER_SPECIFIED
+                                ""
+                                ""
+                                "${OVERRIDE_TABLE_OPTION_OVERRIDABLE_ENTRIES}"
+                                USER_SPECIFIED_PARSE_KEY
+                                ${OVERRIDE_TABLE_OPTION_USER_OPTIONS})
 
     # Now for each of those entries, look up the same in USER_OPTIONS
     # and see if a value was set. If so, override the value here
     foreach (ENTRY ${OVERRIDE_TABLE_OPTION_OVERRIDABLE_ENTRIES})
 
-        cmake_parse_arguments (USER_SPECIFIED_PHASE
-                               ""
-                               "COMMAND"
-                               ""
-                               ${USER_SPECIFIED_${ENTRY}})
+        _cmake_unit_fetch_parsed_arg (${USER_SPECIFIED_PARSE_KEY}
+                                      USER_SPECIFIED ${ENTRY})
+        _cmake_unit_parse_args_key (USER_SPECIFIED_PHASE
+                                    ""
+                                    "COMMAND"
+                                    ""
+                                    USER_SPECIFIED_PHASE_PARSE_KEY
+                                    ${USER_SPECIFIED_${ENTRY}})
 
+        _cmake_unit_fetch_parsed_arg (${USER_SPECIFIED_PHASE_PARSE_KEY}
+                                      USER_SPECIFIED_PHASE COMMAND)
+        _cmake_unit_fetch_parsed_arg (${POTENTIALLY_OVERRIDDEN_PARSE_KEY}
+                                      POTENTIALLY_OVERRIDDEN ${ENTRY})
         _cmake_unit_override_function (POTENTIALLY_OVERRIDDEN_${ENTRY}
                                        "${USER_SPECIFIED_PHASE_COMMAND}")
 
@@ -954,40 +1031,35 @@ function (_cmake_unit_override_func_table RETURN_TABLE)
 
 endfunction ()
 
-function (_cmake_unit_get_func_for_phase RETURN_FUNCTION)
+function (_cmake_unit_get_func_for_phase RETURN_FUNCTION
+                                         PHASE)
 
-    cmake_parse_arguments (FUNC_FOR_PHASE
-                           ""
-                           "PHASE"
-                           "PHASES;DISPATCH_TABLE"
-                           ${ARGN})
+    _cmake_unit_parse_args_key (DISPATCH_FOR
+                                ""
+                                "${CMAKE_UNIT_PHASES}"
+                                ""
+                                DISPATCH_FOR_KEY
+                                ${ARGN})
+    _cmake_unit_fetch_parsed_arg (${DISPATCH_FOR_KEY} DISPATCH_FOR ${PHASE})
 
-    cmake_parse_arguments (DISPATCH_FOR
-                           ""
-                           "${FUNC_FOR_PHASE_PHASES}"
-                           ""
-                           ${FUNC_FOR_PHASE_DISPATCH_TABLE})
-
-    set (PHASE ${FUNC_FOR_PHASE_PHASE})
     set (${RETURN_FUNCTION} ${DISPATCH_FOR_${PHASE}} PARENT_SCOPE)
 
 endfunction ()
 
-function (_cmake_unit_get_arguments_for_phase RETURN_ARGUMENTS)
+# This function assumes that CMAKE_UNIT_PHASES is set in the
+# parent scope
+function (_cmake_unit_get_arguments_for_phase RETURN_ARGUMENTS
+                                              PHASE)
 
-    cmake_parse_arguments (ARGUMENTS_FOR_PHASE
-                           ""
-                           "PHASE"
-                           "PHASES;USER_OPTIONS"
-                           ${ARGN})
+    _cmake_unit_parse_args_key (ARGUMENTS_FOR
+                                ""
+                                ""
+                                "${CMAKE_UNIT_PHASES}"
+                                ARGUMENTS_FOR_PARSE_KEY
+                                ${ARGN})
+    _cmake_unit_fetch_parsed_arg (${ARGUMENTS_FOR_PARSE_KEY}
+                                  ARGUMENTS_FOR ${PHASE})
 
-    cmake_parse_arguments (ARGUMENTS_FOR
-                           ""
-                           ""
-                           "${ARGUMENTS_FOR_PHASE_PHASES}"
-                           ${ARGUMENTS_FOR_PHASE_USER_OPTIONS})
-
-    set (PHASE ${ARGUMENTS_FOR_PHASE_PHASE})
     set (${RETURN_ARGUMENTS} ${ARGUMENTS_FOR_${PHASE}} PARENT_SCOPE)
 
 endfunction ()
@@ -998,6 +1070,9 @@ set (_CMAKE_UNIT_OVERRIDABLE_PHASES CLEAN
                                     INVOKE_BUILD
                                     INVOKE_TEST
                                     VERIFY)
+set (CMAKE_UNIT_PHASES PRECONFIGURE
+                       COVERAGE
+                       ${_CMAKE_UNIT_OVERRIDABLE_PHASES})
 
 # Creates an "override table" of dispatch phase commands for specified
 # USER_OPTIONS. If an ALLOW_FAIL is specified for a particular phase then
@@ -1010,30 +1085,23 @@ function (_cmake_unit_get_override_table_for_allowed_failures RETURN_TABLE)
          INVOKE_BUILD
          INVOKE_TEST)
 
-    set (GEN_OVERRIDE_FOR_FAILURES_MULTIVAR_OPTIONS USER_OPTIONS)
-
-    # First get our USER_OPTIONS
-    cmake_parse_arguments (GEN_OVERRIDE
-                           ""
-                           ""
-                           "${GEN_OVERRIDE_FOR_FAILURES_MULTIVAR_OPTIONS}"
-                           ${ARGN})
-
-    # Now that we have USER_OPTIONS, parse it for each phase
+    # Parse ARGN for each overridable phase
     cmake_parse_arguments (OPTIONS_FOR
                            ""
                            ""
                            "${_CMAKE_UNIT_OVERRIDABLE_PHASES}"
-                           ${GEN_OVERRIDE_USER_OPTIONS})
+                           ${ARGN})
 
     # And now for each phase, check to see if ALLOW_FAIL was defined
     foreach (PHASE ${PHASE_INVOCATION_ORDER})
 
-        cmake_parse_arguments (PHASE
-                               "ALLOW_FAIL"
-                               ""
-                               ""
-                               ${OPTIONS_FOR_${PHASE}})
+        _cmake_unit_parse_args_key (PHASE
+                                    "ALLOW_FAIL"
+                                    ""
+                                    ""
+                                    PHASE_PARSE_ARGS_KEY
+                                    ${OPTIONS_FOR_${PHASE}})
+        _cmake_unit_fetch_parsed_arg (${PHASE_PARSE_ARGS_KEY} PHASE ALLOW_FAIL)
 
         # Allow fail was defined. Look up this phase, generate a table
         # using the remaining phases and return it
@@ -1081,17 +1149,21 @@ function (_cmake_unit_compute_dispatch_table_for_test DISPATCH_TABLE_RETURN)
     set (COMPUTE_DISPATCH_TABLE_SINGLEVAR_ARGS TEST_NAME)
     set (COMPUTE_DISPATCH_TABLE_MULTIVAR_ARGS USER_OPTIONS)
 
-    cmake_parse_arguments (COMPUTE_DISPATCH_TABLE
-                           ""
-                           "${COMPUTE_DISPATCH_TABLE_SINGLEVAR_ARGS}"
-                           "${COMPUTE_DISPATCH_TABLE_MULTIVAR_ARGS}"
-                           ${ARGN})
+    _cmake_unit_parse_args_key (COMPUTE_DISPATCH_TABLE
+                                ""
+                                "${COMPUTE_DISPATCH_TABLE_SINGLEVAR_ARGS}"
+                                "${COMPUTE_DISPATCH_TABLE_MULTIVAR_ARGS}"
+                                COMPUTE_DISPATCH_TABLE_PARSE_KEY
+                                ${ARGN})
 
     # First look up this test name as part of the
     # _CMAKE_UNIT_DISPATCH_CONFIGURE_DISPATCH_FOR_${TEST_NAME} property. If
     # there's a value, then use that (as a cache) instead of recomputing it here
     # as recomputing the value all the time is quite expensive. The value
     # never changes between runs.
+    _cmake_unit_fetch_parsed_arg (${COMPUTE_DISPATCH_TABLE_PARSE_KEY}
+                                  COMPUTE_DISPATCH_TABLE TEST_NAME)
+    set (TEST_NAME "${COMPUTE_DISPATCH_TABLE_TEST_NAME}")
     get_property (DISPATCH_TABLE
                   GLOBAL PROPERTY
                   "_CMAKE_UNIT_DISPATCH_CONFIGURE_DISPATCH_FOR_${TEST_NAME}")
@@ -1108,6 +1180,8 @@ function (_cmake_unit_compute_dispatch_table_for_test DISPATCH_TABLE_RETURN)
              INVOKE_TEST cmake_unit_invoke_test
              VERIFY _cmake_unit_no_op)
 
+        _cmake_unit_fetch_parsed_arg (${COMPUTE_DISPATCH_TABLE_PARSE_KEY}
+                                      COMPUTE_DISPATCH_TABLE USER_OPTIONS)
         set (OVERRIDABLE ${_CMAKE_UNIT_OVERRIDABLE_PHASES})
         set (USER_ARGN ${COMPUTE_DISPATCH_TABLE_USER_OPTIONS})
 
@@ -1118,7 +1192,6 @@ function (_cmake_unit_compute_dispatch_table_for_test DISPATCH_TABLE_RETURN)
 
         set (ALLOWED_FAIL_TABLE)
         _cmake_unit_get_override_table_for_allowed_failures (ALLOWED_FAIL_TABLE
-                                                             USER_OPTIONS
                                                              ${USER_ARGN})
 
         _cmake_unit_override_func_table (OVERRIDDEN_DISPATCH
@@ -1159,10 +1232,6 @@ function (_cmake_unit_configure_test_internal)
 
     set (CMAKE_UNIT_CONFIGURE_TEST_SINGLEVAR_ARGS SOURCE_DIR BINARY_DIR)
 
-    set (CMAKE_UNIT_PHASES PRECONFIGURE
-                           COVERAGE
-                           ${_CMAKE_UNIT_OVERRIDABLE_PHASES})
-
     # TEST_NAME is by convention, the "called function" directly
     # above us name. It must be set here in case we call another function
     # and CALLED_FUNCTION_NAME is overwritten
@@ -1180,16 +1249,13 @@ function (_cmake_unit_configure_test_internal)
 
     # Get the function for this phase
     _cmake_unit_get_func_for_phase (PHASE_FUNCTION
-                                    PHASE ${_CMAKE_UNIT_PHASE}
-                                    PHASES ${CMAKE_UNIT_PHASES}
-                                    DISPATCH_TABLE ${CMAKE_UNIT_TEST_DISPATCH})
+                                    ${_CMAKE_UNIT_PHASE}
+                                    ${CMAKE_UNIT_TEST_DISPATCH})
 
     # Get the arguments to pass to this phase, as a list
     set (PHASE_ARGUMENTS)
     _cmake_unit_get_arguments_for_phase (PHASE_ARGUMENTS
-                                         PHASE ${_CMAKE_UNIT_PHASE}
-                                         PHASES ${CMAKE_UNIT_PHASES}
-                                         USER_OPTIONS
+                                         ${_CMAKE_UNIT_PHASE}
                                          ${ARGN})
 
     set (PHASE ${_CMAKE_UNIT_PHASE})
