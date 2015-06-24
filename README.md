@@ -26,10 +26,10 @@ scripts.
 
 `cmake-unit` is written entirely using the CMake language and should work across
 all platforms where CMake is supported.  It had been tested on:
- * Windows (Visual Studio 2010, 2012, 2013, NMake)
- * Mac OS X (XCode, Ninja,
- Make)
- * Ubuntu (Ninja, Make)
+
+* Windows (Visual Studio 2010, 2012, 2013, NMake)
+* Mac OS X (XCode, Ninja, Make)
+* Ubuntu (Ninja, Make)
 
 ## Usage ##
 
@@ -39,7 +39,7 @@ three files.
 ### CMakeUnitRunner ###
 
 `CMakeUnitRunner` contains the main "runner" script for loading and executing
-test scripts.  Include this file in the `CMakeLists.txt`.
+test scripts.  Include this file in the `/CMakeLists.txt`.
 
 Tests are defined inline as functions. They are automatically discovered by
 cmake-unit and the name of the function must be in the format of
@@ -90,13 +90,13 @@ project's `CMAKE_BINARY_DIR`.
 
 #### The `INVOKE_CONFIGURE` phase ####
 
-This phase is responsible for writing out a stub `CMakeLists.txt` and jumping
+This phase is responsible for writing out a stub `/CMakeLists.txt` and jumping
 invoking `cmake` on the resulting project folder. By default it will call
-`cmake_unit_invoke_configure. The written out `CMakeLists.txt` will do some
+`cmake_unit_invoke_configure`. The written out `/CMakeLists.txt` will do some
 setup for the test project, including calling the `project` command.
 
 `cmake_unit_invoke_configure` will not configure any languages by default. This
-is to prevent unecessary overhead when testing on platforms where configuring
+is to prevent unnecessary overhead when testing on platforms where configuring
 language support is quite slow (for instance, Visual Studio and XCode). Instead
 of overriding the command, usually the only action you will need to take if
 you need language support is to set the `LANGUAGES` option (eg, to `C CXX`).
@@ -105,7 +105,7 @@ you need language support is to set the `LANGUAGES` option (eg, to `C CXX`).
 
 This phase is responsible for actually configuring the project. Any commands
 run inside this phase are effectively run as though CMake was configuring
-a project by processing a `CMakeLists.txt`, so the full range of commands
+a project by processing a `/CMakeLists.txt`, so the full range of commands
 are available. Usually you will want to override the `COMMAND` and configure
 your project as required (or make assertions).
 
@@ -208,56 +208,60 @@ the script hits an assertion failure, it will call `message (SEND_ERROR)`.
 The following assertions are available at the time of writing this documentation
 
 * `cmake_unit_assert_target_exists`, `cmake_unit_assert_target_does_not_exist`:
-Asserts that the target provided as the first argument exists or does not exist.
+  Asserts that the target provided as the first argument exists or does not
+  exist.
 * `cmake_unit_assert_string_contains`,
-`cmake_unit_assert_string_does_not_contain`: Asserts that the second string is a
-substring of the first.
+  `cmake_unit_assert_string_does_not_contain`: Asserts that the second string is
+  a substring of the first.
 * `cmake_unit_assert_variable_is`, `cmake_unit_assert_variable_is_not`: Asserts
-that the variable specified matches some of the parameters provided.  A variable
-name, type, comparator statement (`EQUAL` `LESS` `GREATER`) and value to compare
-against can be provided.
+  that the variable specified matches some of the parameters provided.  A
+  variable name, type, comparator statement (`EQUAL` `LESS` `GREATER`) and value
+  to compare against can be provided.
 * `cmake_unit_assert_variable_matches_regex`,
-`cmake_unit_assert_variable_does_not_match_regex`: Asserts that the value
-provided when treated as a string matches the regex provided in the second
-argument.
-* `cmake_unit_assert_variable_is_defined`, `assert_variable_is_not_defined`:
-Asserts that a variable was or was not defined
-* `assert_cmake_unit_command_executes_with_success`,
-`assert_command_does_not_execute_with_sucess`: For a command `COMMAND` and each
-of its arguments encapsulated in the list passed-by-variable (as opposed to by
-value), check if it executed with success.
-* `assert_cmake_unit_target_is_linked_to`, `assert_target_is_not_linked_to`:
-Asserts that the target has a link library that matches the name specified by
-the second argument.  It does regex matching to ensure that in the default case,
-libraries with slightly inexact names between platforms are still matched
-against.
-* `assert_has_property_with_value`, `assert_does_not_have_property_with_value`:
-Asserts that the item specified with the item type specified has property with
-a value and type specified which matches the provided comparator.
-* `assert_has_property_containing_value`,
- `assert_does_not_have_property_containing_value`: Like
- `assert_has_property_with_value` but looks inside items in a list held by the
- proeprty.
-* `assert_file_exists`, `assert_file_does_not_exist`: Asserts that a
- file exists on the filesystem.
-* `assert_file_contains`, `assert_file_does_not_contain`: Asserts that a file
-contains the substring specified.
+  `cmake_unit_assert_variable_does_not_match_regex`: Asserts that the value
+  provided when treated as a string matches the regex provided in the second
+  argument.
+* `cmake_unit_assert_variable_is_defined`,
+  `cmake_unit_assert_variable_is_not_defined`: Asserts that a variable was or
+  was not defined
+* `cmake_unit_assert_command_executes_with_success`,
+  `cmake_unit_assert_command_does_not_execute_with_success`: For a command
+  `COMMAND` and each of its arguments encapsulated in the list
+  passed-by-variable (as opposed to by value), check if it executed with
+  success.
+* `cmake_unit_assert_target_is_linked_to`,
+  `cmake_unit_assert_target_is_not_linked_to`: Asserts that the target has a
+  link library that matches the name specified by the second argument.  It does
+  regex matching to ensure that in the default case, libraries with slightly
+  inexact names between platforms are still matched against.
+* `cmake_unit_assert_has_property_with_value`,
+  `cmake_unit_assert_does_not_have_property_with_value`: Asserts that the item
+  specified with the item type specified has property with a value and type
+  specified which matches the provided comparator.
+* `cmake_unit_assert_has_property_containing_value`,
+  `cmake_unit_assert_does_not_have_property_containing_value`: Like
+  `cmake_unit_assert_has_property_with_value` but looks inside items in a list
+  held by the property.
+* `cmake_unit_assert_file_exists`, `cmake_unit_assert_file_does_not_exist`:
+  Asserts that a file exists on the filesystem.
+* `cmake_unit_assert_file_contains`, `cmake_unit_assert_file_does_not_contain`:
+  Asserts that a file contains the substring specified.
 
 #### Overridable Phase Functions ####
 
 Each of these functions is a default for a phase of a cmake-unit test's build
-cycle. If they are overriden, they can be "chained up" to. `CALLER_ARGN` will
+cycle. If they are overridden, they can be "chained up" to. `CALLER_ARGN` will
 be passed implicitly.
 
-##### `cmake_unit_clean` #####
+##### `cmake_unit_invoke_clean` #####
 
 Cleans the project `BINARY_DIRECTORY` (as specified in `CALLER_ARGN`).
 
 ##### `cmake_unit_invoke_configure` #####
 
-Creates a `CMakeLists.txt` for this project which does some initial setup and
+Creates a `/CMakeLists.txt` for this project which does some initial setup and
 then jumps to the function defined for `CONFIGURE`. `cmake` is invoked on a
-build directory for the folder containing the created `CMakeLists.txt`.
+build directory for the folder containing the created `/CMakeLists.txt`.
 
 ##### `cmake_unit_invoke_build` #####
 
@@ -287,7 +291,7 @@ where possible, as it will be correct in every phase.
 
 ##### Source File Generation #####
 
-###### `cmake_unit_write_out_source_file_before_build` ######
+###### `cmake_unit_create_source_file_before_build` ######
 
 Writes out a source file, for use with `add_library`, `add_executable` or source
 scanners during the configure phase.
@@ -295,6 +299,7 @@ scanners during the configure phase.
 If the source is detected as a header based on the `NAME` property such that it
 does not have a C or C++ extension, then header guards will be written and
 function definitions will not be included.
+
 * [Optional] `NAME`: Name of the source file.  May include slashes which will
   be interpreted as a subdirectory relative to `CMAKE_CURRENT_SOURCE_DIR`.
   The default is Source.cpp
@@ -311,7 +316,7 @@ function definitions will not be included.
   Definitions
 * [Optional] `INCLUDE_DIRECTORIES`: A list of directories such that, if an
   entry in the INCLUDES list has the same directory name as an entry in
-  `INCLUDE_DIRECTORIES` then the entry will be angle-brackets <include> with
+  `INCLUDE_DIRECTORIES` then the entry will be angle-brackets `<include>` with
   the path relative to that include directory.
 
 ###### `cmake_unit_generate_source_file_during_build` ######
@@ -341,7 +346,7 @@ and function definitions will not be included.
   Definitions
 * [Optional] `INCLUDE_DIRECTORIES`: A list of directories such that, if an
   entry in the INCLUDES list has the same directory name as an entry in
-  `INCLUDE_DIRECTORIES` then the entry will be angle-brackets <include> with
+  `INCLUDE_DIRECTORIES` then the entry will be angle-brackets `<include>` with
   the path relative to that include directory.
 
 ##### Binary target generation #####
@@ -354,6 +359,7 @@ executable or library generated.
 
 Creates a simple executable by the name "NAME" which will always have a "main"
 function.
+
 * `NAME`: Name of executable
 * [Optional] `INCLUDES`: A list of files, relative or absolute paths, to
   `#include`
@@ -364,13 +370,14 @@ function.
   Definitions
 * [Optional] `INCLUDE_DIRECTORIES`: A list of directories such that, if an
   entry in the INCLUDES list has the same directory name as an entry in
-  `INCLUDE_DIRECTORIES` then the entry will be angle-brackets <include> with
+  `INCLUDE_DIRECTORIES` then the entry will be angle-brackets `<include>` with
   the path relative to that include directory.
 
 ###### `cmake_unit_create_simple_library` ######
 
 Creates a simple executable by the name "NAME" which will always have a "main"
 function.
+
 * `NAME`: Name of executable
 * [Optional] `INCLUDES`: A list of files, relative or absolute paths, to
   `#include`
@@ -381,7 +388,7 @@ function.
   Definitions
 * [Optional] `INCLUDE_DIRECTORIES`: A list of directories such that, if an
   entry in the INCLUDES list has the same directory name as an entry in
-  `INCLUDE_DIRECTORIES` then the entry will be angle-brackets <include> with
+  `INCLUDE_DIRECTORIES` then the entry will be angle-brackets `<include>` with
   the path relative to that include directory.
 
 ##### Working with Built Projects #####
@@ -395,7 +402,7 @@ This function should be run in the verify stage in order to determine the
 location of a binary or library built by CMake. The initial configure
 step should run `export (TARGETS ...)` in order to generate this file.
 
-This function should alwyas be used where a binary or library needs to
+This function should always be used where a binary or library needs to
 be invoked after build. Different platforms put the completed binaries
 in different places and also give them a different name. This function
 will resolve all those issues.
@@ -439,18 +446,20 @@ compatible file.
 directory where CMake scripts are to be kept.
 
 There are two cache options which must be set prior to use:
- 1. `TRACEFILE`: Path to a tracefile generated by using
-    `CMAKE_UNIT_LOG_COVERAGE=ON`
- 2. `LCOV_OUTPUT`: Path to filename where LCov output file should be stored.
+
+* `TRACEFILE`: Path to a tracefile generated by using
+  `CMAKE_UNIT_LOG_COVERAGE=ON`
+* `LCOV_OUTPUT`: Path to filename where LCov output file should be stored.
 
 ## Known Issues ##
 
-The following issues are known at the time of writing
- * polysquare/cmake-unit#55 : Custom Command output on Visual Studio Generators
-                              not available
- * polysquare/cmake-unit#56 : cmake-unit overrides add_custom_command
- * polysquare/cmake-unit#57 : Coverage file paths may not contain square
-                              brackets ([])
+The following issues are known at the time of writing:
+
+* polysquare/cmake-unit#55 : Custom Command output on Visual Studio Generators
+                             not available
+* polysquare/cmake-unit#56 : cmake-unit overrides add_custom_command
+* polysquare/cmake-unit#57 : Coverage file paths may not contain square
+                             brackets ([])
 
 ## Technical Implementation Notes ##
 
