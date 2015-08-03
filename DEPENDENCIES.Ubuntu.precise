@@ -1,3 +1,2 @@
-cmake
 ninja-build
 lcov

@@ -227,7 +227,7 @@ function (cmake_unit_test_cmake_build_test_added_where_verify_script_exists)
 
         cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
                                                   "^.*Star.*sample_test_one.*$")
-        set (CMAKE_BUILD_REGEX "^.*${ESC_CMAKE_COMMAND} --build.*$")
+        set (CMAKE_BUILD_REGEX "^.*${ESC_CMAKE_COMMAND}[ \"]+--build.*$")
         cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
                                                   "${CMAKE_BUILD_REGEX}")
         set (CMAKE_TEST_REGEX "^.*${ESC_CMAKE_TEST_COMMAND}.*$")
@@ -537,7 +537,7 @@ function (cmake_unit_test_cmake_build_test_with_custom_target)
         cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
 
         set (CMAKE_BUILD_REGEX
-             "^.*${ESC_CMAKE_COMMAND} --build.*--target custom_target.*$")
+             "^.*${ESC_CMAKE_COMMAND}.*--build.+--target.+custom_target.*$")
         cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
                                                   "${CMAKE_BUILD_REGEX}")
 

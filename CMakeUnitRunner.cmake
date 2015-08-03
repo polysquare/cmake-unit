@@ -101,7 +101,8 @@ function (_cmake_unit_runner_assert)
     else ()
 
         _cmake_unit_spacify (SPACIFIED_COND
-                             LIST ${CMAKE_UNIT_RUNNER_ASSERT_CONDITION})
+                             LIST ${CMAKE_UNIT_RUNNER_ASSERT_CONDITION}
+                             NO_QUOTES)
 
         if (NOT DEFINED CMAKE_UNIT_RUNNER_ASSERT_MESSAGE)
 
@@ -368,13 +369,25 @@ endfunction ()
 
 function (_cmake_unit_spacify RETURN_SPACED)
 
-    _cmake_unit_parse_args_key (SPACIFY "" "" "LIST" PARSE_KEY ${ARGN})
+    _cmake_unit_parse_args_key (SPACIFY
+                                "NO_QUOTES"
+                                ""
+                                "LIST"
+                                PARSE_KEY ${ARGN})
     _cmake_unit_fetch_parsed_arg (${PARSE_KEY} SPACIFY LIST)
 
     set (SPACIFIED "")
     foreach (ELEMENT ${SPACIFY_LIST})
 
-        set (SPACIFIED "${SPACIFIED}${ELEMENT} ")
+        if (SPACIFY_NO_QUOTES)
+
+            set (SPACIFIED "${SPACIFIED}${ELEMENT} ")
+
+        else ()
+
+            set (SPACIFIED "${SPACIFIED}\"${ELEMENT}\" ")
+
+        endif ()
 
     endforeach ()
 
@@ -650,7 +663,9 @@ function (_cmake_unit_invoke_command)
                            "COMMAND"
                            ${ARGN})
 
-    _cmake_unit_spacify (SPACIFIED_COMMAND LIST ${INVOKE_COMMAND_COMMAND})
+    _cmake_unit_spacify (SPACIFIED_COMMAND
+                         LIST ${INVOKE_COMMAND_COMMAND}
+                         NO_QUOTES)
     message (STATUS "Running ${SPACIFIED_COMMAND}")
 
     execute_process (COMMAND ${INVOKE_COMMAND_COMMAND}
@@ -1141,7 +1156,8 @@ function (_cmake_unit_get_override_table_for_allowed_failures RETURN_TABLE)
             list (FIND PHASE_INVOCATION_ORDER "${PHASE}" PHASE_INDEX)
 
             _cmake_unit_spacify (PHASE_INVOCATION_SPACIFIED
-                                 LIST ${PHASE_INVOCATION_ORDER})
+                                 LIST ${PHASE_INVOCATION_ORDER}
+                                 NO_QUOTES)
             _cmake_unit_runner_assert (CONDITION NOT PHASE_INDEX EQUAL -1
                                        MESSAGE "PHASE must be in "
                                                "${PHASE_INVOCATION_SPACIFIED}")
@@ -1369,7 +1385,8 @@ function (cmake_unit_get_log_for PHASE LOG_TYPE LOG_FILE_RETURN)
     set (ACCEPTABLE_PHASES INVOKE_CONFIGURE INVOKE_BUILD INVOKE_TEST)
     list (FIND ACCEPTABLE_PHASES ${PHASE} PHASE_IN_ACCEPTABLE_INDEX)
     _cmake_unit_spacify (SPACIFIED_ACCEPTABLE_PHASES
-                         LIST ${ACCEPTABLE_PHASES})
+                         LIST ${ACCEPTABLE_PHASES}
+                         NO_QUOTES)
     _cmake_unit_runner_assert (CONDITION
                                NOT PHASE_IN_ACCEPTABLE_INDEX EQUAL -1
                                MESSAGE
