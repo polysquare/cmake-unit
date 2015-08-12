@@ -2,22 +2,32 @@ language: cpp
 sudo: false
 cache:
   directories:
-    - ~/container
+  - container
 env:
-- CMAKE_GENERATOR="Unix Makefiles" CMAKE_VERSION="master"
-- CMAKE_GENERATOR="Ninja" CMAKE_VERSION="master"
-- CMAKE_GENERATOR="Unix Makefiles" CMAKE_VERSION="3.0.2"
-- CMAKE_GENERATOR="Ninja" CMAKE_VERSION="3.0.2"
-- CMAKE_GENERATOR="Unix Makefiles" CMAKE_VERSION="2.8.12"
-- CMAKE_GENERATOR="Ninja" CMAKE_VERSION="2.8.12"
-- CMAKE_GENERATOR="Unix Makefiles" CMAKE_VERSION="master" COVERAGE=ON
-before_install:
-# Setup python so that we can install packages on pip.
-- wget public-travis-scripts.polysquare.org/setup-lang.sh
-- source setup-lang.sh -l python -p ~/container/python
-- export NAMESPACE="cmake_unit"
-- export EXCLUDE_FROM_LINT="tests/FileForCoverage.cmake"
+- CMAKE_GENERATOR="Unix Makefiles" CMAKE_VERSION="latest" DEPLOY="1"
+- CMAKE_GENERATOR="Ninja" CMAKE_VERSION="latest"
+- CMAKE_GENERATOR="Unix Makefiles" CMAKE_VERSION="3.0"
+- CMAKE_GENERATOR="Ninja" CMAKE_VERSION="3.0"
+- CMAKE_GENERATOR="Unix Makefiles" CMAKE_VERSION="2.8"
+- CMAKE_GENERATOR="Ninja" CMAKE_VERSION="2.8"
+- CMAKE_GENERATOR="Unix Makefiles" CMAKE_VERSION="latest" COVERAGE="--use-cmake-coverage"
+install:
+- eval $(curl -LSs --retry 100 --connect-timeout 3 public-travis-scripts.polysquare.org/bootstrap.py | python /dev/stdin -d container -s setup/bii/setup.py -e bash -p /dev/stdout --cmake-version ${CMAKE_VERSION})
 script:
-- curl -LSs public-travis-scripts.polysquare.org/cmake-test-in-container.sh | bash
+- polysquare_run check/bii/check.py ${COVERAGE} --cmake-namespace cmake_unit --generator "${CMAKE_GENERATOR}" --lint-exclude "*FileForCoverage.cmake" --block "smspillaz/cmake-unit"
+before_cache:
+- polysquare_cleanup
 after_success:
-- curl -LSs public-travis-scripts.polysquare.org/cmake-coverage.sh | bash
+- polysquare_run coverage/cmake/coverage.py
+before_deploy:
+- polysquare_run deploy/bii/deploy.py
+deploy:
+  provider: biicode
+  user:
+    secure: MVBlNXjlQ3CYQltHKevP7/WQrBgtYJRbe0OoVpvKAfB+sYD54nBhn85a0Jo8zY+jtyLDLa8a7cMdWgnVgL+8NNFTm0QBqGprC/BUGHgBiWa6k3fK2+SuAt3BY18pTLOTL/pLhzwGFvZ3QQ903wAlp8qR8LlTvx2iKhf8H3ANBYI=
+  password:
+    secure: ECvfXt6dC/qX4ULgJbAICgf+u08vUFPBH0TVMNLAmfe9J38ZF8MyrV51JfqP3tELt6tJ8Yk2hSDd6D5LxfMDTSsrw9oaD+69HKO0fLeR/yD96r+TKEkqHWxgi/oez8fTUHZrLT2n7zrqsg4JwuxYFuQ7ARr0IirgaPF5+bw7t38=
+  on:
+    repo: polysquare/cmake-unit
+    branch: master
+    condition: ${DEPLOY} = 1

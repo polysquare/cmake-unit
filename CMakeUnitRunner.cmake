@@ -12,18 +12,16 @@
 #
 # Build tests are a superset of CMake tests. They will run cmake
 # on the specified script, but also use cmake --build to build
-# the resulting project and then run the verfication script
+# the resulting project and then run the verification script
 # specified in order to check that the build succeeded in the
 # way that the user expected it to. Build tests can take
 # much longer to execute and should be used sparingly.
 #
-# See LICENCE.md for Copyright information
-if (_CMAKE_UNIT_RUNNER_INCLUDED)
-
-    return ()
-
+# See /LICENCE.md for Copyright information
+if (BIICODE)
+    include ("smspillaz/cmake-include-guard/IncludeGuard")
+    cmake_include_guard (CMAKE_UNIT_RUNNER SET_MODULE_PATH)
 endif ()
-set (_CMAKE_UNIT_RUNNER_INCLUDED TRUE)
 
 include (CMakeParseArguments)
 include (CMakeUnit)
@@ -47,12 +45,24 @@ option (CMAKE_UNIT_NO_DEV_WARNINGS OFF
         "Turn off developer warnings")
 option (CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS OFF
         "Turn off uninitialized variable usage warnings")
+option (CMAKE_UNIT_PRESERVE_BUILD_ON_COMPLETION OFF
+        "Preserve contents of test build directories on completion")
 
 if (CMAKE_UNIT_COVERAGE_FILE)
 
     set (CMAKE_UNIT_COVERAGE_FILE
          "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}.trace"
-         CACHE STRING "File where coverage data will be stored")
+         CACHE FILE "File where coverage data will be stored")
+
+endif ()
+
+set (CMAKE_UNIT_TRACE_CONVERTER_LOCATION_OUTPUT ""
+     CACHE FILE "Where location of CMakeTraceToLCov.cmake will be written")
+
+if (NOT CMAKE_UNIT_TRACE_CONVERTER_LOCATION_OUTPUT STREQUAL "")
+
+    file (WRITE "${CMAKE_UNIT_TRACE_CONVERTER_LOCATION_OUTPUT}"
+          "${CMAKE_CURRENT_LIST_DIR}/CMakeTraceToLCov.cmake")
 
 endif ()
 
@@ -91,7 +101,8 @@ function (_cmake_unit_runner_assert)
     else ()
 
         _cmake_unit_spacify (SPACIFIED_COND
-                             LIST ${CMAKE_UNIT_RUNNER_ASSERT_CONDITION})
+                             LIST ${CMAKE_UNIT_RUNNER_ASSERT_CONDITION}
+                             NO_QUOTES)
 
         if (NOT DEFINED CMAKE_UNIT_RUNNER_ASSERT_MESSAGE)
 
@@ -222,7 +233,7 @@ function (_cmake_unit_discover_tests_in NAMESPACE RETURN_LIST)
 
 endfunction ()
 
-# This is an optimisation on cmake_parse_arguments which should
+# This is an optimization on cmake_parse_arguments which should
 # help to reduce the number of times which it is called. Effectively,
 # it hashes its arguments and then checks to see if we've called
 # cmake_parse_arguments with this kind of hash. If we have, it uses
@@ -358,13 +369,25 @@ endfunction ()
 
 function (_cmake_unit_spacify RETURN_SPACED)
 
-    _cmake_unit_parse_args_key (SPACIFY "" "" "LIST" PARSE_KEY ${ARGN})
+    _cmake_unit_parse_args_key (SPACIFY
+                                "NO_QUOTES"
+                                ""
+                                "LIST"
+                                PARSE_KEY ${ARGN})
     _cmake_unit_fetch_parsed_arg (${PARSE_KEY} SPACIFY LIST)
 
     set (SPACIFIED "")
     foreach (ELEMENT ${SPACIFY_LIST})
 
-        set (SPACIFIED "${SPACIFIED}${ELEMENT} ")
+        if (SPACIFY_NO_QUOTES)
+
+            set (SPACIFIED "${SPACIFIED}${ELEMENT} ")
+
+        else ()
+
+            set (SPACIFIED "${SPACIFIED}\"${ELEMENT}\" ")
+
+        endif ()
 
     endforeach ()
 
@@ -442,7 +465,7 @@ function (_cmake_unit_preconfigure_test)
 
     _cmake_unit_get_child_invocation_script_header (COMMON_PROLOGUE)
 
-    # Driver.cmake writs some initial variable definitions
+    # /Driver.cmake writs some initial variable definitions
     file (WRITE "${DRIVER_SCRIPT}"
           "set (_CMAKE_UNIT_PHASE CLEAN)\n"
           ${COMMON_PROLOGUE}
@@ -457,7 +480,7 @@ function (_cmake_unit_preconfigure_test)
           "              ${COVERAGE_FILES})\n"
           "include (\"${CMAKE_CURRENT_LIST_FILE}\")\n")
 
-    # Coverage.cmake is intended to wrap Driver.cmake and write trace data
+    # /Coverage.cmake is intended to wrap /Driver.cmake and write trace data
     # into CMAKE_UNIT_COVERAGE_FILE
     _cmake_unit_spacify (POLICY_CACHE_DEFS_SPACIFIED
                          LIST ${CMAKE_POLICY_CACHE_DEFINITIONS})
@@ -526,6 +549,25 @@ function (cmake_unit_invoke_clean)
 
 endfunction ()
 
+function (cmake_unit_invoke_rm_build)
+
+    if (CMAKE_UNIT_PRESERVE_BUILD_ON_COMPLETION)
+
+        return ()
+
+    endif ()
+
+    cmake_parse_arguments (RM_BUILD
+                           ""
+                           "BINARY_DIR;SOURCE_DIR"
+                           ""
+                           ${CALLER_ARGN})
+
+    file (REMOVE_RECURSE "${RM_BUILD_BINARY_DIR}")
+    file (REMOVE_RECURSE "${RM_BUILD_SOURCE_DIR}")
+
+endfunction ()
+
 # Parse INPUT_FILE, remove a problematic regex and write to OUTPUT_FILE
 function (_cmake_unit_remove_problematic_regex PHASE
                                                LOG_TYPE
@@ -563,7 +605,7 @@ function (_cmake_unit_print_lines_for_log PHASE
 
     endif ()
 
-    # Print error lines to stderr and output lines to stdout, mimicing the
+    # Print error lines to stderr and output lines to stdout, mimicking the
     # same format for each
     if (LOG_TYPE STREQUAL "ERROR")
 
@@ -621,7 +663,9 @@ function (_cmake_unit_invoke_command)
                            "COMMAND"
                            ${ARGN})
 
-    _cmake_unit_spacify (SPACIFIED_COMMAND LIST ${INVOKE_COMMAND_COMMAND})
+    _cmake_unit_spacify (SPACIFIED_COMMAND
+                         LIST ${INVOKE_COMMAND_COMMAND}
+                         NO_QUOTES)
     message (STATUS "Running ${SPACIFIED_COMMAND}")
 
     execute_process (COMMAND ${INVOKE_COMMAND_COMMAND}
@@ -694,8 +738,8 @@ function (cmake_unit_invoke_configure)
 
     _cmake_unit_get_child_invocation_script_header (COMMON_PROLOGUE)
 
-    # Write out CMakeLists.txt. This is a special case where we re-include
-    # everything, this time in project-processing mode
+    # Write out ${INVOKE_CONFIGURE_SOURCE_DIR}/CMakeLists.txt. This is a special
+    # case where we re-include everything, this time in project-processing mode
     file (WRITE "${TEST_CMAKELISTS_TXT}"
           "cmake_minimum_required (VERSION 2.8 FATAL_ERROR)\n"
           "project (${TEST_NAME} ${INVOKE_CONFIGURE_LANGUAGES})\n"
@@ -788,7 +832,7 @@ function (cmake_unit_invoke_build)
 
     # The "all" target is special. It means "do whatever happens by
     # default". Some build systems literally have a target called
-    # "all", but others (Xcode) don't, so in that case, just don't
+    # "all", but others (XCode) don't, so in that case, just don't
     # add a --target.
     if (INVOKE_BUILD_TARGET STREQUAL "all")
 
@@ -1072,11 +1116,12 @@ set (_CMAKE_UNIT_OVERRIDABLE_PHASES CLEAN
                                     VERIFY)
 set (CMAKE_UNIT_PHASES PRECONFIGURE
                        COVERAGE
+                       RM_BUILD
                        ${_CMAKE_UNIT_OVERRIDABLE_PHASES})
 
 # Creates an "override table" of dispatch phase commands for specified
 # USER_OPTIONS. If an ALLOW_FAIL is specified for a particular phase then
-# every phase after it is disabled (eg, cmake_unit_no_op is specified
+# every phase after it is disabled (eg, _cmake_unit_no_op is specified
 # in the override table)
 function (_cmake_unit_get_override_table_for_allowed_failures RETURN_TABLE)
 
@@ -1111,7 +1156,8 @@ function (_cmake_unit_get_override_table_for_allowed_failures RETURN_TABLE)
             list (FIND PHASE_INVOCATION_ORDER "${PHASE}" PHASE_INDEX)
 
             _cmake_unit_spacify (PHASE_INVOCATION_SPACIFIED
-                                 LIST ${PHASE_INVOCATION_ORDER})
+                                 LIST ${PHASE_INVOCATION_ORDER}
+                                 NO_QUOTES)
             _cmake_unit_runner_assert (CONDITION NOT PHASE_INDEX EQUAL -1
                                        MESSAGE "PHASE must be in "
                                                "${PHASE_INVOCATION_SPACIFIED}")
@@ -1202,7 +1248,8 @@ function (_cmake_unit_compute_dispatch_table_for_test DISPATCH_TABLE_RETURN)
         set (DISPATCH_TABLE
              ${OVERRIDDEN_DISPATCH}
              PRECONFIGURE _cmake_unit_preconfigure_test
-             COVERAGE _cmake_unit_coverage)
+             COVERAGE _cmake_unit_coverage
+             RM_BUILD cmake_unit_invoke_rm_build)
 
         # Set the _CMAKE_UNIT_DISPATCH_CONFIGURE_DISPATCH_FOR_${TEST_NAME}
         # property.
@@ -1227,6 +1274,7 @@ set (_CMAKE_UNIT_PHASE_AFTER_INVOKE_BUILD # NOLINT:unused/private_var
      INVOKE_TEST)
 set (_CMAKE_UNIT_PHASE_AFTER_INVOKE_TEST VERIFY) # NOLINT:unused/private_var
 set (_CMAKE_UNIT_PHASE_AFTER_VERIFY COVERAGE) # NOLINT:unused/private_var
+set (_CMAKE_UNIT_PHASE_AFTER_COVERAGE RM_BUILD) # NOLINT:unused/private_var
 
 function (_cmake_unit_configure_test_internal)
 
@@ -1287,7 +1335,7 @@ function (_cmake_unit_configure_test_internal)
 
 endfunction ()
 
-# Wraps _cmake_unit_configure_test_internal, which does the heavy lifitng and
+# Wraps _cmake_unit_configure_test_internal, which does the heavy lifting and
 # is a recursive function. This function merely just grabs SOURCE_DIR and
 # BINARY_DIR
 function (cmake_unit_configure_test)
@@ -1337,7 +1385,8 @@ function (cmake_unit_get_log_for PHASE LOG_TYPE LOG_FILE_RETURN)
     set (ACCEPTABLE_PHASES INVOKE_CONFIGURE INVOKE_BUILD INVOKE_TEST)
     list (FIND ACCEPTABLE_PHASES ${PHASE} PHASE_IN_ACCEPTABLE_INDEX)
     _cmake_unit_spacify (SPACIFIED_ACCEPTABLE_PHASES
-                         LIST ${ACCEPTABLE_PHASES})
+                         LIST ${ACCEPTABLE_PHASES}
+                         NO_QUOTES)
     _cmake_unit_runner_assert (CONDITION
                                NOT PHASE_IN_ACCEPTABLE_INDEX EQUAL -1
                                MESSAGE

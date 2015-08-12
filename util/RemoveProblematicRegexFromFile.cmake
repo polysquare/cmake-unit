@@ -10,7 +10,7 @@
 # (which is also why this file should NOT be listed as a coverage
 #  candidate).
 #
-# See LICENCE.md for Copyright information
+# See /LICENCE.md for Copyright information
 
 set (INPUT_FILE "" CACHE STRING "")
 set (OUTPUT_FILE "" CACHE STRING "")
