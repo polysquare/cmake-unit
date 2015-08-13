@@ -8,8 +8,6 @@ env:
 - CMAKE_GENERATOR="Ninja" CMAKE_VERSION="latest"
 - CMAKE_GENERATOR="Unix Makefiles" CMAKE_VERSION="3.0"
 - CMAKE_GENERATOR="Ninja" CMAKE_VERSION="3.0"
-- CMAKE_GENERATOR="Unix Makefiles" CMAKE_VERSION="2.8"
-- CMAKE_GENERATOR="Ninja" CMAKE_VERSION="2.8"
 - CMAKE_GENERATOR="Unix Makefiles" CMAKE_VERSION="latest" COVERAGE="--use-cmake-coverage"
 install:
 - eval $(curl -LSs --retry 100 --connect-timeout 3 public-travis-scripts.polysquare.org/bootstrap.py | python /dev/stdin -d container -s setup/bii/setup.py -e bash -p /dev/stdout --cmake-version ${CMAKE_VERSION})
