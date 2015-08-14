@@ -1,7 +1,7 @@
 clone_depth: 10
 
 cache:
- - C://container -> appveyor.yml
+ - C:/container -> appveyor.yml
 
 environment:
   matrix:
