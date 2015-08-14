@@ -21,6 +21,7 @@ before_deploy:
 - polysquare_run deploy/bii/deploy.py
 deploy:
   provider: biicode
+  skip_cleanup: true
   user:
     secure: MVBlNXjlQ3CYQltHKevP7/WQrBgtYJRbe0OoVpvKAfB+sYD54nBhn85a0Jo8zY+jtyLDLa8a7cMdWgnVgL+8NNFTm0QBqGprC/BUGHgBiWa6k3fK2+SuAt3BY18pTLOTL/pLhzwGFvZ3QQ903wAlp8qR8LlTvx2iKhf8H3ANBYI=
   password:
