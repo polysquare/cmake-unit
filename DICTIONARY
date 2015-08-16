@@ -9,6 +9,7 @@ _namespace_verify
 _test
 _test_
 AppVeyor
+any_line
 arg
 argv
 backend
@@ -41,6 +42,7 @@ decls
 dereference
 executable
 executables
+file_contents
 filename
 Filename
 filenames
@@ -49,6 +51,8 @@ fwrite
 LCov
 linecount
 logfile
+matches_regex
+matcher
 matchers
 MULTIVAR_ARGS
 namespace
