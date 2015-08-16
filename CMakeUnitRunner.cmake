@@ -191,6 +191,18 @@ function (_cmake_unit_call_function FUNCTION_NAME)
                     ${FUNCTION_NAME})
     set (_${_INTERNAL_CALL_COUNT}_${FUNCTION_NAME} "_")
 
+    set (ARGN_VALUES)
+
+    foreach (ARG ${ARGN})
+
+        if (DEFINED "${ARG}")
+
+            set (${ARG} "${${ARG}}" PARENT_SCOPE)
+
+        endif ()
+
+    endforeach ()
+
 endfunction ()
 
 function (_cmake_unit_discover_functions_in NAMESPACE RETURN_LIST)
