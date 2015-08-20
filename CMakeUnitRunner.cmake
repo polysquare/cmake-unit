@@ -539,12 +539,11 @@ function (cmake_unit_invoke_rm_build)
 
     cmake_parse_arguments (RM_BUILD
                            ""
-                           "BINARY_DIR;SOURCE_DIR"
+                           "BINARY_DIR"
                            ""
                            ${CALLER_ARGN})
 
     file (REMOVE_RECURSE "${RM_BUILD_BINARY_DIR}")
-    file (REMOVE_RECURSE "${RM_BUILD_SOURCE_DIR}")
 
 endfunction ()
 
