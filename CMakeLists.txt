@@ -33,6 +33,8 @@ set (FILE_FOR_COVERAGE_PATH "${TESTS_LIST_DIR}/FileForCoverage.cmake")
 set (UNEXECUTED_FILE_FOR_COVERAGE_PATH
      "${TESTS_LIST_DIR}/UnexecutedFileForCoverage.cmake")
 
+set (_CURRENT_LIST_FILE "${CMAKE_CURRENT_LIST_FILE}")
+
 include (CMakeUnitRunner)
 
 function (_cmake_unit_test_gen_configure_no_discover RETURN_AUX_CMAKELISTS)
@@ -313,7 +315,8 @@ function (cmake_unit_test_cmake_build_test_error_on_build_fail)
     function (_cmake_unit_configure)
 
         set (SOURCE "${SOURCE_DIR}/Source.cpp")
-        file (WRITE "${SOURCE}" "invalid(")
+        cmake_unit_write_if_newer ("${SOURCE}" "${_CURRENT_LIST_FILE}"
+                                   "invalid(")
 
         set (CONFIGURE_SCRIPT "add_executable (exec \"${SOURCE}\")\n")
         _cmake_unit_test_gen_configure (NAMESPACE sample
@@ -944,7 +947,9 @@ function (cmake_unit_test_generated_and_created_source_files_equal)
 
         cmake_unit_generate_source_file_during_build (GENERATED_DURING_TARGET
                                                       ${GENERATE_OPTIONS})
-        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS}
+                                                    GENERATING_FILE
+                                                    "${_CURRENT_LIST_FILE}")
 
     endfunction ()
 
@@ -973,7 +978,9 @@ function (cmake_unit_test_create_simple_executable)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_simple_executable (executable)
+        cmake_unit_create_simple_executable (executable
+                                             GENERATING_FILE
+                                             "${_CURRENT_LIST_FILE}")
         export (TARGETS executable FILE "${BINARY_DIR}/exports.cmake")
 
     endfunction ()
@@ -1012,8 +1019,13 @@ function (cmake_unit_test_create_simple_library)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_simple_library (library SHARED FUNCTIONS function)
-        cmake_unit_create_simple_executable (executable)
+        cmake_unit_create_simple_library (library SHARED
+                                          FUNCTIONS function
+                                          GENERATING_FILE
+                                          "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_simple_executable (executable
+                                             GENERATING_FILE
+                                             "${_CURRENT_LIST_FILE}")
         target_link_libraries (executable library)
 
     endfunction ()
@@ -1903,8 +1915,8 @@ function (cmake_unit_test_source_file_created_before_build_exists)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build ()
-
+        set (GENERATE_OPTIONS GENERATING_FILE "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
         cmake_unit_assert_file_exists ("${SOURCE_DIR}/Source.cpp")
 
     endfunction ()
@@ -1923,8 +1935,10 @@ function (cmake_unit_test_source_file_created_before_build_with_custom_name)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build (NAME "CustomName.cpp")
-
+        set (GENERATE_OPTIONS
+             NAME "CustomName.cpp"
+             GENERATING_FILE "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
         cmake_unit_assert_file_exists ("${SOURCE_DIR}/CustomName.cpp")
 
     endfunction ()
@@ -1943,7 +1957,10 @@ function (cmake_unit_test_source_file_created_before_build_with_defines)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build (DEFINES "CUSTOM_DEFINE")
+        set (GENERATE_OPTIONS
+             DEFINES "CUSTOM_DEFINE"
+             GENERATING_FILE "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
 
         set (SOURCE_FILE "${SOURCE_DIR}/Source.cpp")
         cmake_unit_assert_file_has_line_matching ("${SOURCE_FILE}"
@@ -1965,7 +1982,10 @@ function (cmake_unit_test_source_file_created_before_build_with_includes)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build (INCLUDES my_include.h)
+        set (GENERATE_OPTIONS
+             INCLUDES my_include.h
+             GENERATING_FILE "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
 
         set (SOURCE_FILE "${SOURCE_DIR}/Source.cpp")
         cmake_unit_assert_file_has_line_matching ("${SOURCE_FILE}"
@@ -1994,7 +2014,9 @@ function (cmake_unit_test_source_file_created_with_includes_inside_inc_dir)
         cmake_unit_create_source_file_before_build (INCLUDES
                                                     "${MY_INCLUDE}"
                                                     INCLUDE_DIRECTORIES
-                                                    "${INCLUDE_DIRECTORY}")
+                                                    "${INCLUDE_DIRECTORY}"
+                                                    GENERATING_FILE
+                                                    "${_CURRENT_LIST_FILE}")
 
         set (SOURCE_FILE "${SOURCE_DIR}/Source.cpp")
         set (EXPECTED_INCLUDES "^.include <include/my_include.h>$")
@@ -2018,7 +2040,9 @@ function (cmake_unit_test_source_file_created_has_prepended_contents)
     function (_cmake_unit_configure)
 
         set (PREPEND_CONTENTS_INPUT "static int i@SEMICOLON@")
-        cmake_unit_create_source_file_before_build (PREPEND_CONTENTS
+        cmake_unit_create_source_file_before_build (GENERATING_FILE
+                                                    "${_CURRENT_LIST_FILE}"
+                                                    PREPEND_CONTENTS
                                                     "${PREPEND_CONTENTS_INPUT}")
 
         set (SOURCE_FILE "${SOURCE_DIR}/Source.cpp")
@@ -2042,7 +2066,10 @@ function (cmake_unit_test_source_file_created_with_function_decls)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build (FUNCTIONS custom_function)
+        set (GENERATE_OPTIONS
+             FUNCTIONS custom_function
+             GENERATING_FILE "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
 
         set (SOURCE_FILE "${SOURCE_DIR}/Source.cpp")
         cmake_unit_assert_file_has_line_matching ("${SOURCE_FILE}"
@@ -2065,7 +2092,10 @@ function (cmake_unit_test_source_file_created_with_function_defs)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build (FUNCTIONS custom_function)
+        set (GENERATE_OPTIONS
+             FUNCTIONS custom_function
+             GENERATING_FILE "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
 
         set (SOURCE_FILE "${SOURCE_DIR}/Source.cpp")
         cmake_unit_assert_file_has_line_matching ("${SOURCE_FILE}"
@@ -2089,8 +2119,11 @@ function (cmake_unit_test_source_file_created_no_function_defs_if_header)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build (NAME "Header.h"
-                                                    FUNCTIONS custom_function)
+        set (GENERATE_OPTIONS
+             NAME "Header.h"
+             FUNCTIONS custom_function
+             GENERATING_FILE "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
 
         set (HEADER_FILE "${SOURCE_DIR}/Header.h")
         cmake_unit_assert_file_does_not_have_line_matching ("${HEADER_FILE}"
@@ -2115,9 +2148,11 @@ function (cmake_unit_test_source_file_created_header_guards_if_header)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build (NAME "Header.h"
-                                                    PREPEND_CONTENTS
-                                                    "int foo@SEMICOLON@")
+        set (GENERATE_OPTIONS
+             NAME "Header.h"
+             GENERATING_FILE "${_CURRENT_LIST_FILE}"
+             PREPEND_CONTENTS "int foo@SEMICOLON@")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
 
         cmake_unit_assert_file_has_line_matching ("${SOURCE_DIR}/Header.h"
                                                   "^.*ifndef HEADER_H")
@@ -2142,16 +2177,17 @@ macro (_cmake_unit_test_run_trace_to_lcov RETURN_LCOV_PATH)
     set (FILE_FOR_COVERAGE_LOCAL_PATH
          "${CMAKE_CURRENT_SOURCE_DIR}/FileForCoverage.cmake")
     file (READ "${FILE_FOR_COVERAGE_PATH}" FILE_FOR_COVERAGE_CONTENTS)
-    file (WRITE "${FILE_FOR_COVERAGE_LOCAL_PATH}"
-          "${FILE_FOR_COVERAGE_CONTENTS}")
+    cmake_unit_write_if_newer ("${FILE_FOR_COVERAGE_LOCAL_PATH}"
+                               "${_CURRENT_LIST_FILE}"
+                               "${FILE_FOR_COVERAGE_CONTENTS}")
 
     set (UNEXECUTED_FILE_FOR_COVERAGE_LOCAL_PATH
          "${CMAKE_CURRENT_SOURCE_DIR}/UnexecutedFileForCoverage.cmake")
     file (READ "${UNEXECUTED_FILE_FOR_COVERAGE_PATH}"
           UNEXECUTED_FILE_FOR_COVERAGE_CONTENTS)
-    file (WRITE
-          "${UNEXECUTED_FILE_FOR_COVERAGE_LOCAL_PATH}"
-          "${UNEXECUTED_FILE_FOR_COVERAGE_CONTENTS}")
+    cmake_unit_write_if_newer ("${UNEXECUTED_FILE_FOR_COVERAGE_LOCAL_PATH}"
+                               "${_CURRENT_LIST_FILE}"
+                               "${UNEXECUTED_FILE_FOR_COVERAGE_CONTENTS}")
 
     set (MOCK_TRACEFILE_OUTPUT
          "${CMAKE_CURRENT_BINARY_DIR}/MockTracefile.trace")

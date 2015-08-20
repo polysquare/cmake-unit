@@ -36,6 +36,143 @@ include (CMakeParseArguments)
 include (GenerateExportHeader)
 include ("smspillaz/cmake-call-function/CallFunction")
 
+# _cmake_unit_get_hash_for_file
+#
+# Lazy-compute a hash for the specified file
+#
+# FILE: File to compute hash for.
+# RETURN_HASH: Variable to place hash in.
+function (_cmake_unit_get_hash_for_file FILE RETURN_HASH)
+
+    set (CALLING_FILE_HASH_PROPERTY "${CALLING_FILE}_HASH")
+    get_property (CALLING_FILE_HASH_SET
+                  GLOBAL PROPERTY "${CALLING_FILE_HASH_PROPERTY}"
+                  SET)
+
+    if (NOT CALLING_FILE_HASH_SET)
+
+        file (SHA1 "${FILE}"
+              _COMPUTE_USER_HASH_CURRENT_USER_FILE_SHA1)
+
+        set_property (GLOBAL PROPERTY "${CALLING_FILE_HASH_PROPERTY}"
+                      "${_COMPUTE_USER_HASH_CURRENT_USER_FILE_SHA1}")
+
+    endif ()
+
+    get_property (CALLING_FILE_HASH
+                  GLOBAL PROPERTY "${CALLING_FILE_HASH_PROPERTY}")
+
+    set (${RETURN_HASH} "${CALLING_FILE_HASH}" PARENT_SCOPE)
+
+endfunction ()
+
+# cmake_unit_should_write
+#
+# Determine if the CALLING_FILE is newer than FILE and if so, write the
+# CALLING_FILE's hash on disk and return true.
+#
+# You should use this function if you need to write the file in a special
+# way that does not allow its contents to be passed directly to
+# cmake_unit_write_if_newer.
+#
+# FILE: File proposed to be written to.
+# CALLING_FILE: File to compare with.
+# SHOULD_WRITE_RETURN: Name of variable to set should-write status to.
+function (cmake_unit_should_write FILE CALLING_FILE SHOULD_WRITE_RETURN)
+
+    set (HASH_FILE "${FILE}.stamp.sha1")
+    set (SHOULD_WRITE TRUE)
+
+    _cmake_unit_get_hash_for_file ("${CALLING_FILE}" CALLING_FILE_HASH)
+
+    if (EXISTS "${HASH_FILE}")
+
+        file (READ "${HASH_FILE}" HASH_FILE_CONTENTS)
+
+        if ("${HASH_FILE_CONTENTS}" STREQUAL "${CALLING_FILE_HASH}")
+
+            set (SHOULD_WRITE FALSE)
+
+        endif ()
+
+    endif ()
+
+    if (SHOULD_WRITE)
+
+        file (WRITE "${HASH_FILE}" "${CALLING_FILE_HASH}")
+
+    endif ()
+
+    set (${SHOULD_WRITE_RETURN} ${SHOULD_WRITE} PARENT_SCOPE)
+
+endfunction ()
+
+# cmake_unit_write_if_newer
+#
+# Write contents as specified in ARGN to file specified in FILE
+# if the CALLING_FILE is newer than FILE, or FILE does not exist.
+#
+# FILE: File to write to.
+# CALLING_FILE: File to compare with.
+function (cmake_unit_write_if_newer FILE CALLING_FILE)
+
+    cmake_unit_should_write ("${FILE}" "${CALLING_FILE}" PERFORM_WRITE)
+
+    if (PERFORM_WRITE)
+
+        file (WRITE "${FILE}" ${ARGN})
+
+    endif ()
+
+endfunction ()
+
+# _cmake_unit_forward_arguments
+#
+# Internal function to forward arguments used by cmake_parse_arguments
+#
+# SOURCE_PREFIX: Prefix of set variables to forward from
+# RETURN_LIST: List of "forwarded" variables, suitable for passing to
+#              cmake_parse_arguments
+# [Optional] OPTION_ARGS: "Option" arguments (true or false)
+# [Optional] SINGLEVAR_ARGS: "Single variable" arguments (variable, if
+#                            set, has one value. Represented by NAME VALUE)
+# [Optional] MULTIVAR_ARGS: "Multi variable" arguments (variable, if set, has
+#                           a list value. Represented by NAME VALUE0 ... VALUEN)
+function (_cmake_unit_forward_arguments SOURCE_PREFIX RETURN_LIST)
+
+    cmake_parse_arguments (FORWARD
+                           ""
+                           ""
+                           "OPTION_ARGS;SINGLEVAR_ARGS;MULTIVAR_ARGS"
+                           ${ARGN})
+
+    set (_RETURN_LIST)
+    foreach (FORWARDED_OPTION ${FORWARD_OPTION_ARGS})
+
+        if (${SOURCE_PREFIX}_${FORWARDED_OPTION})
+
+            list (APPEND _RETURN_LIST ${FORWARDED_OPTION})
+
+        endif ()
+
+    endforeach ()
+
+    foreach (FORWARDED_VAR ${FORWARD_SINGLEVAR_ARGS} ${FORWARD_MULTIVAR_ARGS})
+
+        if (${SOURCE_PREFIX}_${FORWARDED_VAR})
+
+            list (APPEND _RETURN_LIST
+                         ${FORWARDED_VAR}
+                         ${${SOURCE_PREFIX}_${FORWARDED_VAR}})
+
+        endif ()
+
+    endforeach ()
+
+    set (${RETURN_LIST} ${_RETURN_LIST} PARENT_SCOPE)
+
+endfunction ()
+
 # cmake_unit_escape_string
 #
 # Escape all regex control characters from INPUT and store in
@@ -339,14 +476,29 @@ function (_cmake_unit_write_out_file_without_semicolons NAME)
 
     cmake_parse_arguments (WRITE_OUT_FILE
                            ""
-                           ""
+                           "GENERATING_FILE"
                            "CONTENTS"
                            ${ARGN})
 
     string (REPLACE ";" "\n" CONTENTS "${WRITE_OUT_FILE_CONTENTS}")
     string (REPLACE "@SEMICOLON@" ";" CONTENTS "${CONTENTS}")
-    file (WRITE "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}"
-          "${CONTENTS}\n")
+
+    set (SHOULD_WRITE TRUE)
+
+    if (WRITE_OUT_FILE_GENERATING_FILE)
+
+        cmake_unit_should_write ("${CMAKE_CURRENT_SOURCE_DIR}/${NAME}"
+                                 "${WRITE_OUT_FILE_GENERATING_FILE}"
+                                 SHOULD_WRITE)
+
+    endif ()
+
+    if (SHOULD_WRITE)
+
+        file (WRITE "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}"
+              "${CONTENTS}\n")
+
+    endif ()
 
 endfunction ()
 
@@ -374,11 +526,40 @@ endfunction ()
 #                                 the entry will be angle-brackets <include>
 #                                 with the path relative to that include
 #                                 directory.
+# [Optional] GENERATING_FILE: File which is responsible for generating the
+#                             specified file, used to avoid redundant writes
+#                             into the source directory.
 function (cmake_unit_create_source_file_before_build)
 
-    _cmake_unit_get_created_source_file_contents (CONTENTS NAME ${ARGN})
+    set (CREATE_BEFORE_BUILD_OPTION_ARGS
+         ${_CMAKE_UNIT_SOURCE_FILE_OPTION_ARGS})
+    set (CREATE_BEFORE_BUILD_SINGLEVAR_ARGS
+         GENERATING_FILE
+         ${_CMAKE_UNIT_SOURCE_FILE_SINGLEVAR_ARGS})
+    set (CREATE_BEFORE_BUILD_MULTIVAR_ARGS
+         ${_CMAKE_UNIT_SOURCE_FILE_MULTIVAR_ARGS})
+
+    cmake_parse_arguments (CREATE_BEFORE_BUILD
+                           "${CREATE_BEFORE_BUILD_OPTION_ARGS}"
+                           "${CREATE_BEFORE_BUILD_SINGLEVAR_ARGS}"
+                           "${CREATE_BEFORE_BUILD_MULTIVAR_ARGS}"
+                           ${ARGN})
+
+    set (GENERATING_FILE "${CREATE_BEFORE_BUILD_GENERATING_FILE}")
+    _cmake_unit_forward_arguments (CREATE_BEFORE_BUILD GET_CREATED_ARGUMENTS
+                                   OPTION_ARGS
+                                   ${_CMAKE_UNIT_SOURCE_FILE_OPTION_ARGS}
+                                   SINGLEVAR_ARGS
+                                   ${_CMAKE_UNIT_SOURCE_FILE_SINGLEVAR_ARGS}
+                                   MULTIVAR_ARGS
+                                   ${_CMAKE_UNIT_SOURCE_FILE_MULTIVAR_ARGS})
+
+    _cmake_unit_get_created_source_file_contents (CONTENTS NAME
+                                                  ${GET_CREATED_ARGUMENTS})
     _cmake_unit_write_out_file_without_semicolons ("${NAME}"
-                                                   CONTENTS ${CONTENTS})
+                                                   CONTENTS ${CONTENTS}
+                                                   GENERATING_FILE
+                                                   "${GENERATING_FILE}")
 
 endfunction ()
 
@@ -428,10 +609,11 @@ function (cmake_unit_generate_source_file_during_build TARGET_RETURN)
     string (RANDOM SUFFIX)
 
     set (WRITE_SOURCE_FILE_SCRIPT
-         "${CMAKE_CURRENT_SOURCE_DIR}/Write${BASENAME}${SUFFIX}.cmake")
+         "${CMAKE_CURRENT_BINARY_DIR}/Write${BASENAME}${SUFFIX}.cmake")
     file (WRITE "${WRITE_SOURCE_FILE_SCRIPT}"
           "file (COPY \"${CMAKE_CURRENT_SOURCE_DIR}/${TMP_LOCATION}\"\n"
-          "      DESTINATION \"${CMAKE_CURRENT_BINARY_DIR}/${DIRECTORY}\")\n")
+          "      DESTINATION \"${CMAKE_CURRENT_BINARY_DIR}/${DIRECTORY}\")\n"
+          "file (REMOVE \"${CMAKE_CURRENT_SOURCE_DIR}/${TMP_LOCATION}\")\n")
 
 
     # Generate target name
@@ -455,8 +637,7 @@ endfunction ()
 function (_cmake_unit_create_source_for_simple_target NAME
                                                       SOURCE_LOCATION_RETURN)
 
-    string (RANDOM SUFFIX)
-    set (SOURCE_LOCATION "${NAME}${SUFFIX}.cpp")
+    set (SOURCE_LOCATION "${NAME}.cpp")
     cmake_unit_create_source_file_before_build (NAME "${SOURCE_LOCATION}"
                                                 ${ARGN})
     set (${SOURCE_LOCATION_RETURN} "${SOURCE_LOCATION}" PARENT_SCOPE)
@@ -471,7 +652,7 @@ endfunction ()
 # NAME: Name of executable
 function (cmake_unit_create_simple_executable NAME)
 
-    set (CREATE_SIMPLE_EXECUTABLE_SINGLEVAR_ARGS FUNCTIONS)
+    set (CREATE_SIMPLE_EXECUTABLE_SINGLEVAR_ARGS FUNCTIONS GENERATING_FILE)
     cmake_parse_arguments (CREATE_SIMPLE_EXECUTABLE
                            ""
                            "${CREATE_SIMPLE_EXECUTABLE_SINGLEVAR_ARGS}"
@@ -480,10 +661,13 @@ function (cmake_unit_create_simple_executable NAME)
 
     # Ensure there is always a main in our source file
     set (CREATE_SOURCE_FUNCTIONS ${CREATE_SIMPLE_EXECUTABLE_FUNCTIONS} main)
+    _cmake_unit_forward_arguments (CREATE_SIMPLE_EXECUTABLE GENERATE_FWD
+                                   SINGLEVAR_ARGS GENERATING_FILE)
     _cmake_unit_create_source_for_simple_target (${NAME} LOCATION
                                                  ${ARGN}
                                                  FUNCTIONS
-                                                 ${CREATE_SOURCE_FUNCTIONS})
+                                                 ${CREATE_SOURCE_FUNCTIONS}
+                                                 ${GENERATING_FWD})
     add_executable (${NAME} "${LOCATION}")
 
 endfunction ()
@@ -497,6 +681,11 @@ endfunction ()
 # FUNCTIONS: Functions that the library should have.
 function (cmake_unit_create_simple_library NAME TYPE)
 
+    cmake_parse_arguments (CREATE_SIMPLE_LIBRARY "" "GENERATING_FILE" ""
+                           ${ARGN})
+
+    _cmake_unit_forward_arguments (CREATE_SIMPLE_LIBRARY GENERATE_FWD
+                                   SINGLEVAR_ARGS GENERATING_FILE)
     _cmake_unit_create_source_for_simple_target (${NAME} LOCATION ${ARGN}
                                                  FUNCTIONS_EXPORT_TARGET
                                                  ${NAME})
