@@ -445,20 +445,28 @@ function (_cmake_unit_preconfigure_test)
 
     _cmake_unit_get_child_invocation_script_header (COMMON_PROLOGUE)
 
+    set (DRIVER_SCRIPT_CONTENTS
+         "set (_CMAKE_UNIT_PHASE CLEAN)\n"
+         ${COMMON_PROLOGUE}
+         "set (CMAKE_GENERATOR\n"
+         "     \"${CMAKE_GENERATOR}\")\n"
+         "set (CMAKE_UNIT_NO_DEV_WARNINGS\n"
+         "     ${CMAKE_UNIT_NO_DEV_WARNINGS}\n"
+         "     CACHE BOOL \"\" FORCE)\n"
+         "set (CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS\n"
+         "     ${CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS}\n"
+         "     CACHE BOOL \"\" FORCE)\n"
+         "set (CMAKE_PROJECT_NAME\n"
+         "     \"${CMAKE_PROJECT_NAME}\")\n"
+         "set_property (GLOBAL PROPERTY\n"
+         "              _CMAKE_UNIT_COVERAGE_LOGGING_FILES\n"
+         "              ${COVERAGE_FILES})\n"
+         "include (\"${CMAKE_CURRENT_LIST_FILE}\")\n")
+
     # /Driver.cmake writs some initial variable definitions
-    file (WRITE "${DRIVER_SCRIPT}"
-          "set (_CMAKE_UNIT_PHASE CLEAN)\n"
-          ${COMMON_PROLOGUE}
-          "set (CMAKE_GENERATOR \"${CMAKE_GENERATOR}\")\n"
-          "set (CMAKE_UNIT_NO_DEV_WARNINGS ${CMAKE_UNIT_NO_DEV_WARNINGS}\n"
-          "     CACHE BOOL \"\" FORCE)\n"
-          "set (CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS\n"
-          "     ${CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS}\n"
-          "     CACHE BOOL \"\" FORCE)\n"
-          "set (CMAKE_PROJECT_NAME \"${CMAKE_PROJECT_NAME}\")\n"
-          "set_property (GLOBAL PROPERTY _CMAKE_UNIT_COVERAGE_LOGGING_FILES\n"
-          "              ${COVERAGE_FILES})\n"
-          "include (\"${CMAKE_CURRENT_LIST_FILE}\")\n")
+    cmake_unit_write_if_newer ("${DRIVER_SCRIPT}" "${_RUNNER_LIST_FILE}"
+                               "${DRIVER_SCRIPT_CONTENTS}")
+
 
     # /Coverage.cmake is intended to wrap /Driver.cmake and write trace data
     # into CMAKE_UNIT_COVERAGE_FILE
@@ -481,28 +489,31 @@ function (_cmake_unit_preconfigure_test)
 
     # Working around a bug in cmakelint
     set (END "end")
-    file (WRITE "${COVERAGE_SCRIPT}"
-          ${COMMON_PROLOGUE}
-          "set (_CMAKE_UNIT_PHASE UTILITY)\n"
-          "include (\"${_RUNNER_LIST_FILE}\")\n"
-          "_cmake_unit_invoke_command (COMMAND \"${CMAKE_COMMAND}\"\n"
-          "                                    ${POLICY_CACHE_DEFS_SPACIFIED}\n"
-          "                                    -P \"${DRIVER_SCRIPT}\"\n"
-          "                                    ${TRACE_OPTION}\n"
-          "                            OUTPUT_FILE \"${DRIVER_OUTPUT_LOG}\"\n"
-          "                            ERROR_FILE \"${DRIVER_ERROR_LOG}\"\n"
-          "                            PHASE DRIVER)\n"
-          "set (LOG_COVERAGE \"${CMAKE_UNIT_COVERAGE_FILE}\")\n"
-          "if (LOG_COVERAGE)\n"
-          "    _cmake_unit_filter_trace_lines (FILTERED_LINES\n"
-          "                                    TEST_NAME \"${TEST_NAME}\"\n"
-          "                                    TRACE_FILE\n"
-          "                                    \"\${LOG_COVERAGE}\"\n"
-          "                                    COVERAGE_FILES\n"
-          "                                    ${COVERAGE_FILES})\n"
-          "    file (APPEND \"${ABSOLUTE_COVERAGE_FILE_PATH}\"\n"
-          "          \${FILTERED_LINES})\n"
-          "${END}if ()\n")
+    set (COVERAGE_SCRIPT_CONTENTS
+         ${COMMON_PROLOGUE}
+         "set (_CMAKE_UNIT_PHASE UTILITY)\n"
+         "include (\"${_RUNNER_LIST_FILE}\")\n"
+         "_cmake_unit_invoke_command (COMMAND \"${CMAKE_COMMAND}\"\n"
+         "                                    ${POLICY_CACHE_DEFS_SPACIFIED}\n"
+         "                                    -P \"${DRIVER_SCRIPT}\"\n"
+         "                                    ${TRACE_OPTION}\n"
+         "                            OUTPUT_FILE \"${DRIVER_OUTPUT_LOG}\"\n"
+         "                            ERROR_FILE \"${DRIVER_ERROR_LOG}\"\n"
+         "                            PHASE DRIVER)\n"
+         "set (LOG_COVERAGE \"${CMAKE_UNIT_COVERAGE_FILE}\")\n"
+         "if (LOG_COVERAGE)\n"
+         "    _cmake_unit_filter_trace_lines (FILTERED_LINES\n"
+         "                                    TEST_NAME \"${TEST_NAME}\"\n"
+         "                                    TRACE_FILE\n"
+         "                                    \"\${LOG_COVERAGE}\"\n"
+         "                                    COVERAGE_FILES\n"
+         "                                    ${COVERAGE_FILES})\n"
+         "    file (APPEND \"${ABSOLUTE_COVERAGE_FILE_PATH}\"\n"
+         "          \${FILTERED_LINES})\n"
+         "${END}if ()\n")
+
+    cmake_unit_write_if_newer ("${COVERAGE_SCRIPT}" "${_RUNNER_LIST_FILE}"
+                               "${COVERAGE_SCRIPT_CONTENTS}")
 
     # The test step invokes the script at the INVOKE_CONFIGURE
     # phase, which will then move on to the other phases once its done.
@@ -713,20 +724,28 @@ function (cmake_unit_invoke_configure)
 
         set (INVOKE_CONFIGURE_LANGUAGES NONE)
 
+    else ()
+
+        _cmake_unit_spacify (INVOKE_CONFIGURE_LANGUAGES
+                             LIST ${INVOKE_CONFIGURE_LANGUAGES}
+                             NO_QUOTES)
+
     endif ()
 
     _cmake_unit_get_child_invocation_script_header (COMMON_PROLOGUE)
 
     # Write out ${INVOKE_CONFIGURE_SOURCE_DIR}/CMakeLists.txt. This is a special
     # case where we re-include everything, this time in project-processing mode
-    file (WRITE "${TEST_CMAKELISTS_TXT}"
-          "cmake_minimum_required (VERSION 2.8 FATAL_ERROR)\n"
-          "project (${TEST_NAME} ${INVOKE_CONFIGURE_LANGUAGES})\n"
-          "set (_CMAKE_UNIT_PHASE CONFIGURE)\n"
-          ${COMMON_PROLOGUE}
-          "include (CTest)\n"
-          "enable_testing ()\n"
-          "include (\"${CMAKE_CURRENT_LIST_FILE}\")\n")
+    set (TEST_CMAKELISTS_TXT_CONTENTS
+         "cmake_minimum_required (VERSION 2.8 FATAL_ERROR)\n"
+         "project (${TEST_NAME} ${INVOKE_CONFIGURE_LANGUAGES})\n"
+         "set (_CMAKE_UNIT_PHASE CONFIGURE)\n"
+         ${COMMON_PROLOGUE}
+         "include (CTest)\n"
+         "enable_testing ()\n"
+         "include (\"${CMAKE_CURRENT_LIST_FILE}\")\n")
+    cmake_unit_write_if_newer ("${TEST_CMAKELISTS_TXT}" "${_RUNNER_LIST_FILE}"
+                               "${TEST_CMAKELISTS_TXT_CONTENTS}")
 
     set (TRACE_OPTION "")
     set (UNINITIALIZED_OPTION "")

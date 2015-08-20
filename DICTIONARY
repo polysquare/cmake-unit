@@ -49,6 +49,7 @@ Filename
 filenames
 filesystem
 fwrite
+GENERATING_FILE
 LCov
 linecount
 logfile
