@@ -13,6 +13,7 @@ any_line
 arg
 argv
 backend
+biicode
 BINARY_DIRECTORY
 BOOL
 BUILD_OUTPUT
@@ -80,6 +81,7 @@ Tracefile
 tracefile
 VALUE0
 VALUEN
+variable_watch
 whitespace
 XCode
 xUnit

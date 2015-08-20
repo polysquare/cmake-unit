@@ -563,8 +563,8 @@ function (cmake_unit_test_cmake_build_test_clean_step_always_runs)
 
         set (CLEAN_SCRIPT
              "file (MAKE_DIRECTORY \"${FILE_THAT_SHOULD_NOT_EXIST}\")\n"
-             "_cmake_unit_call_function (cmake_unit_invoke_clean\n"
-             "                           \${CALLER_ARGN})\n")
+             "cmake_call_function (cmake_unit_invoke_clean\n"
+             "                     \${CALLER_ARGN})\n")
         _cmake_unit_test_gen_configure (NAMESPACE sample
                                         NAME one
                                         CLEAN SCRIPT ${CLEAN_SCRIPT})

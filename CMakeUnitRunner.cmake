@@ -18,13 +18,20 @@
 # much longer to execute and should be used sparingly.
 #
 # See /LICENCE.md for Copyright information
-if (BIICODE)
-    include ("smspillaz/cmake-include-guard/IncludeGuard")
-    cmake_include_guard (CMAKE_UNIT_RUNNER SET_MODULE_PATH)
-endif ()
+if (NOT BIICODE)
+
+    set (CMAKE_MODULE_PATH
+         "${CMAKE_CURRENT_LIST_DIR}/bii/deps"
+         "${CMAKE_MODULE_PATH}")
+
+endif (NOT BIICODE)
+
+include ("smspillaz/cmake-include-guard/IncludeGuard")
+cmake_include_guard (CMAKE_UNIT_RUNNER SET_MODULE_PATH)
 
 include (CMakeParseArguments)
 include (CMakeUnit)
+include ("smspillaz/cmake-call-function/CallFunction")
 
 # Phase not set, begin PRECONFIGURE phase
 if (NOT _CMAKE_UNIT_PHASE)
@@ -163,45 +170,6 @@ function (_cmake_unit_forward_arguments SOURCE_PREFIX RETURN_LIST)
     endforeach ()
 
     set (${RETURN_LIST} ${_RETURN_LIST} PARENT_SCOPE)
-
-endfunction ()
-
-function (_cmake_unit_call_function FUNCTION_NAME)
-
-    get_property (_INTERNAL_CALL_COUNT
-                  GLOBAL PROPERTY _INTERNAL_CALL_COUNT)
-
-    if (NOT _INTERNAL_CALL_COUNT)
-
-        set (_INTERNAL_CALL_COUNT 0)
-
-    endif ()
-
-    math (EXPR _INTERNAL_CALL_COUNT "${_INTERNAL_CALL_COUNT} + 1")
-
-    set_property (GLOBAL PROPERTY _INTERNAL_CALL_COUNT ${_INTERNAL_CALL_COUNT})
-
-    # These variables are used by the called function beneath us as part of
-    # a "calling convention". CALLER_ARGN essentially functions like ARGN
-    # for the called function and CALLED_FUNCTION_NAME specifies the name of
-    # the last called function in this call stack.
-    set (CALLER_ARGN ${ARGN}) # NOLINT:unused/var_in_func
-    set (CALLED_FUNCTION_NAME ${FUNCTION_NAME}) # NOLINT:unused/var_in_func
-    variable_watch (_${_INTERNAL_CALL_COUNT}_${FUNCTION_NAME}
-                    ${FUNCTION_NAME})
-    set (_${_INTERNAL_CALL_COUNT}_${FUNCTION_NAME} "_")
-
-    set (ARGN_VALUES)
-
-    foreach (ARG ${ARGN})
-
-        if (DEFINED "${ARG}")
-
-            set (${ARG} "${${ARG}}" PARENT_SCOPE)
-
-        endif ()
-
-    endforeach ()
 
 endfunction ()
 
@@ -368,9 +336,9 @@ function (cmake_unit_init)
         # Pass source and binary directory to test here as it will be the same
         # for all phases and we can use the directories in per-test variables
         # easily.
-        _cmake_unit_call_function (${FUNCTION}
-                                   SOURCE_DIR "${TEST_SOURCE_DIR}"
-                                   BINARY_DIR "${TEST_BINARY_DIR}")
+        cmake_call_function (${FUNCTION}
+                             SOURCE_DIR "${TEST_SOURCE_DIR}"
+                             BINARY_DIR "${TEST_BINARY_DIR}")
 
     endforeach ()
 
@@ -1328,12 +1296,12 @@ function (_cmake_unit_configure_test_internal)
                                                   OUTPUT_FILE
                                                   ERROR_FILE)
 
-    _cmake_unit_call_function (${PHASE_FUNCTION} ${PHASE_ARGUMENTS}
-                               TEST_NAME ${TEST_NAME}
-                               SOURCE_DIR "${TEST_SOURCE_DIR}"
-                               BINARY_DIR "${TEST_BINARY_DIR}"
-                               OUTPUT_FILE "${TEST_BINARY_DIR}/${PHASE}.output"
-                               ERROR_FILE "${TEST_BINARY_DIR}/${PHASE}.error")
+    cmake_call_function (${PHASE_FUNCTION} ${PHASE_ARGUMENTS}
+                         TEST_NAME ${TEST_NAME}
+                         SOURCE_DIR "${TEST_SOURCE_DIR}"
+                         BINARY_DIR "${TEST_BINARY_DIR}"
+                         OUTPUT_FILE "${TEST_BINARY_DIR}/${PHASE}.output"
+                         ERROR_FILE "${TEST_BINARY_DIR}/${PHASE}.error")
 
     # Implicitly dereference _CMAKE_UNIT_PHASE_AFTER_${PHASE} and if there's
     # a phase to go to, recursively call this function and enter the next phase.

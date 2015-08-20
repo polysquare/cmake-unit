@@ -485,8 +485,9 @@ are passed as keywords.
 time, so if a function is to be called multiple times, then a register needs
 to be maintained mapping function names to variable names.
 
-All of this is encapsulated within the `_cmake_unit_call_function` command. It
-is hoped that eventually this can become part of the core CMake syntax.
+All of this is encapsulated within the `cmake_call_function` command. This is
+hosted as a separate block on biicode. It is hoped that eventually this can
+become part of the core CMake syntax.
 
 ### Discovering test functions ###
 

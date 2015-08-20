@@ -25,52 +25,20 @@
 # first class functions in CMake .
 #
 # See /LICENCE.md for Copyright information
-if (BIICODE)
-    include ("smspillaz/cmake-include-guard/IncludeGuard")
-    cmake_include_guard (CMAKE_UNIT SET_MODULE_PATH)
-endif ()
+if (NOT BIICODE)
+
+    set (CMAKE_MODULE_PATH
+         "${CMAKE_CURRENT_LIST_DIR}/bii/deps"
+         "${CMAKE_MODULE_PATH}")
+
+endif (NOT BIICODE)
+
+include ("smspillaz/cmake-include-guard/IncludeGuard")
+cmake_include_guard (CMAKE_UNIT SET_MODULE_PATH)
 
 include (CMakeParseArguments)
 include (GenerateExportHeader)
-
-function (_cmake_unit_call_function FUNCTION_NAME)
-
-    get_property (_INTERNAL_CALL_COUNT
-                  GLOBAL PROPERTY _INTERNAL_CALL_COUNT)
-
-    if (NOT _INTERNAL_CALL_COUNT)
-
-        set (_INTERNAL_CALL_COUNT 0)
-
-    endif ()
-
-    math (EXPR _INTERNAL_CALL_COUNT "${_INTERNAL_CALL_COUNT} + 1")
-
-    set_property (GLOBAL PROPERTY _INTERNAL_CALL_COUNT ${_INTERNAL_CALL_COUNT})
-
-    # These variables are used by the called function beneath us as part of
-    # a "calling convention". CALLER_ARGN essentially functions like ARGN
-    # for the called function and CALLED_FUNCTION_NAME specifies the name of
-    # the last called function in this call stack.
-    set (CALLER_ARGN ${ARGN}) # NOLINT:unused/var_in_func
-    set (CALLED_FUNCTION_NAME ${FUNCTION_NAME}) # NOLINT:unused/var_in_func
-    variable_watch (_${_INTERNAL_CALL_COUNT}_${FUNCTION_NAME}
-                    ${FUNCTION_NAME})
-    set (_${_INTERNAL_CALL_COUNT}_${FUNCTION_NAME} "_")
-
-    set (ARGN_VALUES)
-
-    foreach (ARG ${ARGN})
-
-        if (DEFINED "${ARG}")
-
-            set (${ARG} "${${ARG}}" PARENT_SCOPE)
-
-        endif ()
-
-    endforeach ()
-
-endfunction ()
+include ("smspillaz/cmake-call-function/CallFunction")
 
 # cmake_unit_escape_string
 #
@@ -727,10 +695,10 @@ function (cmake_unit_eval_matcher VARIABLE MATCHER)
                                           ARGN_VAR REMAINING_ARGN
                                           ARGN ${ARGN})
 
-    _cmake_unit_call_function ("cmake_unit_${MATCHER}"
-                               "${VARIABLE}"
-                               ${REMAINING_ARGN}
-                               RESULT)
+    cmake_call_function ("cmake_unit_${MATCHER}"
+                         "${VARIABLE}"
+                         ${REMAINING_ARGN}
+                         RESULT)
 
     set (${RESULT_VARIABLE} "${RESULT}" PARENT_SCOPE)
 
