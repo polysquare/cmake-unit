@@ -1756,8 +1756,11 @@ function (cmake_unit_file_contents)
                                           ARGN_VAR REMAINING_ARGN
                                           ARGN ${CALLER_ARGN})
 
+    cmake_spacify_list (REMAINING_ARGN_SPACIFIED
+                        LIST ${REMAINING_ARGN}
+                        NO_QUOTES)
     set (${RESULT_VARIABLE}
-         "contents of ${FILE} to match ${MATCHER} ${REMAINING_ARGN}"
+         "contents of ${FILE} to match ${MATCHER} ${REMAINING_ARGN_SPACIFIED}"
          PARENT_SCOPE)
 
     file (READ "${FILE}" FILE_CONTENTS)
@@ -1815,8 +1818,11 @@ function (cmake_unit_any_line)
                                           ARGN_VAR REMAINING_ARGN
                                           ARGN ${CALLER_ARGN})
 
+    cmake_spacify_list (REMAINING_ARGN_SPACIFIED
+                        LIST ${REMAINING_ARGN}
+                        NO_QUOTES)
     set (${RESULT_VARIABLE}
-         "any line of contents to match ${MATCHER} ${REMAINING_ARGN}"
+         "any line of contents to match ${MATCHER} ${REMAINING_ARGN_SPACIFIED}"
          PARENT_SCOPE)
 
     # Split the string into individual lines
