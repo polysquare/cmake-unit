@@ -30,12 +30,14 @@ if (NOT BIICODE)
 endif (NOT BIICODE)
 
 include ("smspillaz/cmake-include-guard/IncludeGuard")
-cmake_include_guard (CMAKE_UNIT SET_MODULE_PATH)
+cmake_include_guard (SET_MODULE_PATH)
 
 include (CMakeParseArguments)
 include (GenerateExportHeader)
 include ("smspillaz/cmake-call-function/CallFunction")
 include ("smspillaz/cmake-forward-arguments/ForwardArguments")
+include ("smspillaz/cmake-opt-arg-parsing/OptimizedParseArguments")
+include ("smspillaz/cmake-spacify-list/SpacifyList")
 
 # _cmake_unit_get_hash_for_file
 #
