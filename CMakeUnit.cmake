@@ -35,6 +35,7 @@ cmake_include_guard (CMAKE_UNIT SET_MODULE_PATH)
 include (CMakeParseArguments)
 include (GenerateExportHeader)
 include ("smspillaz/cmake-call-function/CallFunction")
+include ("smspillaz/cmake-forward-arguments/ForwardArguments")
 
 # _cmake_unit_get_hash_for_file
 #
@@ -123,53 +124,6 @@ function (cmake_unit_write_if_newer FILE CALLING_FILE)
         file (WRITE "${FILE}" ${ARGN})
 
     endif ()
-
-endfunction ()
-
-# _cmake_unit_forward_arguments
-#
-# Internal function to forward arguments used by cmake_parse_arguments
-#
-# SOURCE_PREFIX: Prefix of set variables to forward from
-# RETURN_LIST: List of "forwarded" variables, suitable for passing to
-#              cmake_parse_arguments
-# [Optional] OPTION_ARGS: "Option" arguments (true or false)
-# [Optional] SINGLEVAR_ARGS: "Single variable" arguments (variable, if
-#                            set, has one value. Represented by NAME VALUE)
-# [Optional] MULTIVAR_ARGS: "Multi variable" arguments (variable, if set, has
-#                           a list value. Represented by NAME VALUE0 ... VALUEN)
-function (_cmake_unit_forward_arguments SOURCE_PREFIX RETURN_LIST)
-
-    cmake_parse_arguments (FORWARD
-                           ""
-                           ""
-                           "OPTION_ARGS;SINGLEVAR_ARGS;MULTIVAR_ARGS"
-                           ${ARGN})
-
-    set (_RETURN_LIST)
-    foreach (FORWARDED_OPTION ${FORWARD_OPTION_ARGS})
-
-        if (${SOURCE_PREFIX}_${FORWARDED_OPTION})
-
-            list (APPEND _RETURN_LIST ${FORWARDED_OPTION})
-
-        endif ()
-
-    endforeach ()
-
-    foreach (FORWARDED_VAR ${FORWARD_SINGLEVAR_ARGS} ${FORWARD_MULTIVAR_ARGS})
-
-        if (${SOURCE_PREFIX}_${FORWARDED_VAR})
-
-            list (APPEND _RETURN_LIST
-                         ${FORWARDED_VAR}
-                         ${${SOURCE_PREFIX}_${FORWARDED_VAR}})
-
-        endif ()
-
-    endforeach ()
-
-    set (${RETURN_LIST} ${_RETURN_LIST} PARENT_SCOPE)
 
 endfunction ()
 
@@ -546,13 +500,13 @@ function (cmake_unit_create_source_file_before_build)
                            ${ARGN})
 
     set (GENERATING_FILE "${CREATE_BEFORE_BUILD_GENERATING_FILE}")
-    _cmake_unit_forward_arguments (CREATE_BEFORE_BUILD GET_CREATED_ARGUMENTS
-                                   OPTION_ARGS
-                                   ${_CMAKE_UNIT_SOURCE_FILE_OPTION_ARGS}
-                                   SINGLEVAR_ARGS
-                                   ${_CMAKE_UNIT_SOURCE_FILE_SINGLEVAR_ARGS}
-                                   MULTIVAR_ARGS
-                                   ${_CMAKE_UNIT_SOURCE_FILE_MULTIVAR_ARGS})
+    cmake_forward_arguments (CREATE_BEFORE_BUILD GET_CREATED_ARGUMENTS
+                             OPTION_ARGS
+                             ${_CMAKE_UNIT_SOURCE_FILE_OPTION_ARGS}
+                             SINGLEVAR_ARGS
+                             ${_CMAKE_UNIT_SOURCE_FILE_SINGLEVAR_ARGS}
+                             MULTIVAR_ARGS
+                             ${_CMAKE_UNIT_SOURCE_FILE_MULTIVAR_ARGS})
 
     _cmake_unit_get_created_source_file_contents (CONTENTS NAME
                                                   ${GET_CREATED_ARGUMENTS})
@@ -661,8 +615,8 @@ function (cmake_unit_create_simple_executable NAME)
 
     # Ensure there is always a main in our source file
     set (CREATE_SOURCE_FUNCTIONS ${CREATE_SIMPLE_EXECUTABLE_FUNCTIONS} main)
-    _cmake_unit_forward_arguments (CREATE_SIMPLE_EXECUTABLE GENERATE_FWD
-                                   SINGLEVAR_ARGS GENERATING_FILE)
+    cmake_forward_arguments (CREATE_SIMPLE_EXECUTABLE GENERATE_FWD
+                             SINGLEVAR_ARGS GENERATING_FILE)
     _cmake_unit_create_source_for_simple_target (${NAME} LOCATION
                                                  ${ARGN}
                                                  FUNCTIONS
@@ -684,8 +638,8 @@ function (cmake_unit_create_simple_library NAME TYPE)
     cmake_parse_arguments (CREATE_SIMPLE_LIBRARY "" "GENERATING_FILE" ""
                            ${ARGN})
 
-    _cmake_unit_forward_arguments (CREATE_SIMPLE_LIBRARY GENERATE_FWD
-                                   SINGLEVAR_ARGS GENERATING_FILE)
+    cmake_forward_arguments (CREATE_SIMPLE_LIBRARY GENERATE_FWD
+                             SINGLEVAR_ARGS GENERATING_FILE)
     _cmake_unit_create_source_for_simple_target (${NAME} LOCATION ${ARGN}
                                                  FUNCTIONS_EXPORT_TARGET
                                                  ${NAME})
