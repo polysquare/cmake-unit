@@ -32,6 +32,7 @@ cmake_include_guard (CMAKE_UNIT_RUNNER SET_MODULE_PATH)
 include (CMakeParseArguments)
 include (CMakeUnit)
 include ("smspillaz/cmake-call-function/CallFunction")
+include ("smspillaz/cmake-forward-arguments/ForwardArguments")
 
 # Phase not set, begin PRECONFIGURE phase
 if (NOT _CMAKE_UNIT_PHASE)
@@ -123,53 +124,6 @@ function (_cmake_unit_runner_assert)
         endif ()
 
     endif ()
-
-endfunction ()
-
-# _cmake_unit_forward_arguments
-#
-# Internal function to forward arguments used by cmake_parse_arguments
-#
-# SOURCE_PREFIX: Prefix of set variables to forward from
-# RETURN_LIST: List of "forwarded" variables, suitable for passing to
-#              cmake_parse_arguments
-# [Optional] OPTION_ARGS: "Option" arguments (true or false)
-# [Optional] SINGLEVAR_ARGS: "Single variable" arguments (variable, if
-#                            set, has one value. Represented by NAME VALUE)
-# [Optional] MULTIVAR_ARGS: "Multi variable" arguments (variable, if set, has
-#                           a list value. Represented by NAME VALUE0 ... VALUEN)
-function (_cmake_unit_forward_arguments SOURCE_PREFIX RETURN_LIST)
-
-    cmake_parse_arguments (FORWARD
-                           ""
-                           ""
-                           "OPTION_ARGS;SINGLEVAR_ARGS;MULTIVAR_ARGS"
-                           ${ARGN})
-
-    set (_RETURN_LIST)
-    foreach (FORWARDED_OPTION ${FORWARD_OPTION_ARGS})
-
-        if (${SOURCE_PREFIX}_${FORWARDED_OPTION})
-
-            list (APPEND _RETURN_LIST ${FORWARDED_OPTION})
-
-        endif ()
-
-    endforeach ()
-
-    foreach (FORWARDED_VAR ${FORWARD_SINGLEVAR_ARGS} ${FORWARD_MULTIVAR_ARGS})
-
-        if (${SOURCE_PREFIX}_${FORWARDED_VAR})
-
-            list (APPEND _RETURN_LIST
-                         ${FORWARDED_VAR}
-                         ${${SOURCE_PREFIX}_${FORWARDED_VAR}})
-
-        endif ()
-
-    endforeach ()
-
-    set (${RETURN_LIST} ${_RETURN_LIST} PARENT_SCOPE)
 
 endfunction ()
 
@@ -776,9 +730,9 @@ function (cmake_unit_invoke_configure)
 
     endif ()
 
-    _cmake_unit_forward_arguments (INVOKE_CONFIGURE INVOKE_COMMAND_ARGUMENTS
-                                   OPTION_ARGS ALLOW_FAIL
-                                   SINGLEVAR_ARGS OUTPUT_FILE ERROR_FILE)
+    cmake_forward_arguments (INVOKE_CONFIGURE INVOKE_COMMAND_ARGUMENTS
+                             OPTION_ARGS ALLOW_FAIL
+                             SINGLEVAR_ARGS OUTPUT_FILE ERROR_FILE)
     _cmake_unit_invoke_command (COMMAND "${CMAKE_COMMAND}"
                                         "${INVOKE_CONFIGURE_SOURCE_DIR}"
                                         "${TRACE_OPTION}"
@@ -848,9 +802,9 @@ function (cmake_unit_invoke_build)
 
     endif ()
 
-    _cmake_unit_forward_arguments (INVOKE_BUILD INVOKE_COMMAND_ARGUMENTS
-                                   OPTION_ARGS ALLOW_FAIL
-                                   SINGLEVAR_ARGS OUTPUT_FILE ERROR_FILE)
+    cmake_forward_arguments (INVOKE_BUILD INVOKE_COMMAND_ARGUMENTS
+                             OPTION_ARGS ALLOW_FAIL
+                             SINGLEVAR_ARGS OUTPUT_FILE ERROR_FILE)
     _cmake_unit_invoke_command (COMMAND "${CMAKE_COMMAND}"
                                         --build
                                         "${INVOKE_BUILD_BINARY_DIR}"
@@ -871,9 +825,9 @@ function (cmake_unit_invoke_test)
                            ""
                            ${CALLER_ARGN})
 
-    _cmake_unit_forward_arguments (INVOKE_TEST INVOKE_COMMAND_ARGUMENTS
-                                   OPTION_ARGS ALLOW_FAIL
-                                   SINGLEVAR_ARGS OUTPUT_FILE ERROR_FILE)
+    cmake_forward_arguments (INVOKE_TEST INVOKE_COMMAND_ARGUMENTS
+                             OPTION_ARGS ALLOW_FAIL
+                             SINGLEVAR_ARGS OUTPUT_FILE ERROR_FILE)
     _cmake_unit_invoke_command (COMMAND "${CMAKE_CTEST_COMMAND}"
                                         -C
                                         Debug
@@ -1308,11 +1262,11 @@ function (_cmake_unit_configure_test_internal)
     set (TEST_SOURCE_DIR "${CMAKE_UNIT_CONFIGURE_TEST_SOURCE_DIR}")
     set (TEST_BINARY_DIR "${CMAKE_UNIT_CONFIGURE_TEST_BINARY_DIR}")
 
-    _cmake_unit_forward_arguments (TEST PHASE_FUNCTION_STANDARD_ARGS
-                                   SINGLEVAR_ARGS SOURCE_DIR
-                                                  BINARY_DIR
-                                                  OUTPUT_FILE
-                                                  ERROR_FILE)
+    cmake_forward_arguments (TEST PHASE_FUNCTION_STANDARD_ARGS
+                             SINGLEVAR_ARGS SOURCE_DIR
+                                            BINARY_DIR
+                                            OUTPUT_FILE
+                                            ERROR_FILE)
 
     cmake_call_function (${PHASE_FUNCTION} ${PHASE_ARGUMENTS}
                          TEST_NAME ${TEST_NAME}
