@@ -60,6 +60,7 @@ MULTIVAR_ARGS
 namespace
 namespace_test_one
 NMake
+NO_QUOTES
 overridable
 polymorphism
 polysquare
@@ -69,10 +70,13 @@ propogates
 propogation
 SINGLEVAR_ARGS
 Source
+spacified
+spacify
 stderr
 stdout
 subdirectory
 submodule
+subprocess
 substring
 superset
 target_link_libraries
