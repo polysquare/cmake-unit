@@ -230,7 +230,7 @@ The following matchers are available at the time of writing this documentation
   that in the default case, libraries with slightly inexact names between
   platforms are still matched against.
 * `list_contains_value`: Checks inside specified variable name containing
-  a list to see if any item contains a value satisfying the criteria. 
+  a list to see if any item contains a value satisfying the criteria.
 * `has_property_with_value`: Matches if the item specified with the item type
   specified has property with a value and type specified which matches the
   provided comparator.

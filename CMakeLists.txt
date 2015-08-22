@@ -70,7 +70,7 @@ function (_cmake_unit_test_gen_configure_no_discover RETURN_AUX_CMAKELISTS)
 
         # We have options for our phase, now parse those options into the
         # script itself and all its other options to be passed as part
-        # of the configuraton
+        # of the configuration
         if (PHASE_ARGUMENTS)
 
             set (PHASE_OPTIONS_MULTIVAR_ARGS SCRIPT OPTIONS)
@@ -126,7 +126,7 @@ endfunction ()
 
 function (_cmake_unit_test_gen_discover_from_contents)
 
-    # Overrides variables when including AuxCMakeLists.txt
+    # Overrides variables when including /AuxCMakeLists.txt
     set (_CMAKE_UNIT_PHASE PRECONFIGURE)  # NOLINT:unused/var_in_func
     unset (_CMAKE_UNIT_ACTIVE_TEST)  # NOLINT:unused/var_in_func
 
@@ -153,7 +153,7 @@ function (_cmake_unit_test_gen_discover_from_contents)
 
     # Ensure everything in INIT_OPTIONS is quoted so that
     # there is no ambiguity when we insert it into the
-    # AuxCMakeLists.txt script later.
+    # /AuxCMakeLists.txt script later.
     foreach (OPTION ${INIT_OPTIONS})
         list (APPEND QUOTED_INIT_OPTIONS "\"${OPTION}\"")
     endforeach ()
@@ -207,9 +207,9 @@ function (cmake_unit_test_cmake_test_added_where_setup_script_exists)
 
 endfunction ()
 
-# Check that where we have TestName.cmake in CMAKE_CURRENT_SOURCE_DIR
+# Check that where we have a test matching the test pattern in /CMakeLists.txt
 # that calling cmake_unit_configure_test actually adds a test and that the build
-# output indicates that we've built, tested and verified SampleTest too
+# output indicates that we've built, tested and verified sample too
 function (cmake_unit_test_cmake_build_test_added_where_verify_script_exists)
 
     function (_cmake_unit_configure)
@@ -575,7 +575,7 @@ function (cmake_unit_test_cmake_build_test_with_custom_target)
 
 endfunction ()
 
-# Adds a cmake_build_test. Override the clean step and put something in the
+# Adds a build test. Override the clean step and put something in the
 # binary directory. Make sure it is completely cleaned out after passing
 # control back to cmake_unit_invoke_clean
 function (cmake_unit_test_cmake_build_test_clean_step_always_runs)
@@ -702,25 +702,27 @@ function (cmake_unit_test_cmake_build_test_no_errors_where_w_error_disabled)
 
 endfunction ()
 
-# Set up some tests which will include some specifified scripts, but not
+# Set up some tests which will include some specified scripts, but not
 # a certain excluded script. Eg
-# FirstTest:
-# - Excluded.cmake
-# - Included.cmake
-# - FirstTestSpecific.cmake
-# SecondTest:
-# - Excluded.cmake
-# - Included.cmake
-# - SecondTestSpecific.cmake
+# First Test:
+# - /Excluded.cmake
+# - /Included.cmake
+# - /FirstTestSpecific.cmake
+# Second Test:
+# - /Excluded.cmake
+# - /Included.cmake
+# - /SecondTestSpecific.cmake
 # The following files will be added as part of COVERAGE_FILES
-# - Included.cmake
-# - FirstTestSpecific.cmake
-# - SecondTestSpecific.cmake
+# - /Included.cmake
+# - /FirstTestSpecific.cmake
+# - /SecondTestSpecific.cmake
+#
 # Use the excluded script as a convenient crutch to disable
 # all the warnings
+#
 # Coverage should be recorded in both the test and _cmake_unit_verify steps
 # Check that when CMAKE_UNIT_LOG_COVERAGE was on we created a file
-# called SampleTests.trace in CMAKE_CURRENT_BINARY_DIR
+# called /SampleTests.trace in CMAKE_CURRENT_BINARY_DIR
 # and that file contains the following:
 # ^.*Included.cmake\(1\).*$
 # ^.*FirstTestSpecific.cmake\(1\).*$
@@ -845,7 +847,7 @@ function (cmake_unit_test_cmake_test_files_recorded_in_tracefile_across_tests)
 endfunction ()
 
 # Adds a test which adds a custom target with a command "cmake -E touch
-# Generated.cpp" to the ALL target. Checks that cmake -E touch Generated.cpp
+# /Generated.cpp" to the ALL target. Checks that cmake -E touch /Generated.cpp
 # was in the test output
 function (cmake_unit_test_cmake_tests_have_verbose_output)
 
@@ -857,8 +859,8 @@ function (cmake_unit_test_cmake_tests_have_verbose_output)
              "add_custom_command (OUTPUT\n"
              "                    \"\${GENERATED_FILE}\"\n"
              # The two commands will actually be to generate a
-             # file called FirstCommand.cpp, and then another
-             # command to generate SecondCommand.cpp
+             # file called /FirstCommand.cpp, and then another
+             # command to generate /SecondCommand.cpp
              "                    COMMAND\n"
              "                    \"\${CMAKE_COMMAND}\" -E touch\n"
              "                    \"\${BINARY_DIR}/FirstCommand.cpp\"\n"
@@ -943,7 +945,7 @@ endfunction ()
 
 # Check that a source file by the name Source.cpp was created in
 # ${CMAKE_CURRENT_SOURCE_DIR} when we call
-# cmake_unit_generated_source_file_before_build at the
+# cmake_unit_generate_source_file_during_build at the
 # _cmake_unit_configure-stage (it shouldn't exist at the _cmake_unit_configure
 # stage)
 function (cmake_unit_test_source_file_generated_during_build_exists)
@@ -1089,8 +1091,8 @@ function (cmake_unit_test_create_simple_library)
 endfunction ()
 
 # Create an external project with an exported library and use
-# cmake_export_cfg_int_dir in that external project to write out
-# CMAKE_CFG_INT_DIR to CfgIntDirValue.txt in its BINARY_DIR
+# cmake_unit_export_cfg_int_dir in that external project to write out
+# CMAKE_CFG_INT_DIR to /CfgIntDirValue.txt in its BINARY_DIR
 #
 # Uses cmake_unit_import_cfg_int_dir and cross-checks that against an
 # exported target from the external project's location. If the path
@@ -1172,7 +1174,7 @@ function (cmake_unit_test_export_import_cfg_int_dir)
 
 endfunction ()
 
-# Check the cmake_unit_target_exists matcher.
+# Check the target_exists matcher.
 function (cmake_unit_test_target_exists)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
@@ -1200,7 +1202,7 @@ function (cmake_unit_test_target_exists)
 
 endfunction ()
 
-# Check the cmake_unit_variable_contains matcher.
+# Check the variable_contains matcher.
 function (cmake_unit_test_variable_contains)
 
     function (_cmake_unit_configure)
@@ -1225,7 +1227,7 @@ function (cmake_unit_test_variable_contains)
 
 endfunction ()
 
-# Check the cmake_unit_variable_is matcher for ints and bools
+# Check the compare_as matcher for integers and booleans
 function (cmake_unit_test_variable_is)
 
     function (_cmake_unit_configure)
@@ -1291,7 +1293,7 @@ function (cmake_unit_test_variable_is)
 
 endfunction ()
 
-# Check the cmake_unit_variable_is matcher with empty values
+# Check the compare_as matcher with empty values
 function (cmake_unit_test_variable_is_empty)
 
     function (_cmake_unit_configure)
@@ -1310,7 +1312,7 @@ function (cmake_unit_test_variable_is_empty)
 
 endfunction ()
 
-# Check the cmake_unit_command_executes_with_success matcher.
+# Check the executes_with_success matcher.
 function (cmake_unit_test_command_executes_with_success)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
@@ -1339,7 +1341,7 @@ function (cmake_unit_test_command_executes_with_success)
 
 endfunction ()
 
-# Check the cmake_unit_target_is_linked_to matcher.
+# Check the is_linked_to matcher.
 function (cmake_unit_test_target_is_linked_to)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
@@ -1372,7 +1374,7 @@ function (cmake_unit_test_target_is_linked_to)
 
 endfunction ()
 
-# Check the cmake_unit_item_has_property_with_value matcher.
+# Check the has_property_with_value matcher.
 function (cmake_unit_test_item_has_property_with_value)
 
     function (_cmake_unit_configure)
@@ -1419,7 +1421,7 @@ function (cmake_unit_test_item_has_property_with_value)
 
 endfunction ()
 
-# Check the cmake_unit_item_has_property_with_value matcher with empty values.
+# Check the has_property_with_value matcher with empty values.
 function (cmake_unit_test_item_has_property_with_value_empty)
 
     function (_cmake_unit_configure)
@@ -1446,8 +1448,7 @@ function (cmake_unit_test_item_has_property_with_value_empty)
 
 endfunction ()
 
-# Check the cmake_unit_item_has_property_with_value matcher with GLOBAL
-# properties.
+# Check the has_property_with_value matcher with GLOBAL properties.
 function (cmake_unit_test_item_has_property_with_value_global)
 
     function (_cmake_unit_configure)
@@ -1494,7 +1495,7 @@ function (cmake_unit_test_item_has_property_with_value_global)
 
 endfunction ()
 
-# Check the cmake_unit_item_has_property_with_value matcher.
+# Check the has_property_containing_value matcher.
 function (cmake_unit_test_item_has_property_containing_value)
 
     function (_cmake_unit_configure)
@@ -1562,7 +1563,7 @@ function (cmake_unit_test_item_has_property_containing_value)
 
 endfunction ()
 
-# Check the cmake_unit_item_has_property_with_value matcher with empty values.
+# Check the has_property_containing_value matcher with empty values.
 # Empty variables never stored in lists
 function (cmake_unit_test_item_has_property_containing_value_empty)
 
@@ -1593,8 +1594,7 @@ function (cmake_unit_test_item_has_property_containing_value_empty)
 
 endfunction ()
 
-# Check the cmake_unit_item_has_property_with_value matcher with GLOBAL
-# properties.
+# Check the has_property_containing_value matcher with GLOBAL properties.
 function (cmake_unit_test_item_has_property_containing_value_global)
 
     function (_cmake_unit_configure)
@@ -1646,7 +1646,7 @@ function (cmake_unit_test_item_has_property_containing_value_global)
 
 endfunction ()
 
-# Check the cmake_unit_file_exists matcher.
+# Check the exists_as_file matcher.
 function (cmake_unit_test_file_exists)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
@@ -1672,7 +1672,7 @@ function (cmake_unit_test_file_exists)
 
 endfunction ()
 
-# Check the cmake_unit_file_contains_substring matcher.
+# Check the file_contents matcher with the variable_contains matcher.
 function (cmake_unit_test_file_contains_substring)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
@@ -1702,7 +1702,8 @@ function (cmake_unit_test_file_contains_substring)
 
 endfunction ()
 
-# Check the _cmake_unit_file_has_line_matching matcher.
+# Check the file_contents matcher with the any_line variable_matches_regex
+# matcher.
 function (cmake_unit_test_file_has_line_matching)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
@@ -1745,7 +1746,7 @@ function (cmake_unit_test_file_has_line_matching)
                                  matches_regex
                                  ${MATCH_FOO_LINE}
                                  MATCH_FOO_IN_FOO)
-        cmake_unit_eval_matcher (${FILE_WITH_FOO} 
+        cmake_unit_eval_matcher (${FILE_WITH_FOO}
                                  file_contents
                                  any_line
                                  matches_regex
@@ -1844,7 +1845,7 @@ function (cmake_unit_test_file_has_line_matching)
 
 endfunction ()
 
-# Check the cmake_unit_list_contains_value matcher.
+# Check the list_contains_value matcher.
 function (cmake_unit_test_list_contains_value)
 
     function (_cmake_unit_configure)
@@ -1873,7 +1874,7 @@ function (cmake_unit_test_list_contains_value)
 
 endfunction ()
 
-# Check the cmake_unit_list_contains_value matcher with empty values
+# Check the list_contains_value matcher with empty values
 # Empty values are never stored in lists
 function (cmake_unit_test_list_contains_value_empty)
 
@@ -1895,7 +1896,7 @@ function (cmake_unit_test_list_contains_value_empty)
 
 endfunction ()
 
-# Check that ${CMAKE_PROJECT_NAME}.trace (in this case, TestProject.trace)
+# Check that /${CMAKE_PROJECT_NAME}.trace (in this case, /coverage.trace)
 # is overwritten with nothing when cmake_unit_init is called
 function (cmake_unit_test_coverage_file_clobbered_on_bootstrap)
 
@@ -1968,7 +1969,7 @@ function (cmake_unit_test_source_file_created_before_build_exists)
 
 endfunction ()
 
-# Check that a source file by the name CustomName.cpp was created in
+# Check that a source file by the name /CustomName.cpp was created in
 # ${CMAKE_CURRENT_SOURCE_DIR} when we call
 # cmake_unit_create_source_file_before_build with NAME
 function (cmake_unit_test_source_file_created_before_build_with_custom_name)
@@ -1990,7 +1991,7 @@ function (cmake_unit_test_source_file_created_before_build_with_custom_name)
 
 endfunction ()
 
-# Check that a source file by the name Source.cpp was created in
+# Check that a source file by the name /Source.cpp was created in
 # ${CMAKE_CURRENT_SOURCE_DIR} with #define CUSTOM_DEFINE when we call
 # cmake_unit_create_source_file_before_build with DEFINES CUSTOM_DEFINE
 function (cmake_unit_test_source_file_created_before_build_with_defines)
@@ -2157,7 +2158,7 @@ function (cmake_unit_test_source_file_created_with_function_defs)
 
 endfunction ()
 
-# Check that a source file by the name Header.h was created in
+# Check that a source file by the name /Header.h was created in
 # ${CMAKE_CURRENT_SOURCE_DIR} but does not contain a definition like
 # int custom_function ()\n{\n    return 1;\n} when we call
 # cmake_unit_create_source_file_before_build with FUNCTIONS custom_function
@@ -2185,7 +2186,7 @@ function (cmake_unit_test_source_file_created_no_function_defs_if_header)
 
 endfunction ()
 
-# Check that a source file by the name Header.h was created in
+# Check that a source file by the name /Header.h was created in
 # ${CMAKE_CURRENT_SOURCE_DIR} and contains header guards like
 # #ifdef HEADER_H
 # #define HEADER_H
@@ -2204,7 +2205,7 @@ function (cmake_unit_test_source_file_created_header_guards_if_header)
         cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
 
         cmake_unit_assert_that ("${SOURCE_DIR}/Header.h"
-                                file_contents any_line matches_regex 
+                                file_contents any_line matches_regex
                                 "^.*ifndef HEADER_H")
         cmake_unit_assert_that ("${SOURCE_DIR}/Header.h"
                                 file_contents any_line matches_regex
@@ -2349,7 +2350,7 @@ function (cmake_unit_test_lines_starting_with_end_not_executable)
 
 endfunction ()
 
-# Check that lines overflowing after an intial open-brace are not executable
+# Check that lines overflowing after an initial open-brace are not executable
 # until the brace is closed on the end of the line
 function (cmake_unit_test_lines_until_close_bracket_not_executable)
 
@@ -2376,7 +2377,7 @@ function (cmake_unit_test_lines_until_close_bracket_not_executable)
 
 endfunction ()
 
-# Check that lines overflowing after an intial open-brace are not executable
+# Check that lines overflowing after an initial open-brace are not executable
 # until the brace is closed on the end of the line
 function (cmake_unit_test_interleaved_comments_until_close_bracket_no_exec)
 
@@ -2458,8 +2459,8 @@ function (cmake_unit_test_slash_n_doesnt_break_lines)
 endfunction ()
 
 # All files, eg
-# - FileForCoverage.cmake
-# - UnexecutedFileForCoverage.cmake
+# - /FileForCoverage.cmake
+# - /UnexecutedFileForCoverage.cmake
 # Have coverage information
 function (cmake_unit_test_all_files_specified_in_trace_file_have_coverage)
 
