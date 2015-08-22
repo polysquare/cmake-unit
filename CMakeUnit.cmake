@@ -906,29 +906,6 @@ function (cmake_unit_not)
 
 endfunction ()
 
-
-function (cmake_unit_assert_true VARIABLE)
-
-    if (NOT VARIABLE)
-
-        message (SEND_ERROR
-                 "Expected ${VARIABLE} to be true")
-
-    endif ()
-
-endfunction ()
-
-function (cmake_unit_assert_false VARIABLE)
-
-    if (VARIABLE)
-
-        message (SEND_ERROR
-                 "Expected ${VARIABLE} to be false")
-
-    endif ()
-
-endfunction ()
-
 # cmake_unit_is_true
 #
 # Matches if the variable provided is either TRUE or ON.
@@ -990,26 +967,6 @@ function (cmake_unit_target_exists)
 
 endfunction ()
 
-# cmake_unit_assert_target_exists
-#
-# Throws a non-fatal error if the target specified
-# by TARGET_NAME is not a target known by CMake.
-function (cmake_unit_assert_target_exists TARGET_NAME)
-
-    cmake_unit_assert_that (TARGET_NAME target_exists)
-
-endfunction ()
-
-# cmake_unit_assert_target_does_not_exist
-#
-# Throws a non-fatal error if the target specified
-# by TARGET_NAME is a target known by CMake.
-function (cmake_unit_assert_target_does_not_exist TARGET_NAME)
-
-    cmake_unit_assert_that (TARGET_NAME not target_exists)
-
-endfunction ()
-
 # cmake_unit_variable_contains
 #
 # Matches if the value of the variable name provided contains the substring
@@ -1031,27 +988,6 @@ function (cmake_unit_variable_contains)
         set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
     endif ()
-
-endfunction ()
-
-# cmake_unit_assert_string_contains
-#
-# Throws a non-fatal error if the string SUBSTRING
-# is not a substring of MAIN_STRING.
-function (cmake_unit_assert_string_contains MAIN_STRING SUBSTRING)
-
-    cmake_unit_assert_that ("${MAIN_STRING}" string_contains "${SUBSTRING}")
-
-endfunction ()
-
-# cmake_unit_assert_string_does_not_contain
-#
-# Throws a non-fatal error if the string SUBSTRING
-# is a substring of MAIN_STRING.
-function (cmake_unit_assert_string_does_not_contain MAIN_STRING SUBSTRING)
-
-    cmake_unit_assert_that ("${MAIN_STRING}"
-                            not string_contains "${SUBSTRING}")
 
 endfunction ()
 
@@ -1147,54 +1083,6 @@ function (cmake_unit_compare_as)
 
 endfunction ()
 
-# cmake_unit_assert_variable_is
-#
-# Used to check if one VARIABLE is equal, greater than
-# or less than another VALUE. The variable TYPE must
-# be provided as the checks differ subtly between
-# variable types. Valid types are:
-#
-#  STRING
-#  INTEGER
-#  BOOL
-#
-# A fatal error will be thrown when passing an unrecognized
-# type. A non-fatal error will be thrown if the COMPARATOR
-# operation fails between VARIABLE and VALUE
-function (cmake_unit_assert_variable_is VARIABLE TYPE COMPARATOR VALUE)
-
-    cmake_unit_assert_that ("${VARIABLE}"
-                            compare_as ${TYPE} ${COMPARATOR}
-                            "${VALUE}"
-                            RESULT)
-
-endfunction ()
-
-# cmake_unit_assert_variable_is_not
-#
-# Used to check if one VARIABLE is not equal, greater than
-# or less than another VALUE. The variable TYPE must
-# be provided as the checks differ subtly between
-# variable types. Valid types are:
-#
-#  STRING
-#  INTEGER
-#  BOOL
-#
-# A fatal error will be thrown when passing an unrecognized
-# type. A non-fatal error will be thrown if the COMPARATOR
-# operation succeeds between VARIABLE and VALUE
-function (cmake_unit_assert_variable_is_not VARIABLE TYPE COMPARATOR VALUE)
-
-    cmake_unit_assert_that ("${VARIABLE}"
-                            not compare_as
-                            ${TYPE}
-                            ${COMPARATOR}
-                            "${VALUE}"
-                            RESULT)
-
-endfunction ()
-
 # cmake_unit_matches_regex
 #
 # Matches if the value of the variable, after being converted to a string
@@ -1216,28 +1104,6 @@ function (cmake_unit_matches_regex)
 
 endfunction ()
 
-# cmake_unit_assert_matches_regex
-#
-# The variable VARIABLE will be coerced into a string
-# matched against the REGEX provided. Throws a non-fatal
-# error if VARIABLE does not match REGEX.
-function (cmake_unit_assert_matches_regex VARIABLE REGEX)
-
-    cmake_unit_assert_that ("${VARIABLE}" matches_regex "${REGEX}")
-
-endfunction ()
-
-# cmake_unit_assert_variable_does_not_match_regex
-#
-# The variable VARIABLE will be coerced into a string
-# matched against the REGEX provided. Throws a non-fatal
-# error if VARIABLE does matches REGEX.
-function (cmake_unit_assert_variable_does_not_match_regex VARIABLE REGEX)
-
-    cmake_unit_assert_that ("${VARIABLE}" not matches_regex "${REGEX}")
-
-endfunction ()
-
 # cmake_unit_is_defined
 #
 # Matches if the variable is defined, that is, if the variable has
@@ -1255,28 +1121,6 @@ function (cmake_unit_is_defined)
         set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
     endif ()
-
-endfunction ()
-
-# cmake_unit_assert_variable_is_defined
-#
-# Throws a non-fatal error if the variable specified by VARIABLE
-# is not defined. Note that the variable name itself and not
-# its value must be passed to this function.
-function (cmake_unit_assert_variable_is_defined VARIABLE)
-
-    cmake_unit_assert_that ("${VARIABLE}" is_defined)
-
-endfunction ()
-
-# cmake_unit_assert_variable_is_not_defined
-#
-# Throws a non-fatal error if the variable specified by VARIABLE
-# is defined. Note that the variable name itself and not
-# its value must be passed to this function.
-function (cmake_unit_assert_variable_is_not_defined VARIABLE)
-
-    cmake_unit_assert_that ("${VARIABLE}" not is_defined)
 
 endfunction ()
 
@@ -1303,34 +1147,6 @@ function (cmake_unit_executes_with_success)
         set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
     endif ()
-
-endfunction ()
-
-# cmake_unit_assert_command_executes_with_success
-#
-# Throws a non-fatal error if the command and argument
-# list specified by COMMAND does not execute with
-# success. Note that the name of the variable containing
-# the command and the argument list must be provided
-# as opposed to the command and argument list itself.
-#
-# COMMAND: Command to execute
-function (cmake_unit_assert_command_executes_with_success COMMAND)
-
-    cmake_unit_assert_that ("${COMMAND}" executes_with_success)
-
-endfunction ()
-
-# cmake_unit_assert_command_does_not_execute_with_success
-#
-# Throws a non-fatal error if the command and argument
-# list specified by COMMAND executes with
-# success. Note that the name of the variable containing
-# the command and the argument list must be provided
-# as opposed to the command and argument list itself.
-function (cmake_unit_assert_command_does_not_execute_with_success)
-
-    cmake_unit_assert_that ("${COMMAND}" not executes_with_success)
 
 endfunction ()
 
@@ -1418,32 +1234,6 @@ function (cmake_unit_is_linked_to)
 
 endfunction ()
 
-# cmake_unit_assert_target_is_linked_to
-#
-# Throws a non-fatal error if the target specified by
-# TARGET_NAME is not linked to a library which matches
-# the name LIBRARY. Note that this function does regex
-# matching under the hood, matching a whole line which
-# contains anything matching LIBRARY.
-function (cmake_unit_assert_target_is_linked_to TARGET_NAME LIBRARY)
-
-    cmake_unit_assert_that ("${TARGET_NAME}" is_linked_to "${LIBRARY}")
-
-endfunction ()
-
-# cmake_unit_assert_target_is_not_linked_to
-#
-# Throws a non-fatal error if the target specified by
-# TARGET_NAME is linked to a library which matches
-# the name LIBRARY. Note that this function does regex
-# matching under the hood, matching a whole line which
-# contains anything matching LIBRARY.
-function (cmake_unit_assert_target_is_not_linked_to TARGET_NAME LIBRARY)
-
-    cmake_unit_assert_that ("${TARGET_NAME}" not is_linked_to "${LIBRARY}")
-
-endfunction ()
-
 # cmake_unit_item_has_property_with_value
 #
 # Matches if item, which could be a directory, target or anything which
@@ -1494,53 +1284,6 @@ function (cmake_unit_item_has_property_with_value)
 
 endfunction ()
 
-# cmake_unit_assert_has_property_with_value
-#
-# Throws a non-fatal error if the ITEM with ITEM_TYPE specified does not
-# have a PROPERTY of PROPERTY_TYPE which satisfies COMPARATOR with
-# the VALUE specified.
-function (cmake_unit_assert_has_property_with_value ITEM_TYPE
-                                                    ITEM
-                                                    PROPERTY
-                                                    PROPERTY_TYPE
-                                                    COMPARATOR
-                                                    VALUE)
-
-    cmake_unit_assert_that ("${ITEM}"
-                            item_has_property_with_value
-                            ${ITEM_TYPE}
-                            ${PROPERTY}
-                            ${PROPERTY_TYPE}
-                            ${COMPARATOR}
-                            "${VALUE}"
-                            RESULT)
-
-endfunction ()
-
-# cmake_unit_assert_does_not_have_property_with_value
-#
-# Throws a non-fatal error if the ITEM with ITEM_TYPE specified
-# has a PROPERTY of PROPERTY_TYPE which satisfies COMPARATOR with
-# the VALUE specified.
-function (cmake_unit_assert_does_not_have_property_with_value ITEM_TYPE
-                                                              ITEM
-                                                              PROPERTY
-                                                              PROPERTY_TYPE
-                                                              COMPARATOR
-                                                              VALUE)
-
-
-    cmake_unit_assert_that ("${ITEM}"
-                            not item_has_property_with_value
-                            ${ITEM_TYPE}
-                            ${PROPERTY}
-                            ${PROPERTY_TYPE}
-                            ${COMPARATOR}
-                            "${VALUE}"
-                            RESULT)
-
-endfunction ()
-
 # cmake_unit_list_contains_value
 #
 # Matches if the provided list contains a value satisfying the if-expression
@@ -1574,41 +1317,6 @@ function (cmake_unit_list_contains_value)
         endif ()
 
     endforeach ()
-
-endfunction ()
-
-# cmake_unit_assert_list_contains_value
-#
-# Throws a non-fatal error if the list specified by LIST_VARIABLE
-# does not contain a value which satisfies COMPARATOR with
-# VALUE
-function (cmake_unit_assert_list_contains_value LIST_VARIABLE
-                                                TYPE
-                                                COMPARATOR
-                                                VALUE)
-
-    cmake_unit_assert_that ("${LIST_VARIABLE}"
-                            list_contains_value
-                            ${TYPE}
-                            ${COMPARATOR}
-                            ${VALUE})
-
-endfunction ()
-
-# cmake_unit_assert_list_contains_value
-#
-# Throws a non-fatal error if the list specified by LIST_VARIABLE
-# contains a value which satisfies COMPARATOR with VALUE
-function (cmake_unit_assert_list_does_not_contain_value LIST_VARIABLE
-                                                        TYPE
-                                                        COMPARATOR
-                                                        VALUE)
-
-    cmake_unit_assert_that ("${LIST_VARIABLE}"
-                            not list_contains_value
-                            ${TYPE}
-                            ${COMPARATOR}
-                            ${VALUE})
 
 endfunction ()
 
@@ -1657,50 +1365,6 @@ function (cmake_unit_item_has_property_containing_value)
 
 endfunction ()
 
-# cmake_unit_assert_has_property_containing_value
-#
-# Throws a non-fatal error if the ITEM with ITEM_TYPE specified does not
-# have a PROPERTY of PROPERTY_TYPE of which one of the items in the property
-# value's list satisfies COMPARATOR
-function (cmake_unit_assert_has_property_containing_value ITEM_TYPE
-                                                          ITEM
-                                                          PROPERTY
-                                                          PROPERTY_TYPE
-                                                          COMPARATOR
-                                                          VALUE)
-
-    cmake_unit_assert_that ("${ITEM}"
-                            item_has_property_with_value
-                            ${ITEM_TYPE}
-                            ${PROPERTY}
-                            ${PROPERTY_TYPE}
-                            ${COMPARATOR}
-                            ${VALUE})
-
-endfunction ()
-
-# cmake_unit_assert_does_not_have_property_containing_value
-#
-# Throws a non-fatal error if the ITEM with ITEM_TYPE specified does not
-# have a PROPERTY of PROPERTY_TYPE of which one of the items in the property
-# value's list satisfies COMPARATOR
-function (cmake_unit_assert_does_not_have_property_containing_value ITEM_TYPE
-                                                                    ITEM
-                                                                    PROPERTY
-                                                                    PROP_TYPE
-                                                                    COMPARATOR
-                                                                    VALUE)
-
-    cmake_unit_assert_that ("${ITEM}"
-                            not item_has_property_with_value
-                            ${ITEM_TYPE}
-                            ${PROPERTY}
-                            ${PROP_TYPE}
-                            ${COMPARATOR}
-                            ${VALUE})
-
-endfunction ()
-
 # cmake_unit_exists_as_file
 #
 # Matches if the file name provided exists on the filesystem.
@@ -1716,26 +1380,6 @@ function (cmake_unit_exists_as_file)
         set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
     endif ()
-
-endfunction ()
-
-# cmake_unit_assert_file_exists:
-#
-# Throws a non-fatal error if the file specified by FILE
-# does not exist on the filesystem
-function (cmake_unit_assert_file_exists FILE)
-
-    cmake_unit_assert_that ("${FILE}" exists_as_file)
-
-endfunction ()
-
-# cmake_unit_assert_file_does_not_exist:
-#
-# Throws a non-fatal error if the file specified by FILE
-# exists the filesystem
-function (cmake_unit_assert_file_does_not_exist FILE)
-
-    cmake_unit_assert_that ("${FILE}" not exists_as_file)
 
 endfunction ()
 
@@ -1775,30 +1419,6 @@ function (cmake_unit_file_contents)
         set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
     endif ()
-
-endfunction ()
-
-# cmake_unit_assert_file_contains:
-#
-# Throws a non-fatal error if the file specified by FILE
-# does not contain the substring SUBSTRING
-function (cmake_unit_assert_file_contains FILE SUBSTRING)
-
-    cmake_unit_assert_that ("${FILE}"
-                            file_contents variable_contains
-                            "${SUBSTRING}")
-
-endfunction ()
-
-# cmake_unit_assert_file_does_not_contain:
-#
-# Throws a non-fatal error if the file specified by FILE
-# contains the substring SUBSTRING
-function (cmake_unit_assert_file_does_not_contain FILE SUBSTRING)
-
-    cmake_unit_assert_that ("${FILE}"
-                            not file_contents variable_contains
-                            "${SUBSTRING}")
 
 endfunction ()
 
@@ -1847,29 +1467,5 @@ function (cmake_unit_any_line)
         endif ()
 
     endforeach ()
-
-endfunction ()
-
-# cmake_unit_assert_file_has_line_matching
-#
-# Throws a non-fatal error if the file specified by FILE
-# does not have a line that matches PATTERN
-function (cmake_unit_assert_file_has_line_matching FILE PATTERN)
-
-    cmake_unit_assert_that ("${FILE}"
-                            file_contents any_line matches_regex
-                            "${PATTERN}")
-
-endfunction ()
-
-# cmake_unit_assert_file_does_not_have_line_matching
-#
-# Throws a non-fatal error if the file specified by FILE
-# has a line that matches PATTERN
-function (cmake_unit_assert_file_does_not_have_line_matching FILE PATTERN)
-
-    cmake_unit_assert_that ("${FILE}"
-                            not file_contents any_line matches_regex
-                            "${PATTERN}")
 
 endfunction ()
