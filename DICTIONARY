@@ -79,6 +79,7 @@ submodule
 subprocess
 substring
 superset
+target_exists
 target_link_libraries
 test_name
 toplevel

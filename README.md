@@ -150,7 +150,7 @@ Here is an example of how a test looks in practice:
             cmake_unit_create_simple_executable (executable)
             target_link_libraries (executable library)
 
-            cmake_unit_assert_target_is_linked_to (executable library)
+            cmake_unit_assert_that (executable is_linked_to library)
 
         endfunction ()
 
@@ -158,8 +158,10 @@ Here is an example of how a test looks in practice:
 
             cmake_unit_get_log_for (INVOKE_BUILD OUTPUT BUILD_OUTPUT)
 
-            cmake_unit_assert_file_has_line_matching ("${BUILD_OUTPUT}"
-                                                      "^.*executable.*$")
+            cmake_unit_assert_that ("${BUILD_OUTPUT}"
+                                    file_contents any_line
+                                    matches_regex
+                                    "^.*executable.*$")
 
         endfunction ()
 
@@ -200,52 +202,46 @@ As an example, see the following:
 
 ### CMakeUnit ###
 
-`CMakeUnit` contains matchers and assertions.  They aren't written in true xUnit
-style due to the inability to capture function names in variables and later call
-them in CMake.  You can use them in both the configure and verify stages.  If
+`CMakeUnit` contains matchers and a general `cmake_unit_assert_that` function.
+You can use them in both the configure and verify stages.  If
 the script hits an assertion failure, it will call `message (SEND_ERROR)`.
 
-The following assertions are available at the time of writing this documentation
+The following matchers are available at the time of writing this documentation
 
-* `cmake_unit_assert_target_exists`, `cmake_unit_assert_target_does_not_exist`:
-  Asserts that the target provided as the first argument exists or does not
-  exist.
-* `cmake_unit_assert_string_contains`,
-  `cmake_unit_assert_string_does_not_contain`: Asserts that the second string is
-  a substring of the first.
-* `cmake_unit_assert_variable_is`, `cmake_unit_assert_variable_is_not`: Asserts
-  that the variable specified matches some of the parameters provided.  A
-  variable name, type, comparator statement (`EQUAL` `LESS` `GREATER`) and value
-  to compare against can be provided.
-* `cmake_unit_assert_variable_matches_regex`,
-  `cmake_unit_assert_variable_does_not_match_regex`: Asserts that the value
-  provided when treated as a string matches the regex provided in the second
-  argument.
-* `cmake_unit_assert_variable_is_defined`,
-  `cmake_unit_assert_variable_is_not_defined`: Asserts that a variable was or
-  was not defined
-* `cmake_unit_assert_command_executes_with_success`,
-  `cmake_unit_assert_command_does_not_execute_with_success`: For a command
-  `COMMAND` and each of its arguments encapsulated in the list
-  passed-by-variable (as opposed to by value), check if it executed with
-  success.
-* `cmake_unit_assert_target_is_linked_to`,
-  `cmake_unit_assert_target_is_not_linked_to`: Asserts that the target has a
-  link library that matches the name specified by the second argument.  It does
-  regex matching to ensure that in the default case, libraries with slightly
-  inexact names between platforms are still matched against.
-* `cmake_unit_assert_has_property_with_value`,
-  `cmake_unit_assert_does_not_have_property_with_value`: Asserts that the item
-  specified with the item type specified has property with a value and type
-  specified which matches the provided comparator.
-* `cmake_unit_assert_has_property_containing_value`,
-  `cmake_unit_assert_does_not_have_property_containing_value`: Like
-  `cmake_unit_assert_has_property_with_value` but looks inside items in a list
-  held by the property.
-* `cmake_unit_assert_file_exists`, `cmake_unit_assert_file_does_not_exist`:
-  Asserts that a file exists on the filesystem.
-* `cmake_unit_assert_file_contains`, `cmake_unit_assert_file_does_not_contain`:
-  Asserts that a file contains the substring specified.
+* `is_true`: Matches if the passed variable name has a value that is boolean
+  true.
+* `is_false`: Matches if the passed variable name has a value that is boolean
+  false.
+* `target_exists`: Matches if the target provided as the first argument
+  exists.
+* `variable_contains`: Matches if a substring is present in the value of
+  the value of the variable name.
+* `compare_as`: Matches if the variable specified satisfies the
+  parameters provided.  A variable name, type, comparator statement
+  (`EQUAL` `LESS` `GREATER`) and value to compare against can be provided.
+* `matches_regex`: Matches if the value of the variable provided, when
+  treated as a string matches the regex provided in the second argument.
+* `is_defined`: Matches any variable that is defined
+* `executes_with_success`: For a command and each of its arguments encapsulated
+  in the list passed-by-variable-name (as opposed to by value), check if it
+  executed with success.
+* `is_linked_to`: Matches if the target has a link library that matches
+  the name specified by the second argument.  It does regex matching to ensure
+  that in the default case, libraries with slightly inexact names between
+  platforms are still matched against.
+* `list_contains_value`: Checks inside specified variable name containing
+  a list to see if any item contains a value satisfying the criteria. 
+* `has_property_with_value`: Matches if the item specified with the item type
+  specified has property with a value and type specified which matches the
+  provided comparator.
+* `has_property_containing_value`: Like `has_property_with_value` but looks
+  inside items in a list held by the property.
+* `exists_as_file`: Matches if file exists on the filesystem.
+* `file_contents`: Matches if the contents of a file match the matcher
+  and arguments provided afterwards.
+* `any_line`: Matches if any line of a multi-line string matches the following
+  matcher and its arguments.
+* `not`: Matches if the item specified does not match the following matcher.
 
 #### Overridable Phase Functions ####
 
