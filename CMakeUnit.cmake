@@ -827,10 +827,29 @@ function (_cmake_unit_extract_result_from_argn)
 
 endfunction ()
 
+# cmake_unit_register_matcher_namespace
+#
+# Tell cmake-unit about a namespace that matchers live in. If you define
+# a function namespace_matcher and register the namespace "namespace", the
+# matcher "matcher" can be used with cmake_unit_assert_that. Namespaces
+# registered later take priority over namespaces registered earlier.
+#
+# NAMESPACE: The namespace to register.
+function (cmake_unit_register_matcher_namespace NAMESPACE)
+
+    set_property (GLOBAL APPEND PROPERTY "_CMAKE_UNIT_MATCHER_NAMEPSPACE"
+                  "${NAMESPACE}")
+
+endfunction ()
+
+cmake_unit_register_matcher_namespace (cmake_unit)
+
 # cmake_unit_eval_matcher
 #
 # Evaluates MATCHER against VARIABLE with ARGN, returns result in
-# last variable specified.
+# last variable specified. Register additional matcher namespaces
+# with cmake_unit_register_matcher_namespace. By default, the
+# cmake_unit namespace is available.
 #
 # VARIABLE: Name of variable to test.
 # MATCHER: Name of matcher to run against VARIABLE.
@@ -840,10 +859,23 @@ function (cmake_unit_eval_matcher VARIABLE MATCHER)
                                           ARGN_VAR REMAINING_ARGN
                                           ARGN ${ARGN})
 
-    cmake_call_function ("cmake_unit_${MATCHER}"
-                         "${VARIABLE}"
-                         ${REMAINING_ARGN}
-                         RESULT)
+    get_property (MATCHER_NAMESPACES GLOBAL PROPERTY
+                  "_CMAKE_UNIT_MATCHER_NAMEPSPACE")
+    list (REVERSE MATCHER_NAMESPACES)
+
+    foreach (NAMESPACE ${MATCHER_NAMESPACES})
+
+        if (COMMAND "${NAMESPACE}_${MATCHER}")
+
+            cmake_call_function ("${NAMESPACE}_${MATCHER}"
+                                 "${VARIABLE}"
+                                 ${REMAINING_ARGN}
+                                 RESULT)
+            break ()
+
+        endif ()
+
+    endforeach ()
 
     set (${RESULT_VARIABLE} "${RESULT}" PARENT_SCOPE)
 

@@ -74,7 +74,10 @@ matches_regex
 matcher
 matchers
 MULTIVAR_ARGS
+Namespaces
+namespaces
 namespace
+namespace_matcher
 namespace_test_one
 NMake
 NO_QUOTES
