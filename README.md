@@ -206,6 +206,8 @@ As an example, see the following:
 You can use them in both the configure and verify stages.  If
 the script hits an assertion failure, it will call `message (SEND_ERROR)`.
 
+#### Built-in matchers ####
+
 The following matchers are available at the time of writing this documentation
 
 * `is_true`: Matches if the passed variable name has a value that is boolean
@@ -242,6 +244,45 @@ The following matchers are available at the time of writing this documentation
 * `any_line`: Matches if any line of a multi-line string matches the following
   matcher and its arguments.
 * `not`: Matches if the item specified does not match the following matcher.
+
+#### Writing your own matchers ####
+
+`cmake-unit` can be extended with your own matchers. To do this, you will
+need to write a "callable" function in your project's namespace, for example
+
+    function (my_namespace_equal_to_seven)
+
+        list (GET CALLER_ARGN 0 VARIABLE)
+        list (GET CALLER_ARGN -1 RESULT_VALUE)
+
+        set (${RESULT_VALUE} "to be equal to 7" PARENT_SCOPE)
+
+        if ("${${VARIABLE}}" EQUAL 7)
+
+            set (${RESULT_VALUE} TRUE PARENT_SCOPE)
+
+        endif ()
+
+    endfunction ()
+
+Then you will need to register your project's namespace as a namespace
+containing matchers
+
+    cmake_unit_register_matcher_namespace (my_namespace)
+
+You can start using your matcher like so:
+
+    cmake_unit_assert_that (VARIABLE equal_to_seven)
+
+The function `my_namespace_equal_to_seven` is a `callable` function abiding
+by the calling convention set out below. Its first argument will always be
+the variable-to-be-matched. Depending on what your matcher does, this may be
+a value or a variable name. The last variable is always the "result variable",
+which is the name of the variable that you will need to set in the parent
+scope to indicate the matcher status. By convention, matchers should
+set this variable to a sentence fragment that would provide a sensible
+explanation of what happened in the sentence "Expected VARIABLE ..." in
+case there was a mismatch. Otherwise, the variable should be set to TRUE.
 
 #### Overridable Phase Functions ####
 

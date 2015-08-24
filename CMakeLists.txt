@@ -1702,8 +1702,7 @@ function (cmake_unit_test_file_contains_substring)
 
 endfunction ()
 
-# Check the file_contents matcher with the any_line variable_matches_regex
-# matcher.
+# Check the file_contents matcher with the any_line matches_regex matcher.
 function (cmake_unit_test_file_has_line_matching)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
