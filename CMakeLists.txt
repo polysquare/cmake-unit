@@ -2,7 +2,7 @@
 #
 # Main entry point for the cmake-unit tests.
 #
-# See LICENCE.md for Copyright information
+# See /LICENCE.md for Copyright information
 
 if (NOT CMAKE_SCRIPT_MODE_FILE)
 
@@ -32,6 +32,8 @@ set (MOCK_TRACEFILE_INPUT
 set (FILE_FOR_COVERAGE_PATH "${TESTS_LIST_DIR}/FileForCoverage.cmake")
 set (UNEXECUTED_FILE_FOR_COVERAGE_PATH
      "${TESTS_LIST_DIR}/UnexecutedFileForCoverage.cmake")
+
+set (_CURRENT_LIST_FILE "${CMAKE_CURRENT_LIST_FILE}")
 
 include (CMakeUnitRunner)
 
@@ -68,7 +70,7 @@ function (_cmake_unit_test_gen_configure_no_discover RETURN_AUX_CMAKELISTS)
 
         # We have options for our phase, now parse those options into the
         # script itself and all its other options to be passed as part
-        # of the configuraton
+        # of the configuration
         if (PHASE_ARGUMENTS)
 
             set (PHASE_OPTIONS_MULTIVAR_ARGS SCRIPT OPTIONS)
@@ -124,7 +126,7 @@ endfunction ()
 
 function (_cmake_unit_test_gen_discover_from_contents)
 
-    # Overrides variables when including AuxCMakeLists.txt
+    # Overrides variables when including /AuxCMakeLists.txt
     set (_CMAKE_UNIT_PHASE PRECONFIGURE)  # NOLINT:unused/var_in_func
     unset (_CMAKE_UNIT_ACTIVE_TEST)  # NOLINT:unused/var_in_func
 
@@ -151,7 +153,7 @@ function (_cmake_unit_test_gen_discover_from_contents)
 
     # Ensure everything in INIT_OPTIONS is quoted so that
     # there is no ambiguity when we insert it into the
-    # AuxCMakeLists.txt script later.
+    # /AuxCMakeLists.txt script later.
     foreach (OPTION ${INIT_OPTIONS})
         list (APPEND QUOTED_INIT_OPTIONS "\"${OPTION}\"")
     endforeach ()
@@ -195,8 +197,8 @@ function (cmake_unit_test_cmake_test_added_where_setup_script_exists)
         set (TEST_OUTPUT_REGEX "^.*Start.*sample_test_one.*$")
 
         cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "${TEST_OUTPUT_REGEX}")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex "${TEST_OUTPUT_REGEX}")
 
     endfunction ()
 
@@ -205,9 +207,9 @@ function (cmake_unit_test_cmake_test_added_where_setup_script_exists)
 
 endfunction ()
 
-# Check that where we have TestName.cmake in CMAKE_CURRENT_SOURCE_DIR
+# Check that where we have a test matching the test pattern in /CMakeLists.txt
 # that calling cmake_unit_configure_test actually adds a test and that the build
-# output indicates that we've built, tested and verified SampleTest too
+# output indicates that we've built, tested and verified sample too
 function (cmake_unit_test_cmake_build_test_added_where_verify_script_exists)
 
     function (_cmake_unit_configure)
@@ -225,15 +227,19 @@ function (cmake_unit_test_cmake_build_test_added_where_verify_script_exists)
         cmake_unit_escape_string ("${CMAKE_COMMAND}" ESC_CMAKE_COMMAND)
         cmake_unit_escape_string ("${CMAKE_CTEST_COMMAND}" ESC_CTEST_COMMAND)
 
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*Star.*sample_test_one.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*Star.*sample_test_one.*$")
         set (CMAKE_BUILD_REGEX "^.*${ESC_CMAKE_COMMAND}[ \"]+--build.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "${CMAKE_BUILD_REGEX}")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "${CMAKE_BUILD_REGEX}")
         set (CMAKE_TEST_REGEX "^.*${ESC_CMAKE_TEST_COMMAND}.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "${CMAKE_TEST_REGEX}")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}" "^.*Ran.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "${CMAKE_TEST_REGEX}")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex "^.*Ran.*$")
 
     endfunction ()
 
@@ -260,14 +266,18 @@ function (cmake_unit_test_cmake_build_test_error_on_configure_fail)
         cmake_unit_escape_string ("${CMAKE_COMMAND}" ESC_CMAKE_COMMAND)
 
         cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*CMake Error.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*${ESC_CMAKE_COMMAND}.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*failed.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*1.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*CMake Error.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*${ESC_CMAKE_COMMAND}.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*failed.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*1.*$")
 
     endfunction ()
 
@@ -294,8 +304,9 @@ function (cmake_unit_test_cmake_build_test_no_error_where_config_fail_allowed)
     function (_cmake_unit_verify)
 
         cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
-        cmake_unit_assert_file_does_not_have_line_matching ("${TEST_OUTPUT}"
-                                                            "^.*failed with.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" not file_contents any_line
+                                matches_regex
+                                "^.*failed with.*$")
 
     endfunction ()
 
@@ -313,7 +324,8 @@ function (cmake_unit_test_cmake_build_test_error_on_build_fail)
     function (_cmake_unit_configure)
 
         set (SOURCE "${SOURCE_DIR}/Source.cpp")
-        file (WRITE "${SOURCE}" "invalid(")
+        cmake_unit_write_if_newer ("${SOURCE}" "${_CURRENT_LIST_FILE}"
+                                   "invalid(")
 
         set (CONFIGURE_SCRIPT "add_executable (exec \"${SOURCE}\")\n")
         _cmake_unit_test_gen_configure (NAMESPACE sample
@@ -332,16 +344,21 @@ function (cmake_unit_test_cmake_build_test_error_on_build_fail)
         cmake_unit_escape_string ("${CMAKE_COMMAND}" ESC_CMAKE_COMMAND)
 
         cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*CMake Error.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*${ESC_CMAKE_COMMAND}.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*--build.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*failed.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*1.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*CMake Error.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*${ESC_CMAKE_COMMAND}.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*--build.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*failed.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*1.*$")
 
     endfunction ()
 
@@ -376,14 +393,18 @@ function (cmake_unit_test_cmake_build_test_error_on_test_fail)
         set (ESCAPED_CTEST_REGEX "^.*${ESCAPED_CTEST_COMMAND}.*$")
 
         cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*CMake Error.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "${ESCAPED_CTEST_REGEX}")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*failed.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*1.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*CMake Error.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "${ESCAPED_CTEST_REGEX}")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*failed.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*1.*$")
 
     endfunction ()
 
@@ -414,8 +435,9 @@ function (cmake_unit_test_cmake_build_test_no_error_where_test_fail_allowed)
     function (_cmake_unit_verify)
 
         cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
-        cmake_unit_assert_file_does_not_have_line_matching ("${TEST_OUTPUT}"
-                                                            "^.*failed with.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" not file_contents any_line
+                                matches_regex
+                                "^.*failed with.*$")
 
     endfunction ()
 
@@ -443,14 +465,16 @@ function (cmake_unit_test_cmake_build_test_error_on_verify_fail)
         cmake_unit_escape_string ("${CMAKE_COMMAND}" ESC_CMAKE_COMMAND)
 
         cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*CMake Error.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*CMake Error.*$")
         set (EXPECTED_STR
              "A command failed during the"
              "invocation of callback \"gen_verify\"")
         string (REPLACE ";" " " EXPECTED_STR "${EXPECTED_STR}")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*${EXPECTED_STR}.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*${EXPECTED_STR}.*$")
 
     endfunction ()
 
@@ -475,8 +499,9 @@ function (cmake_unit_test_cmake_build_test_build_not_run_if_configure_can_fail)
     function (_cmake_unit_verify)
 
         cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
-        cmake_unit_assert_file_does_not_have_line_matching ("${TEST_OUTPUT}"
-                                                            "^.*--build.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" not file_contents any_line
+                                matches_regex
+                                "^.*--build.*$")
 
     endfunction ()
 
@@ -503,8 +528,9 @@ function (cmake_unit_test_cmake_build_test_test_step_not_run_if_build_can_fail)
         set (CTEST_REGEX "^.*${ESCAPED_CTEST_COMMAND}.*$")
 
         cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
-        cmake_unit_assert_file_does_not_have_line_matching ("${TEST_OUTPUT}"
-                                                            "${CTEST_REGEX}")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" not file_contents any_line
+                                matches_regex
+                                "${CTEST_REGEX}")
 
     endfunction ()
 
@@ -538,8 +564,9 @@ function (cmake_unit_test_cmake_build_test_with_custom_target)
 
         set (CMAKE_BUILD_REGEX
              "^.*${ESC_CMAKE_COMMAND}.*--build.+--target.+custom_target.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "${CMAKE_BUILD_REGEX}")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "${CMAKE_BUILD_REGEX}")
 
     endfunction ()
 
@@ -548,7 +575,7 @@ function (cmake_unit_test_cmake_build_test_with_custom_target)
 
 endfunction ()
 
-# Adds a cmake_build_test. Override the clean step and put something in the
+# Adds a build test. Override the clean step and put something in the
 # binary directory. Make sure it is completely cleaned out after passing
 # control back to cmake_unit_invoke_clean
 function (cmake_unit_test_cmake_build_test_clean_step_always_runs)
@@ -563,8 +590,8 @@ function (cmake_unit_test_cmake_build_test_clean_step_always_runs)
 
         set (CLEAN_SCRIPT
              "file (MAKE_DIRECTORY \"${FILE_THAT_SHOULD_NOT_EXIST}\")\n"
-             "_cmake_unit_call_function (cmake_unit_invoke_clean\n"
-             "                           \${CALLER_ARGN})\n")
+             "cmake_call_function (cmake_unit_invoke_clean\n"
+             "                     \${CALLER_ARGN})\n")
         _cmake_unit_test_gen_configure (NAMESPACE sample
                                         NAME one
                                         CLEAN SCRIPT ${CLEAN_SCRIPT})
@@ -573,7 +600,8 @@ function (cmake_unit_test_cmake_build_test_clean_step_always_runs)
 
     function (_cmake_unit_verify)
 
-        cmake_unit_assert_file_does_not_exist ("${FILE_THAT_SHOULD_NOT_EXIST}")
+        cmake_unit_assert_that ("${FILE_THAT_SHOULD_NOT_EXIST}"
+                                not exists_as_file)
 
     endfunction ()
 
@@ -600,7 +628,8 @@ function (cmake_unit_test_cmake_build_test_clean_step_not_run_on_no_clean)
 
         set (CLEAN_SCRIPT "message (STATUS \"OVERRIDDEN\")\n")
         set (VERIFY_SCRIPT
-             "cmake_unit_assert_file_exists(\"${FILE_THAT_SHOULD_EXIST}\")\n")
+             "cmake_unit_assert_that(\"${FILE_THAT_SHOULD_EXIST}\"\n"
+             "                       exists_as_file)\n")
         _cmake_unit_test_gen_configure (NAMESPACE sample
                                         NAME one
                                         CLEAN SCRIPT "${CLEAN_SCRIPT}"
@@ -628,8 +657,9 @@ function (cmake_unit_test_cmake_build_test_warnings_are_errors)
     function (_cmake_unit_verify)
 
         cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*CMake Error.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*CMake Error.*$")
 
     endfunction ()
 
@@ -658,10 +688,12 @@ function (cmake_unit_test_cmake_build_test_no_errors_where_w_error_disabled)
     function (_cmake_unit_verify)
 
         cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
-        cmake_unit_assert_file_does_not_have_line_matching ("${TEST_OUTPUT}"
-                                                            "^.*CMake Error.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*CMake Warning.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" not file_contents any_line
+                                matches_regex
+                                "^.*CMake Error.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*CMake Warning.*$")
 
     endfunction ()
 
@@ -670,25 +702,27 @@ function (cmake_unit_test_cmake_build_test_no_errors_where_w_error_disabled)
 
 endfunction ()
 
-# Set up some tests which will include some specifified scripts, but not
+# Set up some tests which will include some specified scripts, but not
 # a certain excluded script. Eg
-# FirstTest:
-# - Excluded.cmake
-# - Included.cmake
-# - FirstTestSpecific.cmake
-# SecondTest:
-# - Excluded.cmake
-# - Included.cmake
-# - SecondTestSpecific.cmake
+# First Test:
+# - /Excluded.cmake
+# - /Included.cmake
+# - /FirstTestSpecific.cmake
+# Second Test:
+# - /Excluded.cmake
+# - /Included.cmake
+# - /SecondTestSpecific.cmake
 # The following files will be added as part of COVERAGE_FILES
-# - Included.cmake
-# - FirstTestSpecific.cmake
-# - SecondTestSpecific.cmake
+# - /Included.cmake
+# - /FirstTestSpecific.cmake
+# - /SecondTestSpecific.cmake
+#
 # Use the excluded script as a convenient crutch to disable
 # all the warnings
+#
 # Coverage should be recorded in both the test and _cmake_unit_verify steps
 # Check that when CMAKE_UNIT_LOG_COVERAGE was on we created a file
-# called SampleTests.trace in CMAKE_CURRENT_BINARY_DIR
+# called /SampleTests.trace in CMAKE_CURRENT_BINARY_DIR
 # and that file contains the following:
 # ^.*Included.cmake\(1\).*$
 # ^.*FirstTestSpecific.cmake\(1\).*$
@@ -790,16 +824,20 @@ function (cmake_unit_test_cmake_test_files_recorded_in_tracefile_across_tests)
         set (SECOND_TEST_REGEX "^.*SecondTestSpecific.cmake.1.*$")
         set (EXCLUDED_REGEX "^.*Excluded.cmake.*$")
 
-        cmake_unit_assert_file_exists ("${COVERAGE_TRACE}")
-        cmake_unit_assert_file_has_line_matching ("${COVERAGE_TRACE}"
-                                                  "^.*Included.cmake.1.*$")
-        cmake_unit_assert_file_has_line_matching ("${COVERAGE_TRACE}"
-                                                  "${FIRST_TEST_REGEX}")
-        cmake_unit_assert_file_has_line_matching ("${COVERAGE_TRACE}"
-                                                  "${SECOND_TEST_REGEX}")
+        cmake_unit_assert_that ("${COVERAGE_TRACE}" exists_as_file)
+        cmake_unit_assert_that ("${COVERAGE_TRACE}" file_contents any_line
+                                matches_regex
+                                "^.*Included.cmake.1.*$")
+        cmake_unit_assert_that ("${COVERAGE_TRACE}" file_contents any_line
+                                matches_regex
+                                "${FIRST_TEST_REGEX}")
+        cmake_unit_assert_that ("${COVERAGE_TRACE}" file_contents any_line
+                                matches_regex
+                                "${SECOND_TEST_REGEX}")
 
-        cmake_unit_assert_file_does_not_have_line_matching ("${COVERAGE_TRACE}"
-                                                            "${EXCLUDED_REGEX}")
+        cmake_unit_assert_that ("${COVERAGE_TRACE}" not file_contents any_line
+                                matches_regex
+                                "${EXCLUDED_REGEX}")
 
     endfunction ()
 
@@ -809,7 +847,7 @@ function (cmake_unit_test_cmake_test_files_recorded_in_tracefile_across_tests)
 endfunction ()
 
 # Adds a test which adds a custom target with a command "cmake -E touch
-# Generated.cpp" to the ALL target. Checks that cmake -E touch Generated.cpp
+# /Generated.cpp" to the ALL target. Checks that cmake -E touch /Generated.cpp
 # was in the test output
 function (cmake_unit_test_cmake_tests_have_verbose_output)
 
@@ -821,8 +859,8 @@ function (cmake_unit_test_cmake_tests_have_verbose_output)
              "add_custom_command (OUTPUT\n"
              "                    \"\${GENERATED_FILE}\"\n"
              # The two commands will actually be to generate a
-             # file called FirstCommand.cpp, and then another
-             # command to generate SecondCommand.cpp
+             # file called /FirstCommand.cpp, and then another
+             # command to generate /SecondCommand.cpp
              "                    COMMAND\n"
              "                    \"\${CMAKE_COMMAND}\" -E touch\n"
              "                    \"\${BINARY_DIR}/FirstCommand.cpp\"\n"
@@ -846,13 +884,15 @@ function (cmake_unit_test_cmake_tests_have_verbose_output)
         cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
         set (FIRST_REGEX
              "^.*${ESC_CMAKE_COMMAND}.*-E touch .*FirstCommand.cpp.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "${FIRST_REGEX}")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "${FIRST_REGEX}")
 
         set (SECOND_REGEX
              "^.*${ESC_CMAKE_COMMAND}.*-E touch .*SecondCommand.cpp.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "${SECOND_REGEX}")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "${SECOND_REGEX}")
 
     endfunction ()
 
@@ -883,14 +923,18 @@ function (cmake_unit_test_preserve_contents_of_cmake_errors_in_configure_output)
     function (_cmake_unit_verify)
 
         cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*CMake Error.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*Fatal Error.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*On Multiple Lines.*$")
-        cmake_unit_assert_file_has_line_matching ("${TEST_OUTPUT}"
-                                                  "^.*Call Stack.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*CMake Error.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*Fatal Error.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*On Multiple Lines.*$")
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*Call Stack.*$")
 
     endfunction ()
 
@@ -901,7 +945,7 @@ endfunction ()
 
 # Check that a source file by the name Source.cpp was created in
 # ${CMAKE_CURRENT_SOURCE_DIR} when we call
-# cmake_unit_generated_source_file_before_build at the
+# cmake_unit_generate_source_file_during_build at the
 # _cmake_unit_configure-stage (it shouldn't exist at the _cmake_unit_configure
 # stage)
 function (cmake_unit_test_source_file_generated_during_build_exists)
@@ -912,13 +956,13 @@ function (cmake_unit_test_source_file_generated_during_build_exists)
 
         cmake_unit_generate_source_file_during_build (GENERATED_DURING_TARGET)
 
-        cmake_unit_assert_file_does_not_exist ("${SOURCE_DIR}/Source.cpp")
+        cmake_unit_assert_that ("${SOURCE_DIR}/Source.cpp" not exists_as_file)
 
     endfunction ()
 
     function (_cmake_unit_verify)
 
-        cmake_unit_assert_file_exists ("${BINARY_DIR}/Source.cpp")
+        cmake_unit_assert_that ("${BINARY_DIR}/Source.cpp" exists_as_file)
 
     endfunction ()
 
@@ -944,7 +988,9 @@ function (cmake_unit_test_generated_and_created_source_files_equal)
 
         cmake_unit_generate_source_file_during_build (GENERATED_DURING_TARGET
                                                       ${GENERATE_OPTIONS})
-        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS}
+                                                    GENERATING_FILE
+                                                    "${_CURRENT_LIST_FILE}")
 
     endfunction ()
 
@@ -953,8 +999,8 @@ function (cmake_unit_test_generated_and_created_source_files_equal)
         file (SHA512 "${SOURCE_DIR}/CustomSource.cpp" CREATED_HASH)
         file (SHA512 "${BINARY_DIR}/CustomSource.cpp" GENERATED_HASH)
 
-        cmake_unit_assert_variable_is (CREATED_HASH
-                                       STRING EQUAL "${GENERATED_HASH}")
+        cmake_unit_assert_that (CREATED_HASH compare_as
+                                STRING EQUAL "${GENERATED_HASH}")
 
     endfunction ()
 
@@ -973,7 +1019,9 @@ function (cmake_unit_test_create_simple_executable)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_simple_executable (executable)
+        cmake_unit_create_simple_executable (executable
+                                             GENERATING_FILE
+                                             "${_CURRENT_LIST_FILE}")
         export (TARGETS executable FILE "${BINARY_DIR}/exports.cmake")
 
     endfunction ()
@@ -986,8 +1034,8 @@ function (cmake_unit_test_create_simple_executable)
                                                      executable
                                                      LOCATION)
 
-        cmake_unit_assert_file_exists ("${LOCATION}")
-        cmake_unit_assert_command_executes_with_success (COMMAND "${LOCATION}")
+        cmake_unit_assert_that ("${LOCATION}" exists_as_file)
+        cmake_unit_assert_that ("${LOCATION}" executes_with_success)
 
     endfunction ()
 
@@ -1012,8 +1060,13 @@ function (cmake_unit_test_create_simple_library)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_simple_library (library SHARED FUNCTIONS function)
-        cmake_unit_create_simple_executable (executable)
+        cmake_unit_create_simple_library (library SHARED
+                                          FUNCTIONS function
+                                          GENERATING_FILE
+                                          "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_simple_executable (executable
+                                             GENERATING_FILE
+                                             "${_CURRENT_LIST_FILE}")
         target_link_libraries (executable library)
 
     endfunction ()
@@ -1022,10 +1075,12 @@ function (cmake_unit_test_create_simple_library)
 
         cmake_unit_get_log_for (INVOKE_BUILD OUTPUT BUILD_OUTPUT)
 
-        cmake_unit_assert_file_has_line_matching ("${BUILD_OUTPUT}"
-                                                  "^.*library.*$")
-        cmake_unit_assert_file_has_line_matching ("${BUILD_OUTPUT}"
-                                                  "^.*executable.*$")
+        cmake_unit_assert_that ("${BUILD_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*library.*$")
+        cmake_unit_assert_that ("${BUILD_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*executable.*$")
 
     endfunction ()
 
@@ -1036,8 +1091,8 @@ function (cmake_unit_test_create_simple_library)
 endfunction ()
 
 # Create an external project with an exported library and use
-# cmake_export_cfg_int_dir in that external project to write out
-# CMAKE_CFG_INT_DIR to CfgIntDirValue.txt in its BINARY_DIR
+# cmake_unit_export_cfg_int_dir in that external project to write out
+# CMAKE_CFG_INT_DIR to /CfgIntDirValue.txt in its BINARY_DIR
 #
 # Uses cmake_unit_import_cfg_int_dir and cross-checks that against an
 # exported target from the external project's location. If the path
@@ -1108,9 +1163,9 @@ function (cmake_unit_test_export_import_cfg_int_dir)
                 ${EXPECTED_EXECUTABLE_LOCATION_HEADER_LENGTH}
                 EXECUTABLE_LOCATION_HEADER)
 
-        cmake_unit_assert_variable_is (EXECUTABLE_LOCATION_HEADER
-                                       STRING EQUAL
-                                       "${EXPECTED_EXECUTABLE_LOCATION_HEADER}")
+        cmake_unit_assert_that (EXECUTABLE_LOCATION_HEADER compare_as
+                                STRING EQUAL
+                                "${EXPECTED_EXECUTABLE_LOCATION_HEADER}")
 
     endfunction ()
 
@@ -1119,7 +1174,7 @@ function (cmake_unit_test_export_import_cfg_int_dir)
 
 endfunction ()
 
-# Check the cmake_unit_target_exists matcher.
+# Check the target_exists matcher.
 function (cmake_unit_test_target_exists)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
@@ -1130,11 +1185,14 @@ function (cmake_unit_test_target_exists)
         add_library (library SHARED
                      "${CMAKE_CURRENT_BINARY_DIR}/Library.cpp")
 
-        cmake_unit_target_exists (library RESULT)
-        cmake_unit_target_exists (not_existing NOT_RESULT)
+        cmake_unit_eval_matcher (library target_exists TARGET_EXISTS_RESULT)
+        cmake_unit_eval_matcher (not_existing target_exists
+                                 TARGET_EXISTS_NOT_RESULT)
 
-        cmake_unit_assert_true (${RESULT})
-        cmake_unit_assert_false (${NOT_RESULT})
+        cmake_unit_assert_that (TARGET_EXISTS_RESULT is_true)
+        cmake_unit_assert_that (TARGET_EXISTS_NOT_RESULT
+                                compare_as STRING EQUAL
+                                "not_existing to be a target")
 
     endfunction ()
 
@@ -1144,19 +1202,23 @@ function (cmake_unit_test_target_exists)
 
 endfunction ()
 
-# Check the cmake_unit_string_contains matcher.
-function (cmake_unit_test_string_contains)
+# Check the variable_contains matcher.
+function (cmake_unit_test_variable_contains)
 
     function (_cmake_unit_configure)
 
         set (SUBSTRING "substring")
         set (MAIN_STRING "main_${SUBSTRING}_string")
 
-        cmake_unit_string_contains (${MAIN_STRING} ${SUBSTRING} RESULT)
-        cmake_unit_string_contains (${MAIN_STRING} "other" NOT_RESULT)
+        cmake_unit_eval_matcher (MAIN_STRING variable_contains ${SUBSTRING}
+                                 RESULT)
+        cmake_unit_eval_matcher (MAIN_STRING variable_contains "other"
+                                 NOT_RESULT)
 
-        cmake_unit_assert_true (${RESULT})
-        cmake_unit_assert_false (${NOT_RESULT})
+        cmake_unit_assert_that (RESULT is_true)
+        cmake_unit_assert_that (NOT_RESULT
+                                variable_contains
+                                "substring other to be found in MAIN_STRING")
 
     endfunction ()
 
@@ -1165,50 +1227,64 @@ function (cmake_unit_test_string_contains)
 
 endfunction ()
 
-# Check the cmake_unit_variable_is matcher for ints and bools
+# Check the compare_as matcher for integers and booleans
 function (cmake_unit_test_variable_is)
 
     function (_cmake_unit_configure)
 
         set (STR_VAR "value")
 
-        cmake_unit_variable_is (STR_VAR STRING EQUAL "value" EXPECT_EQUAL)
-        cmake_unit_variable_is (STR_VAR STRING EQUAL "nvalue" EXPECT_UNEQUAL)
-        cmake_unit_variable_is (STR_VAR STRING GREATER "valud" EXPECT_LESS)
-        cmake_unit_variable_is (STR_VAR STRING GREATER "valuf" EXPECT_NOT_LESS)
-        cmake_unit_variable_is (STR_VAR STRING LESS "valuf" EXPECT_GREATER)
-        cmake_unit_variable_is (STR_VAR STRING LESS "valud" EXPECT_NOT_GREATER)
+        cmake_unit_eval_matcher (STR_VAR compare_as STRING EQUAL "value"
+                                 EXPECT_EQUAL)
+        cmake_unit_eval_matcher (STR_VAR compare_as STRING EQUAL "nvalue"
+                                 EXPECT_UNEQUAL)
+        cmake_unit_eval_matcher (STR_VAR compare_as STRING GREATER "valud"
+                                 EXPECT_LESS)
+        cmake_unit_eval_matcher (STR_VAR compare_as STRING GREATER "valuf"
+                                 EXPECT_NOT_LESS)
+        cmake_unit_eval_matcher (STR_VAR compare_as STRING LESS "valuf"
+                                 EXPECT_GREATER)
+        cmake_unit_eval_matcher (STR_VAR compare_as STRING LESS "valud"
+                                 EXPECT_NOT_GREATER)
 
-        cmake_unit_assert_true (${EXPECT_EQUAL})
-        cmake_unit_assert_false (${EXPECT_UNEQUAL})
-        cmake_unit_assert_true (${EXPECT_LESS})
-        cmake_unit_assert_false (${EXPECT_NOT_LESS})
-        cmake_unit_assert_true (${EXPECT_GREATER})
-        cmake_unit_assert_false (${EXPECT_NOT_GREATER})
+        cmake_unit_assert_that (EXPECT_EQUAL is_true)
+        cmake_unit_assert_that (EXPECT_UNEQUAL variable_contains "nvalue")
+        cmake_unit_assert_that (EXPECT_LESS is_true)
+        cmake_unit_assert_that (EXPECT_NOT_LESS variable_contains "valuf")
+        cmake_unit_assert_that (EXPECT_GREATER is_true)
+        cmake_unit_assert_that (EXPECT_NOT_GREATER variable_contains "valud")
 
         set (INT_VAR 1)
 
-        cmake_unit_variable_is (INT_VAR INTEGER EQUAL 1 EXPECT_EQUAL)
-        cmake_unit_variable_is (INT_VAR INTEGER EQUAL 2 EXPECT_UNEQUAL)
-        cmake_unit_variable_is (INT_VAR INTEGER GREATER 0 EXPECT_LESS)
-        cmake_unit_variable_is (INT_VAR INTEGER GREATER 2 EXPECT_NOT_LESS)
-        cmake_unit_variable_is (INT_VAR INTEGER LESS 2 EXPECT_GREATER)
-        cmake_unit_variable_is (INT_VAR INTEGER LESS 0 EXPECT_NOT_GREATER)
+        cmake_unit_eval_matcher (INT_VAR compare_as INTEGER EQUAL 1
+                                 EXPECT_EQUAL)
+        cmake_unit_eval_matcher (INT_VAR compare_as INTEGER EQUAL 2
+                                 EXPECT_UNEQUAL)
+        cmake_unit_eval_matcher (INT_VAR compare_as INTEGER GREATER 0
+                                 EXPECT_LESS)
+        cmake_unit_eval_matcher (INT_VAR compare_as INTEGER GREATER 2
+                                 EXPECT_NOT_LESS)
+        cmake_unit_eval_matcher (INT_VAR compare_as INTEGER LESS 2
+                                 EXPECT_GREATER)
+        cmake_unit_eval_matcher (INT_VAR compare_as INTEGER LESS 0
+                                 EXPECT_NOT_GREATER)
 
-        cmake_unit_assert_true (${EXPECT_EQUAL})
-        cmake_unit_assert_false (${EXPECT_UNEQUAL})
-        cmake_unit_assert_true (${EXPECT_LESS})
-        cmake_unit_assert_false (${EXPECT_NOT_LESS})
-        cmake_unit_assert_true (${EXPECT_GREATER})
-        cmake_unit_assert_false (${EXPECT_NOT_GREATER})
+        cmake_unit_assert_that (EXPECT_EQUAL is_true)
+        cmake_unit_assert_that (EXPECT_UNEQUAL variable_contains "2")
+        cmake_unit_assert_that (EXPECT_LESS is_true)
+        cmake_unit_assert_that (EXPECT_NOT_LESS variable_contains "2")
+        cmake_unit_assert_that (EXPECT_GREATER is_true)
+        cmake_unit_assert_that (EXPECT_NOT_GREATER variable_contains "0")
 
         set (BOOL_VARIABLE ON)
 
-        cmake_unit_variable_is (BOOL_VARIABLE BOOL EQUAL ON EXPECT_EQUAL)
-        cmake_unit_variable_is (BOOL_VARIABLE BOOL EQUAL OFF EXPECT_UNEQUAL)
+        cmake_unit_eval_matcher (BOOL_VARIABLE compare_as BOOL EQUAL ON
+                                 EXPECT_EQUAL)
+        cmake_unit_eval_matcher (BOOL_VARIABLE compare_as BOOL EQUAL OFF
+                                 EXPECT_UNEQUAL)
 
-        cmake_unit_assert_true (${EXPECT_EQUAL})
-        cmake_unit_assert_false (${EXPECT_UNEQUAL})
+        cmake_unit_assert_that (EXPECT_EQUAL is_true)
+        cmake_unit_assert_that (EXPECT_UNEQUAL variable_contains "OFF")
 
     endfunction ()
 
@@ -1217,16 +1293,17 @@ function (cmake_unit_test_variable_is)
 
 endfunction ()
 
-# Check the cmake_unit_variable_is matcher with empty values
+# Check the compare_as matcher with empty values
 function (cmake_unit_test_variable_is_empty)
 
     function (_cmake_unit_configure)
 
         set (STR_VAR "")
 
-        cmake_unit_variable_is ("${STR_VAR}" STRING EQUAL "" EXPECT_EQUAL)
+        cmake_unit_eval_matcher (STR_VAR compare_as STRING EMPTY "EMPTY"
+                                 EXPECT_EQUAL)
 
-        cmake_unit_assert_true (${EXPECT_EQUAL})
+        cmake_unit_assert_that (EXPECT_EQUAL is_true)
 
     endfunction ()
 
@@ -1235,29 +1312,27 @@ function (cmake_unit_test_variable_is_empty)
 
 endfunction ()
 
-# Check the cmake_unit_command_executes_with_success matcher.
+# Check the executes_with_success matcher.
 function (cmake_unit_test_command_executes_with_success)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_command_executes_with_success (RESULT_TRUE
-                                                  ERROR_TRUE
-                                                  CODE_TRUE
-                                                  COMMAND "${CMAKE_COMMAND}")
+        cmake_unit_eval_matcher ("${CMAKE_COMMAND}"
+                                 executes_with_success
+                                 RESULT_TRUE)
 
         # Passes bogus argument to CMake, won't ever succeed
         set (UNSUCCESSFUL_EXECUTABLE "${BINARY_DIR}/does_not_exist")
-        cmake_unit_command_executes_with_success (RESULT_FALSE
-                                                  ERROR_FALSE
-                                                  CODE_FALSE
-                                                  COMMAND
-                                                  "${CMAKE_COMMAND}"
-                                                  "${UNSUCCESSFUL_EXECUTABLE}")
+        cmake_unit_eval_matcher ("${UNSUCCESSFUL_EXECUTABLE}"
+                                 executes_with_success
+                                 RESULT_FALSE)
 
-        cmake_unit_assert_true (${RESULT_TRUE})
-        cmake_unit_assert_false (${RESULT_FALSE})
+        cmake_unit_assert_that (RESULT_TRUE is_true)
+        cmake_unit_assert_that (RESULT_FALSE
+                                variable_contains
+                                "to exit with success")
 
     endfunction ()
 
@@ -1266,7 +1341,7 @@ function (cmake_unit_test_command_executes_with_success)
 
 endfunction ()
 
-# Check the cmake_unit_target_is_linked_to matcher.
+# Check the is_linked_to matcher.
 function (cmake_unit_test_target_is_linked_to)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
@@ -1283,11 +1358,13 @@ function (cmake_unit_test_target_is_linked_to)
 
         target_link_libraries (executable library)
 
-        cmake_unit_target_is_linked_to (executable library RESULT)
-        cmake_unit_target_is_linked_to (executable not_linked_to NOT_RESULT)
+        cmake_unit_eval_matcher (executable is_linked_to library RESULT)
+        cmake_unit_eval_matcher (executable is_linked_to other__ NOT_RESULT)
 
-        cmake_unit_assert_true (${RESULT})
-        cmake_unit_assert_false (${NOT_RESULT})
+        cmake_unit_assert_that (RESULT is_true)
+        cmake_unit_assert_that (NOT_RESULT
+                                variable_contains
+                                "other__ to be a link-library")
 
     endfunction ()
 
@@ -1297,7 +1374,7 @@ function (cmake_unit_test_target_is_linked_to)
 
 endfunction ()
 
-# Check the cmake_unit_item_has_property_with_value matcher.
+# Check the has_property_with_value matcher.
 function (cmake_unit_test_item_has_property_with_value)
 
     function (_cmake_unit_configure)
@@ -1308,27 +1385,34 @@ function (cmake_unit_test_item_has_property_with_value)
                       PROPERTY TARGET_PROPERTY
                       ${TARGET_PROPERTY_VALUE})
 
-        cmake_unit_item_has_property_with_value (TARGET target
-                                                 TARGET_PROPERTY
-                                                 STRING EQUAL
-                                                 ${TARGET_PROPERTY_VALUE}
-                                                 EXPECT_EQUAL)
+        cmake_unit_eval_matcher (target item_has_property_with_value
+                                 TARGET
+                                 TARGET_PROPERTY
+                                 STRING EQUAL
+                                 ${TARGET_PROPERTY_VALUE}
+                                 EXPECT_EQUAL)
 
-        cmake_unit_item_has_property_with_value (TARGET target
-                                                 TARGET_PROPERTY
-                                                 STRING EQUAL
-                                                 "something_else"
-                                                 EXPECT_NOT_EQUAL)
+        cmake_unit_eval_matcher (target item_has_property_with_value
+                                 TARGET
+                                 TARGET_PROPERTY
+                                 STRING EQUAL
+                                 "something_else"
+                                 EXPECT_NOT_EQUAL)
 
-        cmake_unit_item_has_property_with_value (TARGET target
-                                                 TARGET_NON_EXISTENT_PROPERTY
-                                                 STRING EQUAL
-                                                 ${TARGET_PROPERTY_VALUE}
-                                                 EXPECT_DOESNT_EXIST)
+        cmake_unit_eval_matcher (target item_has_property_with_value
+                                 TARGET
+                                 TARGET_NON_EXISTENT_PROPERTY
+                                 STRING EQUAL
+                                 ${TARGET_PROPERTY_VALUE}
+                                 EXPECT_DOESNT_EXIST)
 
-        cmake_unit_assert_true (${EXPECT_EQUAL})
-        cmake_unit_assert_false (${EXPECT_NOT_EQUAL})
-        cmake_unit_assert_false (${EXPECT_DOESNT_EXIST})
+        cmake_unit_assert_that (EXPECT_EQUAL is_true)
+        cmake_unit_assert_that (EXPECT_NOT_EQUAL
+                                variable_contains
+                                "to have property TARGET_PROPERTY")
+        cmake_unit_assert_that (EXPECT_DOESNT_EXIST
+                                variable_contains
+                                "to have property TARGET_NON_EXISTENT_PROPERTY")
 
     endfunction ()
 
@@ -1337,7 +1421,7 @@ function (cmake_unit_test_item_has_property_with_value)
 
 endfunction ()
 
-# Check the cmake_unit_item_has_property_with_value matcher with empty values.
+# Check the has_property_with_value matcher with empty values.
 function (cmake_unit_test_item_has_property_with_value_empty)
 
     function (_cmake_unit_configure)
@@ -1348,13 +1432,14 @@ function (cmake_unit_test_item_has_property_with_value_empty)
                       PROPERTY TARGET_PROPERTY
                       "${TARGET_PROPERTY_VALUE}")
 
-        cmake_unit_item_has_property_with_value (TARGET target
-                                                 TARGET_PROPERTY
-                                                 STRING EQUAL
-                                                 "${TARGET_PROPERTY_VALUE}"
-                                                 EXPECT_EQUAL)
+        cmake_unit_eval_matcher (target item_has_property_with_value
+                                 TARGET
+                                 TARGET_PROPERTY
+                                 STRING EMPTY
+                                 "EMPTY"
+                                 EXPECT_EMPTY)
 
-        cmake_unit_assert_true (${EXPECT_EQUAL})
+        cmake_unit_assert_that (EXPECT_EMPTY is_true)
 
     endfunction ()
 
@@ -1363,8 +1448,7 @@ function (cmake_unit_test_item_has_property_with_value_empty)
 
 endfunction ()
 
-# Check the cmake_unit_item_has_property_with_value matcher with GLOBAL
-# properties.
+# Check the has_property_with_value matcher with GLOBAL properties.
 function (cmake_unit_test_item_has_property_with_value_global)
 
     function (_cmake_unit_configure)
@@ -1375,27 +1459,34 @@ function (cmake_unit_test_item_has_property_with_value_global)
                       PROPERTY GLOBAL_PROPERTY
                       ${GLOBAL_PROPERTY_VALUE})
 
-        cmake_unit_item_has_property_with_value (GLOBAL GLOBAL
-                                                 GLOBAL_PROPERTY
-                                                 STRING EQUAL
-                                                 ${GLOBAL_PROPERTY_VALUE}
-                                                 EXPECT_EQUAL)
+        cmake_unit_eval_matcher (GLOBAL item_has_property_with_value
+                                 GLOBAL
+                                 GLOBAL_PROPERTY
+                                 STRING EQUAL
+                                 ${GLOBAL_PROPERTY_VALUE}
+                                 EXPECT_EQUAL)
 
-        cmake_unit_item_has_property_with_value (GLOBAL GLOBAL
-                                                 GLOBAL_PROPERTY
-                                                 STRING EQUAL
-                                                 "something_else"
-                                                 EXPECT_NOT_EQUAL)
+        cmake_unit_eval_matcher (GLOBAL item_has_property_with_value
+                                 GLOBAL
+                                 GLOBAL_PROPERTY
+                                 STRING EQUAL
+                                 "something_else"
+                                 EXPECT_NOT_EQUAL)
 
-        cmake_unit_item_has_property_with_value (GLOBAL GLOBAL
-                                                 GLOBAL_NON_EXISTENT_PROPERTY
-                                                 STRING EQUAL
-                                                 ${GLOBAL_PROPERTY_VALUE}
-                                                 EXPECT_DOESNT_EXIST)
+        cmake_unit_eval_matcher (GLOBAL item_has_property_with_value
+                                 GLOBAL
+                                 GLOBAL_NON_EXISTENT_PROPERTY
+                                 STRING EQUAL
+                                 ${GLOBAL_PROPERTY_VALUE}
+                                 EXPECT_DOESNT_EXIST)
 
-        cmake_unit_assert_true (${EXPECT_EQUAL})
-        cmake_unit_assert_false (${EXPECT_NOT_EQUAL})
-        cmake_unit_assert_false (${EXPECT_DOESNT_EXIST})
+        cmake_unit_assert_that (EXPECT_EQUAL is_true)
+        cmake_unit_assert_that (EXPECT_NOT_EQUAL
+                                variable_contains
+                                "to have property GLOBAL_PROPERTY")
+        cmake_unit_assert_that (EXPECT_DOESNT_EXIST
+                                variable_contains
+                                "to have property GLOBAL_NON_EXISTENT_PROPERTY")
 
     endfunction ()
 
@@ -1404,7 +1495,7 @@ function (cmake_unit_test_item_has_property_with_value_global)
 
 endfunction ()
 
-# Check the cmake_unit_item_has_property_with_value matcher.
+# Check the has_property_containing_value matcher.
 function (cmake_unit_test_item_has_property_containing_value)
 
     function (_cmake_unit_configure)
@@ -1421,34 +1512,49 @@ function (cmake_unit_test_item_has_property_containing_value)
                       PROPERTY TARGET_PROPERTY
                       ${TARGET_PROPERTY_VALUE2})
 
-        cmake_unit_item_has_property_containing_value (TARGET target
-                                                       TARGET_PROPERTY
-                                                       STRING EQUAL
-                                                       ${TARGET_PROPERTY_VALUE}
-                                                       EXPECT_EQUAL_FIRST)
+        cmake_unit_eval_matcher (target item_has_property_containing_value
+                                 TARGET
+                                 TARGET_PROPERTY
+                                 STRING EQUAL
+                                 ${TARGET_PROPERTY_VALUE}
+                                 EXPECT_EQUAL_FIRST)
 
-        cmake_unit_item_has_property_containing_value (TARGET target
-                                                       TARGET_PROPERTY
-                                                       STRING EQUAL
-                                                       ${TARGET_PROPERTY_VALUE2}
-                                                       EXPECT_EQUAL_SECOND)
+        cmake_unit_eval_matcher (target item_has_property_containing_value
+                                 TARGET
+                                 TARGET_PROPERTY
+                                 STRING EQUAL
+                                 ${TARGET_PROPERTY_VALUE}
+                                 EXPECT_EQUAL_FIRST)
 
-        cmake_unit_item_has_property_containing_value (TARGET target
-                                                       TARGET_PROPERTY
-                                                       STRING EQUAL
-                                                       "not_contained_in_prop"
-                                                       EXPECT_NOT_EQUAL)
+        cmake_unit_eval_matcher (target item_has_property_containing_value
+                                 TARGET
+                                 TARGET_PROPERTY
+                                 STRING EQUAL
+                                 ${TARGET_PROPERTY_VALUE2}
+                                 EXPECT_EQUAL_SECOND)
 
-        cmake_unit_item_has_property_containing_value (TARGET target
-                                                       TARGET_NO_EXIST_PROPERTY
-                                                       STRING EQUAL
-                                                       ${TARGET_PROPERTY_VALUE}
-                                                       EXPECT_DOESNT_EXIST)
+        cmake_unit_eval_matcher (target item_has_property_containing_value
+                                 TARGET
+                                 TARGET_PROPERTY
+                                 STRING EQUAL
+                                 "not_contained_in_prop"
+                                 EXPECT_NOT_EQUAL)
 
-        cmake_unit_assert_true (${EXPECT_EQUAL_FIRST})
-        cmake_unit_assert_true (${EXPECT_EQUAL_SECOND})
-        cmake_unit_assert_false (${EXPECT_NOT_EQUAL})
-        cmake_unit_assert_false (${EXPECT_DOESNT_EXIST})
+        cmake_unit_eval_matcher (target item_has_property_containing_value
+                                 TARGET
+                                 TARGET_NO_EXIST_PROPERTY
+                                 STRING EQUAL
+                                 ${TARGET_PROPERTY_VALUE}
+                                 EXPECT_DOESNT_EXIST)
+
+        cmake_unit_assert_that (EXPECT_EQUAL_FIRST is_true)
+        cmake_unit_assert_that (EXPECT_EQUAL_SECOND is_true)
+        cmake_unit_assert_that (EXPECT_NOT_EQUAL
+                                variable_contains
+                                "property STRING TARGET_PROPERTY")
+        cmake_unit_assert_that (EXPECT_DOESNT_EXIST
+                                variable_contains
+                                "property STRING TARGET_NO_EXIST_PROPERTY")
 
     endfunction ()
 
@@ -1457,7 +1563,7 @@ function (cmake_unit_test_item_has_property_containing_value)
 
 endfunction ()
 
-# Check the cmake_unit_item_has_property_with_value matcher with empty values.
+# Check the has_property_containing_value matcher with empty values.
 # Empty variables never stored in lists
 function (cmake_unit_test_item_has_property_containing_value_empty)
 
@@ -1470,13 +1576,16 @@ function (cmake_unit_test_item_has_property_containing_value_empty)
                       PROPERTY TARGET_PROPERTY
                       "${TARGET_PROP_VALUE}")
 
-        cmake_unit_item_has_property_containing_value (TARGET target
-                                                       TARGET_PROPERTY
-                                                       STRING EQUAL
-                                                       "${TARGET_PROP_VALUE}"
-                                                       EXPECT_EQUAL)
+        cmake_unit_eval_matcher (target item_has_property_containing_value
+                                 TARGET
+                                 TARGET_PROPERTY
+                                 STRING EMPTY
+                                 "EMPTY"
+                                 EXPECT_EQUAL)
 
-        cmake_unit_assert_false (${EXPECT_EQUAL})
+        cmake_unit_assert_that (EXPECT_EQUAL
+                                variable_contains
+                                "property STRING TARGET_PROPERTY")
 
     endfunction ()
 
@@ -1485,8 +1594,7 @@ function (cmake_unit_test_item_has_property_containing_value_empty)
 
 endfunction ()
 
-# Check the cmake_unit_item_has_property_with_value matcher with GLOBAL
-# properties.
+# Check the has_property_containing_value matcher with GLOBAL properties.
 function (cmake_unit_test_item_has_property_containing_value_global)
 
     function (_cmake_unit_configure)
@@ -1502,27 +1610,34 @@ function (cmake_unit_test_item_has_property_containing_value_global)
                       PROPERTY GLOBAL_PROPERTY
                       ${GLOBAL_PROPERTY_OTHER_VALUE})
 
-        cmake_unit_item_has_property_containing_value (GLOBAL GLOBAL
-                                                       GLOBAL_PROPERTY
-                                                       STRING EQUAL
-                                                       ${GLOBAL_PROPERTY_VALUE}
-                                                       EXPECT_EQUAL)
+        cmake_unit_eval_matcher (GLOBAL item_has_property_containing_value
+                                 GLOBAL
+                                 GLOBAL_PROPERTY
+                                 STRING EQUAL
+                                 ${GLOBAL_PROPERTY_VALUE}
+                                 EXPECT_EQUAL)
 
-        cmake_unit_item_has_property_containing_value (GLOBAL GLOBAL
-                                                       GLOBAL_PROPERTY
-                                                       STRING EQUAL
-                                                       "something_else"
-                                                       EXPECT_NOT_EQUAL)
+        cmake_unit_eval_matcher (GLOBAL item_has_property_containing_value
+                                 GLOBAL
+                                 GLOBAL_PROPERTY
+                                 STRING EQUAL
+                                 "something_else"
+                                 EXPECT_NOT_EQUAL)
 
-        cmake_unit_item_has_property_containing_value (GLOBAL GLOBAL
-                                                       GLOBAL_NO_EXIST_PROPERTY
-                                                       STRING EQUAL
-                                                       ${GLOBAL_PROPERTY_VALUE}
-                                                       EXPECT_DOESNT_EXIST)
+        cmake_unit_eval_matcher (GLOBAL item_has_property_containing_value
+                                 GLOBAL
+                                 GLOBAL_NO_EXIST_PROPERTY
+                                 STRING EQUAL
+                                 ${GLOBAL_PROPERTY_VALUE}
+                                 EXPECT_DOESNT_EXIST)
 
-        cmake_unit_assert_true (${EXPECT_EQUAL})
-        cmake_unit_assert_false (${EXPECT_NOT_EQUAL})
-        cmake_unit_assert_false (${EXPECT_DOESNT_EXIST})
+        cmake_unit_assert_that (EXPECT_EQUAL is_true)
+        cmake_unit_assert_that (EXPECT_NOT_EQUAL
+                                variable_contains
+                                "property STRING GLOBAL_PROPERTY")
+        cmake_unit_assert_that (EXPECT_DOESNT_EXIST
+                                variable_contains
+                                "property STRING GLOBAL_NO_EXIST_PROPERTY")
 
     endfunction ()
 
@@ -1531,20 +1646,24 @@ function (cmake_unit_test_item_has_property_containing_value_global)
 
 endfunction ()
 
-# Check the cmake_unit_file_exists matcher.
+# Check the exists_as_file matcher.
 function (cmake_unit_test_file_exists)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
 
     function (_cmake_unit_configure)
 
-        file (WRITE "${BINARY_DIR}/File" "")
+        set (FILE "${BINARY_DIR}/File")
+        set (NOT_FILE "${BINARY_DIR}/NotFile")
+        file (WRITE "${FILE}" "")
 
-        cmake_unit_file_exists ("${BINARY_DIR}/File" FILE_EXISTS)
-        cmake_unit_file_exists ("${BINARY_DIR}/NotFile" NOT_FILE_EXISTS)
+        cmake_unit_eval_matcher ("${FILE}" exists_as_file FILE_EXISTS)
+        cmake_unit_eval_matcher ("${NOT_FILE}" exists_as_file NOT_FILE_EXISTS)
 
-        cmake_unit_assert_true ("${FILE_EXISTS}")
-        cmake_unit_assert_false ("${NOT_FILE_EXISTS}")
+        cmake_unit_assert_that (FILE_EXISTS is_true)
+        cmake_unit_assert_that (NOT_FILE_EXISTS
+                                compare_as STRING EQUAL
+                                "(file) to exist")
 
     endfunction ()
 
@@ -1553,7 +1672,7 @@ function (cmake_unit_test_file_exists)
 
 endfunction ()
 
-# Check the cmake_unit_file_contains_substring matcher.
+# Check the file_contents matcher with the variable_contains matcher.
 function (cmake_unit_test_file_contains_substring)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
@@ -1565,15 +1684,16 @@ function (cmake_unit_test_file_contains_substring)
 
         file (WRITE "${BINARY_DIR}/File" ${MAIN_STRING})
 
-        cmake_unit_file_contains_substring ("${BINARY_DIR}/File"
-                                            ${SUBSTRING}
-                                            CONTAINING_SUBSTRING)
-        cmake_unit_file_contains_substring ("${BINARY_DIR}/File"
-                                            "other_string"
-                                            NOT_CONTAINING_SUBSTRING)
+        cmake_unit_eval_matcher ("${BINARY_DIR}/File"
+                                 file_contents variable_contains "${SUBSTRING}"
+                                 CONTAINING_SUBSTRING)
+        cmake_unit_eval_matcher ("${BINARY_DIR}/File"
+                                 file_contents variable_contains "other_string"
+                                 NOT_CONTAINING_SUBSTRING)
 
-        cmake_unit_assert_true (${CONTAINING_SUBSTRING})
-        cmake_unit_assert_false (${NOT_CONTAINING_SUBSTRING})
+        cmake_unit_assert_that (CONTAINING_SUBSTRING is_true)
+        cmake_unit_assert_that (NOT_CONTAINING_SUBSTRING
+                                variable_contains "${BINARY_DIR}/File")
 
     endfunction ()
 
@@ -1582,7 +1702,7 @@ function (cmake_unit_test_file_contains_substring)
 
 endfunction ()
 
-# Check the cmake_unit_file_has_line_matching matcher.
+# Check the file_contents matcher with the any_line matches_regex matcher.
 function (cmake_unit_test_file_has_line_matching)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
@@ -1619,61 +1739,103 @@ function (cmake_unit_test_file_has_line_matching)
         file (WRITE ${FILE_WITH_BOTH} ${MAIN_STRING_WITH_BOTH})
         file (WRITE ${FILE_WITH_ALL} ${MAIN_STRING_WITH_ALL})
 
-        cmake_unit_file_has_line_matching (${FILE_WITH_FOO}
-                                           ${MATCH_FOO_LINE}
-                                           MATCH_FOO_IN_FOO)
-        cmake_unit_file_has_line_matching (${FILE_WITH_FOO}
-                                           ${MATCH_FOO_SUBSTR_LINE}
-                                           NO_MATCH_SUBSTR_IN_FOO)
-        cmake_unit_file_has_line_matching (${FILE_WITH_FOO}
-                                           ${MATCH_FOO_SUBSTR_LINE}
-                                           NO_MATCH_BOTH_IN_FOO)
+        cmake_unit_eval_matcher (${FILE_WITH_FOO}
+                                 file_contents
+                                 any_line
+                                 matches_regex
+                                 ${MATCH_FOO_LINE}
+                                 MATCH_FOO_IN_FOO)
+        cmake_unit_eval_matcher (${FILE_WITH_FOO}
+                                 file_contents
+                                 any_line
+                                 matches_regex
+                                 ${MATCH_FOO_SUBSTR_LINE}
+                                 NO_MATCH_SUBSTR_IN_FOO)
+        cmake_unit_eval_matcher (${FILE_WITH_FOO}
+                                 file_contents
+                                 any_line
+                                 matches_regex
+                                 ${MATCH_FOO_SUBSTR_LINE}
+                                 NO_MATCH_BOTH_IN_FOO)
 
-        cmake_unit_file_has_line_matching (${FILE_WITH_BOTH_INDEPENDENTLY}
-                                           ${MATCH_FOO_LINE}
-                                           MATCH_FOO_IN_BOTH_INDEPENDENTLY)
-        cmake_unit_file_has_line_matching (${FILE_WITH_BOTH_INDEPENDENTLY}
-                                           ${MATCH_SUBSTR_LINE}
-                                           MATCH_SUBSTR_IN_BOTH_INDEPENDENTLY)
-        cmake_unit_file_has_line_matching (${FILE_WITH_BOTH_INDEPENDENTLY}
-                                           ${MATCH_FOO_SUBSTR_LINE}
-                                           NO_MATCH_BOTH_IN_BOTH_INDEPENDENTLY)
+        cmake_unit_eval_matcher (${FILE_WITH_BOTH_INDEPENDENTLY}
+                                 file_contents
+                                 any_line
+                                 matches_regex
+                                 ${MATCH_FOO_LINE}
+                                 MATCH_FOO_IN_BOTH_INDEPENDENTLY)
+        cmake_unit_eval_matcher (${FILE_WITH_BOTH_INDEPENDENTLY}
+                                 file_contents
+                                 any_line
+                                 matches_regex
+                                 ${MATCH_SUBSTR_LINE}
+                                 MATCH_SUBSTR_IN_BOTH_INDEPENDENTLY)
+        cmake_unit_eval_matcher (${FILE_WITH_BOTH_INDEPENDENTLY}
+                                 file_contents
+                                 any_line
+                                 matches_regex
+                                 ${MATCH_FOO_SUBSTR_LINE}
+                                 NO_MATCH_BOTH_IN_BOTH_INDEPENDENTLY)
 
-        cmake_unit_file_has_line_matching (${FILE_WITH_BOTH}
-                                           ${MATCH_FOO_LINE}
-                                           MATCH_FOO_IN_BOTH)
-        cmake_unit_file_has_line_matching (${FILE_WITH_BOTH}
-                                           ${MATCH_SUBSTR_LINE}
-                                           MATCH_SUBSTR_IN_BOTH)
-        cmake_unit_file_has_line_matching (${FILE_WITH_BOTH}
-                                           ${MATCH_FOO_SUBSTR_LINE}
-                                           MATCH_BOTH_IN_BOTH)
+        cmake_unit_eval_matcher (${FILE_WITH_BOTH}
+                                 file_contents
+                                 any_line
+                                 matches_regex
+                                 ${MATCH_FOO_LINE}
+                                 MATCH_FOO_IN_BOTH)
+        cmake_unit_eval_matcher (${FILE_WITH_BOTH}
+                                 file_contents
+                                 any_line
+                                 matches_regex
+                                 ${MATCH_SUBSTR_LINE}
+                                 MATCH_SUBSTR_IN_BOTH)
+        cmake_unit_eval_matcher (${FILE_WITH_BOTH}
+                                 file_contents
+                                 any_line
+                                 matches_regex
+                                 ${MATCH_FOO_SUBSTR_LINE}
+                                 MATCH_BOTH_IN_BOTH)
 
-        cmake_unit_file_has_line_matching (${FILE_WITH_ALL}
-                                           ${MATCH_FOO_LINE}
-                                           MATCH_FOO_IN_ALL)
-        cmake_unit_file_has_line_matching (${FILE_WITH_ALL}
-                                           ${MATCH_SUBSTR_LINE}
-                                           MATCH_SUBSTR_IN_ALL)
-        cmake_unit_file_has_line_matching (${FILE_WITH_ALL}
-                                           ${MATCH_FOO_SUBSTR_LINE}
-                                           MATCH_BOTH_IN_ALL)
+        cmake_unit_eval_matcher (${FILE_WITH_ALL}
+                                 file_contents
+                                 any_line
+                                 matches_regex
+                                 ${MATCH_FOO_LINE}
+                                 MATCH_FOO_IN_ALL)
+        cmake_unit_eval_matcher (${FILE_WITH_ALL}
+                                 file_contents
+                                 any_line
+                                 matches_regex
+                                 ${MATCH_SUBSTR_LINE}
+                                 MATCH_SUBSTR_IN_ALL)
+        cmake_unit_eval_matcher (${FILE_WITH_ALL}
+                                 file_contents
+                                 any_line
+                                 matches_regex
+                                 ${MATCH_FOO_SUBSTR_LINE}
+                                 MATCH_BOTH_IN_ALL)
 
-        cmake_unit_assert_true (${MATCH_FOO_IN_FOO})
-        cmake_unit_assert_false (${NO_MATCH_SUBSTR_IN_FOO})
-        cmake_unit_assert_false (${NO_MATCH_BOTH_IN_FOO})
+        cmake_unit_assert_that (MATCH_FOO_IN_FOO is_true)
+        cmake_unit_assert_that (NO_MATCH_SUBSTR_IN_FOO
+                                variable_contains
+                                "${FILE_WITH_FOO}")
+        cmake_unit_assert_that (NO_MATCH_BOTH_IN_FOO
+                                variable_contains
+                                "${FILE_WITH_FOO}")
 
-        cmake_unit_assert_true (${MATCH_FOO_IN_BOTH_INDEPENDENTLY})
-        cmake_unit_assert_true (${MATCH_SUBSTR_IN_BOTH_INDEPENDENTLY})
-        cmake_unit_assert_false (${NO_MATCH_BOTH_IN_BOTH_INDEPENDENTLY})
+        cmake_unit_assert_that (MATCH_FOO_IN_BOTH_INDEPENDENTLY is_true)
+        cmake_unit_assert_that (MATCH_SUBSTR_IN_BOTH_INDEPENDENTLY is_true)
+        cmake_unit_assert_that (NO_MATCH_BOTH_IN_BOTH_INDEPENDENTLY
+                                variable_contains
+                                "${FILE_WITH_BOTH_INDEPENDENTLY}")
 
-        cmake_unit_assert_true (${MATCH_FOO_IN_BOTH})
-        cmake_unit_assert_true (${MATCH_SUBSTR_IN_BOTH})
-        cmake_unit_assert_true (${MATCH_BOTH_IN_BOTH})
+        cmake_unit_assert_that (MATCH_FOO_IN_BOTH is_true)
+        cmake_unit_assert_that (MATCH_SUBSTR_IN_BOTH is_true)
+        cmake_unit_assert_that (MATCH_BOTH_IN_BOTH is_true)
 
-        cmake_unit_assert_true (${MATCH_FOO_IN_ALL})
-        cmake_unit_assert_true (${MATCH_SUBSTR_IN_ALL})
-        cmake_unit_assert_true (${MATCH_BOTH_IN_ALL})
+        cmake_unit_assert_that (MATCH_FOO_IN_ALL is_true)
+        cmake_unit_assert_that (MATCH_SUBSTR_IN_ALL is_true)
+        cmake_unit_assert_that (MATCH_BOTH_IN_ALL is_true)
 
     endfunction ()
 
@@ -1682,7 +1844,7 @@ function (cmake_unit_test_file_has_line_matching)
 
 endfunction ()
 
-# Check the cmake_unit_list_contains_value matcher.
+# Check the list_contains_value matcher.
 function (cmake_unit_test_list_contains_value)
 
     function (_cmake_unit_configure)
@@ -1691,13 +1853,18 @@ function (cmake_unit_test_list_contains_value)
              v
              ov)
 
-        cmake_unit_list_contains_value (LIST STRING EQUAL "v" CONTAINS_VAL)
-        cmake_unit_list_contains_value (LIST STRING EQUAL "ov" CONTAINS_VAL2)
-        cmake_unit_list_contains_value (LIST STRING EQUAL "not_in" NO_CONTAIN)
+        cmake_unit_eval_matcher (LIST list_contains_value
+                                 STRING EQUAL "v" CONTAINS_VAL)
+        cmake_unit_eval_matcher (LIST list_contains_value
+                                 STRING EQUAL "ov" CONTAINS_VAL2)
+        cmake_unit_eval_matcher (LIST list_contains_value
+                                 STRING EQUAL "not_in" NO_CONTAIN)
 
-        cmake_unit_assert_true (${CONTAINS_VAL})
-        cmake_unit_assert_true (${CONTAINS_VAL2})
-        cmake_unit_assert_false (${NO_CONTAIN})
+        cmake_unit_assert_that (CONTAINS_VAL is_true)
+        cmake_unit_assert_that (CONTAINS_VAL2 is_true)
+        cmake_unit_assert_that (NO_CONTAIN
+                                compare_as STRING EQUAL
+                                "LIST contains a value EQUAL not_in")
 
     endfunction ()
 
@@ -1706,7 +1873,7 @@ function (cmake_unit_test_list_contains_value)
 
 endfunction ()
 
-# Check the cmake_unit_list_contains_value matcher with empty values
+# Check the list_contains_value matcher with empty values
 # Empty values are never stored in lists
 function (cmake_unit_test_list_contains_value_empty)
 
@@ -1714,9 +1881,12 @@ function (cmake_unit_test_list_contains_value_empty)
 
         set (LIST "")
 
-        cmake_unit_list_contains_value (LIST STRING EQUAL "" CONTAINS_VALUE)
+        cmake_unit_eval_matcher (LIST list_contains_value
+                                 STRING EMPTY "EMPTY" CONTAINS_VALUE)
 
-        cmake_unit_assert_false (${CONTAINS_VALUE})
+        cmake_unit_assert_that (CONTAINS_VALUE
+                                compare_as STRING EQUAL
+                                "LIST contains a value EMPTY EMPTY")
 
     endfunction ()
 
@@ -1725,7 +1895,7 @@ function (cmake_unit_test_list_contains_value_empty)
 
 endfunction ()
 
-# Check that ${CMAKE_PROJECT_NAME}.trace (in this case, TestProject.trace)
+# Check that /${CMAKE_PROJECT_NAME}.trace (in this case, /coverage.trace)
 # is overwritten with nothing when cmake_unit_init is called
 function (cmake_unit_test_coverage_file_clobbered_on_bootstrap)
 
@@ -1740,10 +1910,11 @@ function (cmake_unit_test_coverage_file_clobbered_on_bootstrap)
         _cmake_unit_test_gen_configure (NAMESPACE sample
                                         NAME one
                                         CONFIGURE SCRIPT
-                                                  ${CONFIGURE_SCRIPT})
+                                        ${CONFIGURE_SCRIPT})
         # At least after the preconfigure step, the tracefile should be empty
         file (READ "${CMAKE_UNIT_COVERAGE_FILE}" TRACE_FILE_CONTENTS)
-        cmake_unit_assert_variable_is (TRACE_FILE_CONTENTS STRING EQUAL "")
+        cmake_unit_assert_that (TRACE_FILE_CONTENTS
+                                compare_as STRING EMPTY "EMPTY")
 
     endfunction ()
 
@@ -1768,7 +1939,7 @@ function (cmake_unit_test_driver_script_written_after_test_added)
     function (_cmake_unit_verify)
 
         set (DRIVER_FILE "${BINARY_DIR}/sample_test_one/Driver.cmake")
-        cmake_unit_assert_file_exists ("${DRIVER_FILE}")
+        cmake_unit_assert_that ("${DRIVER_FILE}" exists_as_file)
 
     endfunction ()
 
@@ -1786,9 +1957,9 @@ function (cmake_unit_test_source_file_created_before_build_exists)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build ()
-
-        cmake_unit_assert_file_exists ("${SOURCE_DIR}/Source.cpp")
+        set (GENERATE_OPTIONS GENERATING_FILE "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
+        cmake_unit_assert_that ("${SOURCE_DIR}/Source.cpp" exists_as_file)
 
     endfunction ()
 
@@ -1797,7 +1968,7 @@ function (cmake_unit_test_source_file_created_before_build_exists)
 
 endfunction ()
 
-# Check that a source file by the name CustomName.cpp was created in
+# Check that a source file by the name /CustomName.cpp was created in
 # ${CMAKE_CURRENT_SOURCE_DIR} when we call
 # cmake_unit_create_source_file_before_build with NAME
 function (cmake_unit_test_source_file_created_before_build_with_custom_name)
@@ -1806,9 +1977,11 @@ function (cmake_unit_test_source_file_created_before_build_with_custom_name)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build (NAME "CustomName.cpp")
-
-        cmake_unit_assert_file_exists ("${SOURCE_DIR}/CustomName.cpp")
+        set (GENERATE_OPTIONS
+             NAME "CustomName.cpp"
+             GENERATING_FILE "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
+        cmake_unit_assert_that ("${SOURCE_DIR}/CustomName.cpp" exists_as_file)
 
     endfunction ()
 
@@ -1817,7 +1990,7 @@ function (cmake_unit_test_source_file_created_before_build_with_custom_name)
 
 endfunction ()
 
-# Check that a source file by the name Source.cpp was created in
+# Check that a source file by the name /Source.cpp was created in
 # ${CMAKE_CURRENT_SOURCE_DIR} with #define CUSTOM_DEFINE when we call
 # cmake_unit_create_source_file_before_build with DEFINES CUSTOM_DEFINE
 function (cmake_unit_test_source_file_created_before_build_with_defines)
@@ -1826,11 +1999,15 @@ function (cmake_unit_test_source_file_created_before_build_with_defines)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build (DEFINES "CUSTOM_DEFINE")
+        set (GENERATE_OPTIONS
+             DEFINES "CUSTOM_DEFINE"
+             GENERATING_FILE "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
 
         set (SOURCE_FILE "${SOURCE_DIR}/Source.cpp")
-        cmake_unit_assert_file_has_line_matching ("${SOURCE_FILE}"
-                                                  "^.define CUSTOM_DEFINE$")
+        cmake_unit_assert_that ("${SOURCE_FILE}"
+                                file_contents any_line matches_regex
+                                "^.define CUSTOM_DEFINE$")
 
     endfunction ()
 
@@ -1848,11 +2025,15 @@ function (cmake_unit_test_source_file_created_before_build_with_includes)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build (INCLUDES my_include.h)
+        set (GENERATE_OPTIONS
+             INCLUDES my_include.h
+             GENERATING_FILE "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
 
         set (SOURCE_FILE "${SOURCE_DIR}/Source.cpp")
-        cmake_unit_assert_file_has_line_matching ("${SOURCE_FILE}"
-                                                  "^.include \"my_include.h\"$")
+        cmake_unit_assert_that ("${SOURCE_FILE}"
+                                file_contents any_line matches_regex
+                                "^.include \"my_include.h\"$")
 
     endfunction ()
 
@@ -1877,12 +2058,15 @@ function (cmake_unit_test_source_file_created_with_includes_inside_inc_dir)
         cmake_unit_create_source_file_before_build (INCLUDES
                                                     "${MY_INCLUDE}"
                                                     INCLUDE_DIRECTORIES
-                                                    "${INCLUDE_DIRECTORY}")
+                                                    "${INCLUDE_DIRECTORY}"
+                                                    GENERATING_FILE
+                                                    "${_CURRENT_LIST_FILE}")
 
         set (SOURCE_FILE "${SOURCE_DIR}/Source.cpp")
         set (EXPECTED_INCLUDES "^.include <include/my_include.h>$")
-        cmake_unit_assert_file_has_line_matching ("${SOURCE_FILE}"
-                                                  "${EXPECTED_INCLUDES}")
+        cmake_unit_assert_that ("${SOURCE_FILE}"
+                                file_contents any_line matches_regex
+                                "${EXPECTED_INCLUDES}")
 
     endfunction ()
 
@@ -1901,12 +2085,15 @@ function (cmake_unit_test_source_file_created_has_prepended_contents)
     function (_cmake_unit_configure)
 
         set (PREPEND_CONTENTS_INPUT "static int i@SEMICOLON@")
-        cmake_unit_create_source_file_before_build (PREPEND_CONTENTS
+        cmake_unit_create_source_file_before_build (GENERATING_FILE
+                                                    "${_CURRENT_LIST_FILE}"
+                                                    PREPEND_CONTENTS
                                                     "${PREPEND_CONTENTS_INPUT}")
 
         set (SOURCE_FILE "${SOURCE_DIR}/Source.cpp")
-        cmake_unit_assert_file_has_line_matching ("${SOURCE_FILE}"
-                                                  "^static int i.$")
+        cmake_unit_assert_that ("${SOURCE_FILE}"
+                                file_contents any_line matches_regex
+                                "^static int i.$")
 
     endfunction ()
 
@@ -1925,11 +2112,15 @@ function (cmake_unit_test_source_file_created_with_function_decls)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build (FUNCTIONS custom_function)
+        set (GENERATE_OPTIONS
+             FUNCTIONS custom_function
+             GENERATING_FILE "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
 
         set (SOURCE_FILE "${SOURCE_DIR}/Source.cpp")
-        cmake_unit_assert_file_has_line_matching ("${SOURCE_FILE}"
-                                                  "^int custom_function ...$")
+        cmake_unit_assert_that ("${SOURCE_FILE}"
+                                file_contents any_line matches_regex
+                                "^int custom_function ...$")
 
     endfunction ()
 
@@ -1948,11 +2139,15 @@ function (cmake_unit_test_source_file_created_with_function_defs)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build (FUNCTIONS custom_function)
+        set (GENERATE_OPTIONS
+             FUNCTIONS custom_function
+             GENERATING_FILE "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
 
         set (SOURCE_FILE "${SOURCE_DIR}/Source.cpp")
-        cmake_unit_assert_file_has_line_matching ("${SOURCE_FILE}"
-                                                  "^.*return 0.*$")
+        cmake_unit_assert_that ("${SOURCE_FILE}"
+                                file_contents any_line matches_regex
+                                "^.*return 0.*$")
 
     endfunction ()
 
@@ -1962,7 +2157,7 @@ function (cmake_unit_test_source_file_created_with_function_defs)
 
 endfunction ()
 
-# Check that a source file by the name Header.h was created in
+# Check that a source file by the name /Header.h was created in
 # ${CMAKE_CURRENT_SOURCE_DIR} but does not contain a definition like
 # int custom_function ()\n{\n    return 1;\n} when we call
 # cmake_unit_create_source_file_before_build with FUNCTIONS custom_function
@@ -1972,12 +2167,16 @@ function (cmake_unit_test_source_file_created_no_function_defs_if_header)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build (NAME "Header.h"
-                                                    FUNCTIONS custom_function)
+        set (GENERATE_OPTIONS
+             NAME "Header.h"
+             FUNCTIONS custom_function
+             GENERATING_FILE "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
 
         set (HEADER_FILE "${SOURCE_DIR}/Header.h")
-        cmake_unit_assert_file_does_not_have_line_matching ("${HEADER_FILE}"
-                                                            "^.*return 1.*$")
+        cmake_unit_assert_that ("${HEADER_FILE}"
+                                not file_contents any_line
+                                matches_regex "^.*return 1.*$")
 
     endfunction ()
 
@@ -1986,7 +2185,7 @@ function (cmake_unit_test_source_file_created_no_function_defs_if_header)
 
 endfunction ()
 
-# Check that a source file by the name Header.h was created in
+# Check that a source file by the name /Header.h was created in
 # ${CMAKE_CURRENT_SOURCE_DIR} and contains header guards like
 # #ifdef HEADER_H
 # #define HEADER_H
@@ -1998,16 +2197,21 @@ function (cmake_unit_test_source_file_created_header_guards_if_header)
 
     function (_cmake_unit_configure)
 
-        cmake_unit_create_source_file_before_build (NAME "Header.h"
-                                                    PREPEND_CONTENTS
-                                                    "int foo@SEMICOLON@")
+        set (GENERATE_OPTIONS
+             NAME "Header.h"
+             GENERATING_FILE "${_CURRENT_LIST_FILE}"
+             PREPEND_CONTENTS "int foo@SEMICOLON@")
+        cmake_unit_create_source_file_before_build (${GENERATE_OPTIONS})
 
-        cmake_unit_assert_file_has_line_matching ("${SOURCE_DIR}/Header.h"
-                                                  "^.*ifndef HEADER_H")
-        cmake_unit_assert_file_has_line_matching ("${SOURCE_DIR}/Header.h"
-                                                  "^.*define HEADER_H")
-        cmake_unit_assert_file_has_line_matching ("${SOURCE_DIR}/Header.h"
-                                                  "^.*endif")
+        cmake_unit_assert_that ("${SOURCE_DIR}/Header.h"
+                                file_contents any_line matches_regex
+                                "^.*ifndef HEADER_H")
+        cmake_unit_assert_that ("${SOURCE_DIR}/Header.h"
+                                file_contents any_line matches_regex
+                                "^.*define HEADER_H")
+        cmake_unit_assert_that ("${SOURCE_DIR}/Header.h"
+                                file_contents any_line matches_regex
+                                "^.*endif")
 
     endfunction ()
 
@@ -2025,16 +2229,17 @@ macro (_cmake_unit_test_run_trace_to_lcov RETURN_LCOV_PATH)
     set (FILE_FOR_COVERAGE_LOCAL_PATH
          "${CMAKE_CURRENT_SOURCE_DIR}/FileForCoverage.cmake")
     file (READ "${FILE_FOR_COVERAGE_PATH}" FILE_FOR_COVERAGE_CONTENTS)
-    file (WRITE "${FILE_FOR_COVERAGE_LOCAL_PATH}"
-          "${FILE_FOR_COVERAGE_CONTENTS}")
+    cmake_unit_write_if_newer ("${FILE_FOR_COVERAGE_LOCAL_PATH}"
+                               "${_CURRENT_LIST_FILE}"
+                               "${FILE_FOR_COVERAGE_CONTENTS}")
 
     set (UNEXECUTED_FILE_FOR_COVERAGE_LOCAL_PATH
          "${CMAKE_CURRENT_SOURCE_DIR}/UnexecutedFileForCoverage.cmake")
     file (READ "${UNEXECUTED_FILE_FOR_COVERAGE_PATH}"
           UNEXECUTED_FILE_FOR_COVERAGE_CONTENTS)
-    file (WRITE
-          "${UNEXECUTED_FILE_FOR_COVERAGE_LOCAL_PATH}"
-          "${UNEXECUTED_FILE_FOR_COVERAGE_CONTENTS}")
+    cmake_unit_write_if_newer ("${UNEXECUTED_FILE_FOR_COVERAGE_LOCAL_PATH}"
+                               "${_CURRENT_LIST_FILE}"
+                               "${UNEXECUTED_FILE_FOR_COVERAGE_CONTENTS}")
 
     set (MOCK_TRACEFILE_OUTPUT
          "${CMAKE_CURRENT_BINARY_DIR}/MockTracefile.trace")
@@ -2061,9 +2266,12 @@ function (cmake_unit_test_lines_starting_with_comment_not_executable)
 
         set (EXECUTABLE_LINES_VAR
              "_${FILE_FOR_COVERAGE_LOCAL_PATH}_EXECUTABLE_LINES")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "1")
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:1$")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value
+                                STRING EQUAL "1")
+        cmake_unit_assert_that ("${LCOV}"
+                                not file_contents any_line
+                                matches_regex "^DA:1$")
 
     endfunction ()
 
@@ -2082,13 +2290,19 @@ function (cmake_unit_test_lines_with_no_content_not_executable)
 
         set (EXECUTABLE_LINES_VAR
              "_${FILE_FOR_COVERAGE_LOCAL_PATH}_EXECUTABLE_LINES")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "7")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "10")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value
+                                STRING EQUAL "7")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value
+                                STRING EQUAL "10")
 
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:7$")
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:10$")
+        cmake_unit_assert_that ("${LCOV}"
+                                not file_contents any_line
+                                matches_regex "^DA:7$")
+        cmake_unit_assert_that ("${LCOV}"
+                                not file_contents any_line
+                                matches_regex "^DA:10$")
 
     endfunction ()
 
@@ -2106,22 +2320,27 @@ function (cmake_unit_test_lines_starting_with_end_not_executable)
 
         set (EXECUTABLE_LINES_VAR
              "_${FILE_FOR_COVERAGE_LOCAL_PATH}_EXECUTABLE_LINES")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "3")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "19")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "28")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "34")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "36")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value STRING EQUAL "3")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value STRING EQUAL "19")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value STRING EQUAL "28")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value STRING EQUAL "34")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value STRING EQUAL "36")
 
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:3$")
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:19$")
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:28$")
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:34$")
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:36$")
+        cmake_unit_assert_that ("${LCOV}" not file_contents any_line
+                                matches_regex "^DA:3$")
+        cmake_unit_assert_that ("${LCOV}" not file_contents any_line
+                                matches_regex "^DA:19$")
+        cmake_unit_assert_that ("${LCOV}" not file_contents any_line
+                                matches_regex "^DA:28$")
+        cmake_unit_assert_that ("${LCOV}" not file_contents any_line
+                                matches_regex "^DA:34$")
+        cmake_unit_assert_that ("${LCOV}" not file_contents any_line
+                                matches_regex "^DA:36$")
 
     endfunction ()
 
@@ -2130,7 +2349,7 @@ function (cmake_unit_test_lines_starting_with_end_not_executable)
 
 endfunction ()
 
-# Check that lines overflowing after an intial open-brace are not executable
+# Check that lines overflowing after an initial open-brace are not executable
 # until the brace is closed on the end of the line
 function (cmake_unit_test_lines_until_close_bracket_not_executable)
 
@@ -2140,13 +2359,15 @@ function (cmake_unit_test_lines_until_close_bracket_not_executable)
 
         set (EXECUTABLE_LINES_VAR
              "_${FILE_FOR_COVERAGE_LOCAL_PATH}_EXECUTABLE_LINES")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "6")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "22")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value STRING EQUAL "6")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value STRING EQUAL "22")
 
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:6$")
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:22$")
+        cmake_unit_assert_that ("${LCOV}" not file_contents any_line
+                                matches_regex "^DA:6$")
+        cmake_unit_assert_that ("${LCOV}" not file_contents any_line
+                                matches_regex "^DA:22$")
 
     endfunction ()
 
@@ -2155,7 +2376,7 @@ function (cmake_unit_test_lines_until_close_bracket_not_executable)
 
 endfunction ()
 
-# Check that lines overflowing after an intial open-brace are not executable
+# Check that lines overflowing after an initial open-brace are not executable
 # until the brace is closed on the end of the line
 function (cmake_unit_test_interleaved_comments_until_close_bracket_no_exec)
 
@@ -2165,19 +2386,23 @@ function (cmake_unit_test_interleaved_comments_until_close_bracket_no_exec)
 
         set (EXECUTABLE_LINES_VAR
              "_${FILE_FOR_COVERAGE_LOCAL_PATH}_EXECUTABLE_LINES")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "39")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "40")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "41")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "42")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value STRING EQUAL "39")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value STRING EQUAL "40")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value STRING EQUAL "41")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value STRING EQUAL "42")
 
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:39$")
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:40$")
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:41$")
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:42$")
+        cmake_unit_assert_that ("${LCOV}" not file_contents any_line
+                                matches_regex "^DA:39$")
+        cmake_unit_assert_that ("${LCOV}" not file_contents any_line
+                                matches_regex "^DA:40$")
+        cmake_unit_assert_that ("${LCOV}" not file_contents any_line
+                                matches_regex "^DA:41$")
+        cmake_unit_assert_that ("${LCOV}" not file_contents any_line
+                                matches_regex "^DA:42$")
 
     endfunction ()
 
@@ -2196,10 +2421,11 @@ function (cmake_unit_test_semicolons_dont_break_lines)
 
         set (EXECUTABLE_LINES_VAR
              "_${FILE_FOR_COVERAGE_LOCAL_PATH}_EXECUTABLE_LINES")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "15")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value STRING EQUAL "15")
 
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:15$")
+        cmake_unit_assert_that ("${LCOV}" not file_contents any_line
+                                matches_regex "^DA:15$")
 
     endfunction ()
 
@@ -2218,10 +2444,11 @@ function (cmake_unit_test_slash_n_doesnt_break_lines)
 
         set (EXECUTABLE_LINES_VAR
              "_${FILE_FOR_COVERAGE_LOCAL_PATH}_EXECUTABLE_LINES")
-        cmake_unit_assert_list_does_not_contain_value ("${EXECUTABLE_LINES_VAR}"
-                                                       STRING EQUAL "17")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}"
+                                not list_contains_value STRING EQUAL "17")
 
-        cmake_unit_assert_file_does_not_have_line_matching ("${LCOV}" "^DA:17$")
+        cmake_unit_assert_that ("${LCOV}" not file_contents any_line
+                                matches_regex "^DA:17$")
 
     endfunction ()
 
@@ -2231,8 +2458,8 @@ function (cmake_unit_test_slash_n_doesnt_break_lines)
 endfunction ()
 
 # All files, eg
-# - FileForCoverage.cmake
-# - UnexecutedFileForCoverage.cmake
+# - /FileForCoverage.cmake
+# - /UnexecutedFileForCoverage.cmake
 # Have coverage information
 function (cmake_unit_test_all_files_specified_in_trace_file_have_coverage)
 
@@ -2243,10 +2470,12 @@ function (cmake_unit_test_all_files_specified_in_trace_file_have_coverage)
         set (EXECUTED_FILE_FOR_COV "^SF:.*FileForCoverage.*$")
         set (UNEXECUTED_FILE_FOR_COV "^SF:.*UnexecutedFileForCoverage.*$")
 
-        cmake_unit_assert_file_has_line_matching ("${LCOV}"
-                                                  "${EXECUTED_FILE_FOR_COV}")
-        cmake_unit_assert_file_has_line_matching ("${LCOV}"
-                                                  "${UNEXECUTED_FILE_FOR_COV}")
+        cmake_unit_assert_that ("${LCOV}" file_contents any_line
+                                matches_regex
+                                "${EXECUTED_FILE_FOR_COV}")
+        cmake_unit_assert_that ("${LCOV}" file_contents any_line
+                                matches_regex
+                                "${UNEXECUTED_FILE_FOR_COV}")
 
     endfunction ()
 
@@ -2264,26 +2493,26 @@ function (cmake_unit_test_other_lines_executable)
 
         set (EXECUTABLE_LINES_VAR
              "_${FILE_FOR_COVERAGE_LOCAL_PATH}_EXECUTABLE_LINES")
-        cmake_unit_assert_list_contains_value ("${EXECUTABLE_LINES_VAR}"
-                                               STRING EQUAL "2")
-        cmake_unit_assert_list_contains_value ("${EXECUTABLE_LINES_VAR}"
-                                               STRING EQUAL "5")
-        cmake_unit_assert_list_contains_value ("${EXECUTABLE_LINES_VAR}"
-                                               STRING EQUAL "11")
-        cmake_unit_assert_list_contains_value ("${EXECUTABLE_LINES_VAR}"
-                                               STRING EQUAL "13")
-        cmake_unit_assert_list_contains_value ("${EXECUTABLE_LINES_VAR}"
-                                               STRING EQUAL "14")
-        cmake_unit_assert_list_contains_value ("${EXECUTABLE_LINES_VAR}"
-                                               STRING EQUAL "21")
-        cmake_unit_assert_list_contains_value ("${EXECUTABLE_LINES_VAR}"
-                                               STRING EQUAL "24")
-        cmake_unit_assert_list_contains_value ("${EXECUTABLE_LINES_VAR}"
-                                               STRING EQUAL "26")
-        cmake_unit_assert_list_contains_value ("${EXECUTABLE_LINES_VAR}"
-                                               STRING EQUAL "30")
-        cmake_unit_assert_list_contains_value ("${EXECUTABLE_LINES_VAR}"
-                                               STRING EQUAL "32")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}" list_contains_value
+                                STRING EQUAL "2")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}" list_contains_value
+                                STRING EQUAL "5")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}" list_contains_value
+                                STRING EQUAL "11")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}" list_contains_value
+                                STRING EQUAL "13")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}" list_contains_value
+                                STRING EQUAL "14")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}" list_contains_value
+                                STRING EQUAL "21")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}" list_contains_value
+                                STRING EQUAL "24")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}" list_contains_value
+                                STRING EQUAL "26")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}" list_contains_value
+                                STRING EQUAL "30")
+        cmake_unit_assert_that ("${EXECUTABLE_LINES_VAR}" list_contains_value
+                                STRING EQUAL "32")
 
     endfunction ()
 
@@ -2299,16 +2528,26 @@ function (cmake_unit_test_hit_lines_have_non_zero_d_a_counter)
 
         _cmake_unit_test_run_trace_to_lcov (LCOV)
 
-        cmake_unit_assert_file_has_line_matching ("${LCOV}" "^DA:2,1$")
-        cmake_unit_assert_file_has_line_matching ("${LCOV}" "^DA:5,1$")
-        cmake_unit_assert_file_has_line_matching ("${LCOV}" "^DA:11,1$")
-        cmake_unit_assert_file_has_line_matching ("${LCOV}" "^DA:13,1$")
-        cmake_unit_assert_file_has_line_matching ("${LCOV}" "^DA:14,1$")
-        cmake_unit_assert_file_has_line_matching ("${LCOV}" "^DA:16,1$")
-        cmake_unit_assert_file_has_line_matching ("${LCOV}" "^DA:21,1$")
-        cmake_unit_assert_file_has_line_matching ("${LCOV}" "^DA:24,1$")
-        cmake_unit_assert_file_has_line_matching ("${LCOV}" "^DA:26,1$")
-        cmake_unit_assert_file_has_line_matching ("${LCOV}" "^DA:30,1$")
+        cmake_unit_assert_that ("${LCOV}" file_contents any_line
+                                matches_regex "^DA:2,1$")
+        cmake_unit_assert_that ("${LCOV}" file_contents any_line
+                                matches_regex "^DA:5,1$")
+        cmake_unit_assert_that ("${LCOV}" file_contents any_line
+                                matches_regex "^DA:11,1$")
+        cmake_unit_assert_that ("${LCOV}" file_contents any_line
+                                matches_regex "^DA:13,1$")
+        cmake_unit_assert_that ("${LCOV}" file_contents any_line
+                                matches_regex "^DA:14,1$")
+        cmake_unit_assert_that ("${LCOV}" file_contents any_line
+                                matches_regex "^DA:16,1$")
+        cmake_unit_assert_that ("${LCOV}" file_contents any_line
+                                matches_regex "^DA:21,1$")
+        cmake_unit_assert_that ("${LCOV}" file_contents any_line
+                                matches_regex "^DA:24,1$")
+        cmake_unit_assert_that ("${LCOV}" file_contents any_line
+                                matches_regex "^DA:26,1$")
+        cmake_unit_assert_that ("${LCOV}" file_contents any_line
+                                matches_regex "^DA:30,1$")
 
     endfunction ()
 
@@ -2324,7 +2563,8 @@ function (cmake_unit_test_missed_lines_have_non_zero_d_a_counter)
 
         _cmake_unit_test_run_trace_to_lcov (LCOV)
 
-        cmake_unit_assert_file_has_line_matching ("${LCOV}" "^DA:32,0$")
+        cmake_unit_assert_that ("${LCOV}" file_contents any_line
+                                matches_regex "^DA:32,0$")
 
     endfunction ()
 

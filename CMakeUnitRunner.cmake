@@ -18,13 +18,23 @@
 # much longer to execute and should be used sparingly.
 #
 # See /LICENCE.md for Copyright information
-if (BIICODE)
-    include ("smspillaz/cmake-include-guard/IncludeGuard")
-    cmake_include_guard (CMAKE_UNIT_RUNNER SET_MODULE_PATH)
-endif ()
+if (NOT BIICODE)
+
+    set (CMAKE_MODULE_PATH
+         "${CMAKE_CURRENT_LIST_DIR}/bii/deps"
+         "${CMAKE_MODULE_PATH}")
+
+endif (NOT BIICODE)
+
+include ("smspillaz/cmake-include-guard/IncludeGuard")
+cmake_include_guard (SET_MODULE_PATH)
 
 include (CMakeParseArguments)
 include (CMakeUnit)
+include ("smspillaz/cmake-call-function/CallFunction")
+include ("smspillaz/cmake-forward-arguments/ForwardArguments")
+include ("smspillaz/cmake-opt-arg-parsing/OptimizedParseArguments")
+include ("smspillaz/cmake-spacify-list/SpacifyList")
 
 # Phase not set, begin PRECONFIGURE phase
 if (NOT _CMAKE_UNIT_PHASE)
@@ -100,9 +110,9 @@ function (_cmake_unit_runner_assert)
 
     else ()
 
-        _cmake_unit_spacify (SPACIFIED_COND
-                             LIST ${CMAKE_UNIT_RUNNER_ASSERT_CONDITION}
-                             NO_QUOTES)
+        cmake_spacify_list (SPACIFIED_COND
+                            LIST ${CMAKE_UNIT_RUNNER_ASSERT_CONDITION}
+                            NO_QUOTES)
 
         if (NOT DEFINED CMAKE_UNIT_RUNNER_ASSERT_MESSAGE)
 
@@ -116,80 +126,6 @@ function (_cmake_unit_runner_assert)
         endif ()
 
     endif ()
-
-endfunction ()
-
-# _cmake_unit_forward_arguments
-#
-# Internal function to forward arguments used by cmake_parse_arguments
-#
-# SOURCE_PREFIX: Prefix of set variables to forward from
-# RETURN_LIST: List of "forwarded" variables, suitable for passing to
-#              cmake_parse_arguments
-# [Optional] OPTION_ARGS: "Option" arguments (true or false)
-# [Optional] SINGLEVAR_ARGS: "Single variable" arguments (variable, if
-#                            set, has one value. Represented by NAME VALUE)
-# [Optional] MULTIVAR_ARGS: "Multi variable" arguments (variable, if set, has
-#                           a list value. Represented by NAME VALUE0 ... VALUEN)
-function (_cmake_unit_forward_arguments SOURCE_PREFIX RETURN_LIST)
-
-    cmake_parse_arguments (FORWARD
-                           ""
-                           ""
-                           "OPTION_ARGS;SINGLEVAR_ARGS;MULTIVAR_ARGS"
-                           ${ARGN})
-
-    set (_RETURN_LIST)
-    foreach (FORWARDED_OPTION ${FORWARD_OPTION_ARGS})
-
-        if (${SOURCE_PREFIX}_${FORWARDED_OPTION})
-
-            list (APPEND _RETURN_LIST ${FORWARDED_OPTION})
-
-        endif ()
-
-    endforeach ()
-
-    foreach (FORWARDED_VAR ${FORWARD_SINGLEVAR_ARGS} ${FORWARD_MULTIVAR_ARGS})
-
-        if (${SOURCE_PREFIX}_${FORWARDED_VAR})
-
-            list (APPEND _RETURN_LIST
-                         ${FORWARDED_VAR}
-                         ${${SOURCE_PREFIX}_${FORWARDED_VAR}})
-
-        endif ()
-
-    endforeach ()
-
-    set (${RETURN_LIST} ${_RETURN_LIST} PARENT_SCOPE)
-
-endfunction ()
-
-function (_cmake_unit_call_function FUNCTION_NAME)
-
-    get_property (_INTERNAL_CALL_COUNT
-                  GLOBAL PROPERTY _INTERNAL_CALL_COUNT)
-
-    if (NOT _INTERNAL_CALL_COUNT)
-
-        set (_INTERNAL_CALL_COUNT 0)
-
-    endif ()
-
-    math (EXPR _INTERNAL_CALL_COUNT "${_INTERNAL_CALL_COUNT} + 1")
-
-    set_property (GLOBAL PROPERTY _INTERNAL_CALL_COUNT ${_INTERNAL_CALL_COUNT})
-
-    # These variables are used by the called function beneath us as part of
-    # a "calling convention". CALLER_ARGN essentially functions like ARGN
-    # for the called function and CALLED_FUNCTION_NAME specifies the name of
-    # the last called function in this call stack.
-    set (CALLER_ARGN ${ARGN}) # NOLINT:unused/var_in_func
-    set (CALLED_FUNCTION_NAME ${FUNCTION_NAME}) # NOLINT:unused/var_in_func
-    variable_watch (_${_INTERNAL_CALL_COUNT}_${FUNCTION_NAME}
-                    ${FUNCTION_NAME})
-    set (_${_INTERNAL_CALL_COUNT}_${FUNCTION_NAME} "_")
 
 endfunction ()
 
@@ -233,74 +169,16 @@ function (_cmake_unit_discover_tests_in NAMESPACE RETURN_LIST)
 
 endfunction ()
 
-# This is an optimization on cmake_parse_arguments which should
-# help to reduce the number of times which it is called. Effectively,
-# it hashes its arguments and then checks to see if we've called
-# cmake_parse_arguments with this kind of hash. If we have, it uses
-# the cached values.
-function (_cmake_unit_parse_args_key PREFIX
-                                     OPTION_ARGS_STRING
-                                     SINGLEVAR_ARGS_STRING
-                                     MULTIVAR_ARGS_STRING
-                                     RETURN_KEY)
-
-    # First get the key for this argv set
-    string (MD5 CACHE_KEY "${ARGV}")
-
-    # Lookup to see if we've parsed arguments like these before
-    get_property (CACHE_KEY_IS_SET
-                  GLOBAL
-                  PROPERTY _CMAKE_UNIT_CACHED_${CACHE_KEY})
-    if (NOT CACHE_KEY_IS_SET)
-
-        # Cache key was not set. Parse arguments and then store the
-        # results in global properties.
-        cmake_parse_arguments (${PREFIX}
-                               "${OPTION_ARGS_STRING}"
-                               "${SINGLEVAR_ARGS_STRING}"
-                               "${MULTIVAR_ARGS_STRING}"
-                               ${ARGN})
-
-        set (VARIABLES ${OPTION_ARGS_STRING}
-                       ${SINGLEVAR_ARGS_STRING}
-                       ${MULTIVAR_ARGS_STRING})
-
-        foreach (VAR ${VARIABLES})
-
-            set_property (GLOBAL
-                          PROPERTY _CMAKE_UNIT_PARSE_CACHE_${CACHE_KEY}_${VAR}
-                          "${${PREFIX}_${VAR}}")
-
-        endforeach ()
-
-        set_property (GLOBAL
-                      PROPERTY _CMAKE_UNIT_CACHED_${CACHE_KEY}
-                      TRUE)
-
-    endif ()
-
-    set (${RETURN_KEY} ${CACHE_KEY} PARENT_SCOPE)
-
-endfunction ()
-
-function (_cmake_unit_fetch_parsed_arg CACHE_KEY PREFIX ARGUMENT)
-
-    get_property (VALUE GLOBAL
-                  PROPERTY _CMAKE_UNIT_PARSE_CACHE_${CACHE_KEY}_${ARGUMENT})
-    set (${PREFIX}_${ARGUMENT} "${VALUE}" PARENT_SCOPE)
-
-endfunction ()
-
 function (cmake_unit_init)
 
-    _cmake_unit_parse_args_key (CMAKE_UNIT_INIT
-                                ""
-                                ""
-                                "NAMESPACE;COVERAGE_FILES"
-                                PARSE_KEY
-                                ${ARGN})
+    cmake_parse_args_key (CMAKE_UNIT_INIT
+                          ""
+                          ""
+                          "NAMESPACE;COVERAGE_FILES"
+                          PARSE_KEY
+                          ${ARGN})
 
-    _cmake_unit_fetch_parsed_arg (${PARSE_KEY} CMAKE_UNIT_INIT NAMESPACE)
+    cmake_fetch_parsed_arg (${PARSE_KEY} CMAKE_UNIT_INIT NAMESPACE)
     _cmake_unit_discover_tests_in (${CMAKE_UNIT_INIT_NAMESPACE}
                                    CMAKE_UNIT_INIT_TESTS)
 
@@ -308,8 +186,8 @@ function (cmake_unit_init)
 
         # Escape characters out of filenames that will cause problems when
         # attempting to regex match them later
-        _cmake_unit_fetch_parsed_arg (${PARSE_KEY} CMAKE_UNIT_INIT
-                                      COVERAGE_FILES)
+        cmake_fetch_parsed_arg (${PARSE_KEY} CMAKE_UNIT_INIT
+                                COVERAGE_FILES)
         foreach (COVERAGE_FILE ${CMAKE_UNIT_INIT_COVERAGE_FILES})
 
             cmake_unit_escape_string ("${COVERAGE_FILE}" ESCAPED_COVERAGE_FILE)
@@ -356,9 +234,9 @@ function (cmake_unit_init)
         # Pass source and binary directory to test here as it will be the same
         # for all phases and we can use the directories in per-test variables
         # easily.
-        _cmake_unit_call_function (${FUNCTION}
-                                   SOURCE_DIR "${TEST_SOURCE_DIR}"
-                                   BINARY_DIR "${TEST_BINARY_DIR}")
+        cmake_call_function (${FUNCTION}
+                             SOURCE_DIR "${TEST_SOURCE_DIR}"
+                             BINARY_DIR "${TEST_BINARY_DIR}")
 
     endforeach ()
 
@@ -367,41 +245,12 @@ function (cmake_unit_init)
 
 endfunction ()
 
-function (_cmake_unit_spacify RETURN_SPACED)
-
-    _cmake_unit_parse_args_key (SPACIFY
-                                "NO_QUOTES"
-                                ""
-                                "LIST"
-                                PARSE_KEY ${ARGN})
-    _cmake_unit_fetch_parsed_arg (${PARSE_KEY} SPACIFY LIST)
-
-    set (SPACIFIED "")
-    foreach (ELEMENT ${SPACIFY_LIST})
-
-        if (SPACIFY_NO_QUOTES)
-
-            set (SPACIFIED "${SPACIFIED}${ELEMENT} ")
-
-        else ()
-
-            set (SPACIFIED "${SPACIFIED}\"${ELEMENT}\" ")
-
-        endif ()
-
-    endforeach ()
-
-    string (STRIP "${SPACIFIED}" SPACIFIED)
-    set (${RETURN_SPACED} "${SPACIFIED}" PARENT_SCOPE)
-
-endfunction ()
-
 # Gets a set_property line in a script which contains the forwarded
 # version of our GLOBAL property GLOBAL
 function (_cmake_unit_forwarded_script_prop_line RETURN_LINE PROPERTY)
 
     get_property (VALUE GLOBAL PROPERTY "${PROPERTY}")
-    _cmake_unit_spacify (SPACIFIED_VALUE LIST ${VALUE})
+    cmake_spacify_list (SPACIFIED_VALUE LIST ${VALUE})
     set (${RETURN_LINE}
          "set_property (GLOBAL PROPERTY ${PROPERTY} ${SPACIFIED_VALUE})\n"
          PARENT_SCOPE)
@@ -428,7 +277,7 @@ function (_cmake_unit_get_child_invocation_script_header HEADER_RETURN)
     _cmake_unit_forwarded_script_prop_line (DISCOVERED_TESTS_PROP_LINE
                                             ${CACHED_DISCOVERED_TESTS_PROPERTY})
 
-    _cmake_unit_spacify (SPACIFIED_MODULE_PATH LIST "${CMAKE_MODULE_PATH}")
+    cmake_spacify_list (SPACIFIED_MODULE_PATH LIST "${CMAKE_MODULE_PATH}")
 
     set (${HEADER_RETURN}
          "set (CMAKE_MODULE_PATH \"${_RUNNER_LIST_DIR}\"\n"
@@ -461,29 +310,37 @@ function (_cmake_unit_preconfigure_test)
     get_property (COVERAGE_FILES_LIST
                   GLOBAL PROPERTY _CMAKE_UNIT_COVERAGE_LOGGING_FILES)
 
-    _cmake_unit_spacify (COVERAGE_FILES LIST ${COVERAGE_FILES_LIST})
+    cmake_spacify_list (COVERAGE_FILES LIST ${COVERAGE_FILES_LIST})
 
     _cmake_unit_get_child_invocation_script_header (COMMON_PROLOGUE)
 
+    set (DRIVER_SCRIPT_CONTENTS
+         "set (_CMAKE_UNIT_PHASE CLEAN)\n"
+         ${COMMON_PROLOGUE}
+         "set (CMAKE_GENERATOR\n"
+         "     \"${CMAKE_GENERATOR}\")\n"
+         "set (CMAKE_UNIT_NO_DEV_WARNINGS\n"
+         "     ${CMAKE_UNIT_NO_DEV_WARNINGS}\n"
+         "     CACHE BOOL \"\" FORCE)\n"
+         "set (CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS\n"
+         "     ${CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS}\n"
+         "     CACHE BOOL \"\" FORCE)\n"
+         "set (CMAKE_PROJECT_NAME\n"
+         "     \"${CMAKE_PROJECT_NAME}\")\n"
+         "set_property (GLOBAL PROPERTY\n"
+         "              _CMAKE_UNIT_COVERAGE_LOGGING_FILES\n"
+         "              ${COVERAGE_FILES})\n"
+         "include (\"${CMAKE_CURRENT_LIST_FILE}\")\n")
+
     # /Driver.cmake writs some initial variable definitions
-    file (WRITE "${DRIVER_SCRIPT}"
-          "set (_CMAKE_UNIT_PHASE CLEAN)\n"
-          ${COMMON_PROLOGUE}
-          "set (CMAKE_GENERATOR \"${CMAKE_GENERATOR}\")\n"
-          "set (CMAKE_UNIT_NO_DEV_WARNINGS ${CMAKE_UNIT_NO_DEV_WARNINGS}\n"
-          "     CACHE BOOL \"\" FORCE)\n"
-          "set (CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS\n"
-          "     ${CMAKE_UNIT_NO_UNINITIALIZED_WARNINGS}\n"
-          "     CACHE BOOL \"\" FORCE)\n"
-          "set (CMAKE_PROJECT_NAME \"${CMAKE_PROJECT_NAME}\")\n"
-          "set_property (GLOBAL PROPERTY _CMAKE_UNIT_COVERAGE_LOGGING_FILES\n"
-          "              ${COVERAGE_FILES})\n"
-          "include (\"${CMAKE_CURRENT_LIST_FILE}\")\n")
+    cmake_unit_write_if_newer ("${DRIVER_SCRIPT}" "${_RUNNER_LIST_FILE}"
+                               "${DRIVER_SCRIPT_CONTENTS}")
+
 
     # /Coverage.cmake is intended to wrap /Driver.cmake and write trace data
     # into CMAKE_UNIT_COVERAGE_FILE
-    _cmake_unit_spacify (POLICY_CACHE_DEFS_SPACIFIED
-                         LIST ${CMAKE_POLICY_CACHE_DEFINITIONS})
+    cmake_spacify_list (POLICY_CACHE_DEFS_SPACIFIED
+                        LIST ${CMAKE_POLICY_CACHE_DEFINITIONS})
     set (DRIVER_OUTPUT_LOG "${CMAKE_CURRENT_BINARY_DIR}/DRIVER.output")
     set (DRIVER_ERROR_LOG "${CMAKE_CURRENT_BINARY_DIR}/DRIVER.error")
 
@@ -501,28 +358,31 @@ function (_cmake_unit_preconfigure_test)
 
     # Working around a bug in cmakelint
     set (END "end")
-    file (WRITE "${COVERAGE_SCRIPT}"
-          ${COMMON_PROLOGUE}
-          "set (_CMAKE_UNIT_PHASE UTILITY)\n"
-          "include (\"${_RUNNER_LIST_FILE}\")\n"
-          "_cmake_unit_invoke_command (COMMAND \"${CMAKE_COMMAND}\"\n"
-          "                                    ${POLICY_CACHE_DEFS_SPACIFIED}\n"
-          "                                    -P \"${DRIVER_SCRIPT}\"\n"
-          "                                    ${TRACE_OPTION}\n"
-          "                            OUTPUT_FILE \"${DRIVER_OUTPUT_LOG}\"\n"
-          "                            ERROR_FILE \"${DRIVER_ERROR_LOG}\"\n"
-          "                            PHASE DRIVER)\n"
-          "set (LOG_COVERAGE \"${CMAKE_UNIT_COVERAGE_FILE}\")\n"
-          "if (LOG_COVERAGE)\n"
-          "    _cmake_unit_filter_trace_lines (FILTERED_LINES\n"
-          "                                    TEST_NAME \"${TEST_NAME}\"\n"
-          "                                    TRACE_FILE\n"
-          "                                    \"\${LOG_COVERAGE}\"\n"
-          "                                    COVERAGE_FILES\n"
-          "                                    ${COVERAGE_FILES})\n"
-          "    file (APPEND \"${ABSOLUTE_COVERAGE_FILE_PATH}\"\n"
-          "          \${FILTERED_LINES})\n"
-          "${END}if ()\n")
+    set (COVERAGE_SCRIPT_CONTENTS
+         ${COMMON_PROLOGUE}
+         "set (_CMAKE_UNIT_PHASE UTILITY)\n"
+         "include (\"${_RUNNER_LIST_FILE}\")\n"
+         "_cmake_unit_invoke_command (COMMAND \"${CMAKE_COMMAND}\"\n"
+         "                                    ${POLICY_CACHE_DEFS_SPACIFIED}\n"
+         "                                    -P \"${DRIVER_SCRIPT}\"\n"
+         "                                    ${TRACE_OPTION}\n"
+         "                            OUTPUT_FILE \"${DRIVER_OUTPUT_LOG}\"\n"
+         "                            ERROR_FILE \"${DRIVER_ERROR_LOG}\"\n"
+         "                            PHASE DRIVER)\n"
+         "set (LOG_COVERAGE \"${CMAKE_UNIT_COVERAGE_FILE}\")\n"
+         "if (LOG_COVERAGE)\n"
+         "    _cmake_unit_filter_trace_lines (FILTERED_LINES\n"
+         "                                    TEST_NAME \"${TEST_NAME}\"\n"
+         "                                    TRACE_FILE\n"
+         "                                    \"\${LOG_COVERAGE}\"\n"
+         "                                    COVERAGE_FILES\n"
+         "                                    ${COVERAGE_FILES})\n"
+         "    file (APPEND \"${ABSOLUTE_COVERAGE_FILE_PATH}\"\n"
+         "          \${FILTERED_LINES})\n"
+         "${END}if ()\n")
+
+    cmake_unit_write_if_newer ("${COVERAGE_SCRIPT}" "${_RUNNER_LIST_FILE}"
+                               "${COVERAGE_SCRIPT_CONTENTS}")
 
     # The test step invokes the script at the INVOKE_CONFIGURE
     # phase, which will then move on to the other phases once its done.
@@ -559,12 +419,11 @@ function (cmake_unit_invoke_rm_build)
 
     cmake_parse_arguments (RM_BUILD
                            ""
-                           "BINARY_DIR;SOURCE_DIR"
+                           "BINARY_DIR"
                            ""
                            ${CALLER_ARGN})
 
     file (REMOVE_RECURSE "${RM_BUILD_BINARY_DIR}")
-    file (REMOVE_RECURSE "${RM_BUILD_SOURCE_DIR}")
 
 endfunction ()
 
@@ -663,9 +522,9 @@ function (_cmake_unit_invoke_command)
                            "COMMAND"
                            ${ARGN})
 
-    _cmake_unit_spacify (SPACIFIED_COMMAND
-                         LIST ${INVOKE_COMMAND_COMMAND}
-                         NO_QUOTES)
+    cmake_spacify_list (SPACIFIED_COMMAND
+                        LIST ${INVOKE_COMMAND_COMMAND}
+                        NO_QUOTES)
     message (STATUS "Running ${SPACIFIED_COMMAND}")
 
     execute_process (COMMAND ${INVOKE_COMMAND_COMMAND}
@@ -734,20 +593,28 @@ function (cmake_unit_invoke_configure)
 
         set (INVOKE_CONFIGURE_LANGUAGES NONE)
 
+    else ()
+
+        cmake_spacify_list (INVOKE_CONFIGURE_LANGUAGES
+                            LIST ${INVOKE_CONFIGURE_LANGUAGES}
+                            NO_QUOTES)
+
     endif ()
 
     _cmake_unit_get_child_invocation_script_header (COMMON_PROLOGUE)
 
     # Write out ${INVOKE_CONFIGURE_SOURCE_DIR}/CMakeLists.txt. This is a special
     # case where we re-include everything, this time in project-processing mode
-    file (WRITE "${TEST_CMAKELISTS_TXT}"
-          "cmake_minimum_required (VERSION 2.8 FATAL_ERROR)\n"
-          "project (${TEST_NAME} ${INVOKE_CONFIGURE_LANGUAGES})\n"
-          "set (_CMAKE_UNIT_PHASE CONFIGURE)\n"
-          ${COMMON_PROLOGUE}
-          "include (CTest)\n"
-          "enable_testing ()\n"
-          "include (\"${CMAKE_CURRENT_LIST_FILE}\")\n")
+    set (TEST_CMAKELISTS_TXT_CONTENTS
+         "cmake_minimum_required (VERSION 2.8 FATAL_ERROR)\n"
+         "project (${TEST_NAME} ${INVOKE_CONFIGURE_LANGUAGES})\n"
+         "set (_CMAKE_UNIT_PHASE CONFIGURE)\n"
+         ${COMMON_PROLOGUE}
+         "include (CTest)\n"
+         "enable_testing ()\n"
+         "include (\"${CMAKE_CURRENT_LIST_FILE}\")\n")
+    cmake_unit_write_if_newer ("${TEST_CMAKELISTS_TXT}" "${_RUNNER_LIST_FILE}"
+                               "${TEST_CMAKELISTS_TXT_CONTENTS}")
 
     set (TRACE_OPTION "")
     set (UNINITIALIZED_OPTION "")
@@ -778,9 +645,9 @@ function (cmake_unit_invoke_configure)
 
     endif ()
 
-    _cmake_unit_forward_arguments (INVOKE_CONFIGURE INVOKE_COMMAND_ARGUMENTS
-                                   OPTION_ARGS ALLOW_FAIL
-                                   SINGLEVAR_ARGS OUTPUT_FILE ERROR_FILE)
+    cmake_forward_arguments (INVOKE_CONFIGURE INVOKE_COMMAND_ARGUMENTS
+                             OPTION_ARGS ALLOW_FAIL
+                             SINGLEVAR_ARGS OUTPUT_FILE ERROR_FILE)
     _cmake_unit_invoke_command (COMMAND "${CMAKE_COMMAND}"
                                         "${INVOKE_CONFIGURE_SOURCE_DIR}"
                                         "${TRACE_OPTION}"
@@ -850,9 +717,9 @@ function (cmake_unit_invoke_build)
 
     endif ()
 
-    _cmake_unit_forward_arguments (INVOKE_BUILD INVOKE_COMMAND_ARGUMENTS
-                                   OPTION_ARGS ALLOW_FAIL
-                                   SINGLEVAR_ARGS OUTPUT_FILE ERROR_FILE)
+    cmake_forward_arguments (INVOKE_BUILD INVOKE_COMMAND_ARGUMENTS
+                             OPTION_ARGS ALLOW_FAIL
+                             SINGLEVAR_ARGS OUTPUT_FILE ERROR_FILE)
     _cmake_unit_invoke_command (COMMAND "${CMAKE_COMMAND}"
                                         --build
                                         "${INVOKE_BUILD_BINARY_DIR}"
@@ -873,9 +740,9 @@ function (cmake_unit_invoke_test)
                            ""
                            ${CALLER_ARGN})
 
-    _cmake_unit_forward_arguments (INVOKE_TEST INVOKE_COMMAND_ARGUMENTS
-                                   OPTION_ARGS ALLOW_FAIL
-                                   SINGLEVAR_ARGS OUTPUT_FILE ERROR_FILE)
+    cmake_forward_arguments (INVOKE_TEST INVOKE_COMMAND_ARGUMENTS
+                             OPTION_ARGS ALLOW_FAIL
+                             SINGLEVAR_ARGS OUTPUT_FILE ERROR_FILE)
     _cmake_unit_invoke_command (COMMAND "${CMAKE_CTEST_COMMAND}"
                                         -C
                                         Debug
@@ -1011,50 +878,50 @@ function (_cmake_unit_override_func_table RETURN_TABLE)
     set (OVERRIDE_TABLE_OPTION_MULTIVAR_ARGS OVERRIDABLE_ENTRIES
                                              CURRENT_DISPATCH
                                              USER_OPTIONS)
-    _cmake_unit_parse_args_key (OVERRIDE_TABLE_OPTION
-                                ""
-                                ""
-                                "${OVERRIDE_TABLE_OPTION_MULTIVAR_ARGS}"
-                                OVERRIDE_TABLE_OPTION_PARSE_KEY
-                                ${ARGN})
+    cmake_parse_args_key (OVERRIDE_TABLE_OPTION
+                          ""
+                          ""
+                          "${OVERRIDE_TABLE_OPTION_MULTIVAR_ARGS}"
+                          OVERRIDE_TABLE_OPTION_PARSE_KEY
+                          ${ARGN})
 
     # Now for each overridable entry, get the default option in its own variable
-    _cmake_unit_fetch_parsed_arg (${OVERRIDE_TABLE_OPTION_PARSE_KEY}
-                                  OVERRIDE_TABLE_OPTION OVERRIDABLE_ENTRIES)
-    _cmake_unit_fetch_parsed_arg (${OVERRIDE_TABLE_OPTION_PARSE_KEY}
-                                  OVERRIDE_TABLE_OPTION CURRENT_DISPATCH)
-    _cmake_unit_fetch_parsed_arg (${OVERRIDE_TABLE_OPTION_PARSE_KEY}
-                                  OVERRIDE_TABLE_OPTION USER_OPTIONS)
-    _cmake_unit_parse_args_key (POTENTIALLY_OVERRIDDEN
-                                ""
-                                ""
-                                "${OVERRIDE_TABLE_OPTION_OVERRIDABLE_ENTRIES}"
-                                POTENTIALLY_OVERRIDDEN_PARSE_KEY
-                                ${OVERRIDE_TABLE_OPTION_CURRENT_DISPATCH})
-    _cmake_unit_parse_args_key (USER_SPECIFIED
-                                ""
-                                ""
-                                "${OVERRIDE_TABLE_OPTION_OVERRIDABLE_ENTRIES}"
-                                USER_SPECIFIED_PARSE_KEY
-                                ${OVERRIDE_TABLE_OPTION_USER_OPTIONS})
+    cmake_fetch_parsed_arg (${OVERRIDE_TABLE_OPTION_PARSE_KEY}
+                            OVERRIDE_TABLE_OPTION OVERRIDABLE_ENTRIES)
+    cmake_fetch_parsed_arg (${OVERRIDE_TABLE_OPTION_PARSE_KEY}
+                            OVERRIDE_TABLE_OPTION CURRENT_DISPATCH)
+    cmake_fetch_parsed_arg (${OVERRIDE_TABLE_OPTION_PARSE_KEY}
+                            OVERRIDE_TABLE_OPTION USER_OPTIONS)
+    cmake_parse_args_key (POTENTIALLY_OVERRIDDEN
+                          ""
+                          ""
+                          "${OVERRIDE_TABLE_OPTION_OVERRIDABLE_ENTRIES}"
+                          POTENTIALLY_OVERRIDDEN_PARSE_KEY
+                          ${OVERRIDE_TABLE_OPTION_CURRENT_DISPATCH})
+    cmake_parse_args_key (USER_SPECIFIED
+                          ""
+                          ""
+                          "${OVERRIDE_TABLE_OPTION_OVERRIDABLE_ENTRIES}"
+                          USER_SPECIFIED_PARSE_KEY
+                          ${OVERRIDE_TABLE_OPTION_USER_OPTIONS})
 
     # Now for each of those entries, look up the same in USER_OPTIONS
     # and see if a value was set. If so, override the value here
     foreach (ENTRY ${OVERRIDE_TABLE_OPTION_OVERRIDABLE_ENTRIES})
 
-        _cmake_unit_fetch_parsed_arg (${USER_SPECIFIED_PARSE_KEY}
-                                      USER_SPECIFIED ${ENTRY})
-        _cmake_unit_parse_args_key (USER_SPECIFIED_PHASE
-                                    ""
-                                    "COMMAND"
-                                    ""
-                                    USER_SPECIFIED_PHASE_PARSE_KEY
-                                    ${USER_SPECIFIED_${ENTRY}})
+        cmake_fetch_parsed_arg (${USER_SPECIFIED_PARSE_KEY}
+                                USER_SPECIFIED ${ENTRY})
+        cmake_parse_args_key (USER_SPECIFIED_PHASE
+                              ""
+                              "COMMAND"
+                              ""
+                              USER_SPECIFIED_PHASE_PARSE_KEY
+                              ${USER_SPECIFIED_${ENTRY}})
 
-        _cmake_unit_fetch_parsed_arg (${USER_SPECIFIED_PHASE_PARSE_KEY}
-                                      USER_SPECIFIED_PHASE COMMAND)
-        _cmake_unit_fetch_parsed_arg (${POTENTIALLY_OVERRIDDEN_PARSE_KEY}
-                                      POTENTIALLY_OVERRIDDEN ${ENTRY})
+        cmake_fetch_parsed_arg (${USER_SPECIFIED_PHASE_PARSE_KEY}
+                                USER_SPECIFIED_PHASE COMMAND)
+        cmake_fetch_parsed_arg (${POTENTIALLY_OVERRIDDEN_PARSE_KEY}
+                                POTENTIALLY_OVERRIDDEN ${ENTRY})
         _cmake_unit_override_function (POTENTIALLY_OVERRIDDEN_${ENTRY}
                                        "${USER_SPECIFIED_PHASE_COMMAND}")
 
@@ -1078,13 +945,13 @@ endfunction ()
 function (_cmake_unit_get_func_for_phase RETURN_FUNCTION
                                          PHASE)
 
-    _cmake_unit_parse_args_key (DISPATCH_FOR
-                                ""
-                                "${CMAKE_UNIT_PHASES}"
-                                ""
-                                DISPATCH_FOR_KEY
-                                ${ARGN})
-    _cmake_unit_fetch_parsed_arg (${DISPATCH_FOR_KEY} DISPATCH_FOR ${PHASE})
+    cmake_parse_args_key (DISPATCH_FOR
+                          ""
+                          "${CMAKE_UNIT_PHASES}"
+                          ""
+                          DISPATCH_FOR_KEY
+                          ${ARGN})
+    cmake_fetch_parsed_arg (${DISPATCH_FOR_KEY} DISPATCH_FOR ${PHASE})
 
     set (${RETURN_FUNCTION} ${DISPATCH_FOR_${PHASE}} PARENT_SCOPE)
 
@@ -1095,14 +962,14 @@ endfunction ()
 function (_cmake_unit_get_arguments_for_phase RETURN_ARGUMENTS
                                               PHASE)
 
-    _cmake_unit_parse_args_key (ARGUMENTS_FOR
-                                ""
-                                ""
-                                "${CMAKE_UNIT_PHASES}"
-                                ARGUMENTS_FOR_PARSE_KEY
-                                ${ARGN})
-    _cmake_unit_fetch_parsed_arg (${ARGUMENTS_FOR_PARSE_KEY}
-                                  ARGUMENTS_FOR ${PHASE})
+    cmake_parse_args_key (ARGUMENTS_FOR
+                          ""
+                          ""
+                          "${CMAKE_UNIT_PHASES}"
+                          ARGUMENTS_FOR_PARSE_KEY
+                          ${ARGN})
+    cmake_fetch_parsed_arg (${ARGUMENTS_FOR_PARSE_KEY}
+                            ARGUMENTS_FOR ${PHASE})
 
     set (${RETURN_ARGUMENTS} ${ARGUMENTS_FOR_${PHASE}} PARENT_SCOPE)
 
@@ -1140,13 +1007,13 @@ function (_cmake_unit_get_override_table_for_allowed_failures RETURN_TABLE)
     # And now for each phase, check to see if ALLOW_FAIL was defined
     foreach (PHASE ${PHASE_INVOCATION_ORDER})
 
-        _cmake_unit_parse_args_key (PHASE
-                                    "ALLOW_FAIL"
-                                    ""
-                                    ""
-                                    PHASE_PARSE_ARGS_KEY
-                                    ${OPTIONS_FOR_${PHASE}})
-        _cmake_unit_fetch_parsed_arg (${PHASE_PARSE_ARGS_KEY} PHASE ALLOW_FAIL)
+        cmake_parse_args_key (PHASE
+                              "ALLOW_FAIL"
+                              ""
+                              ""
+                              PHASE_PARSE_ARGS_KEY
+                              ${OPTIONS_FOR_${PHASE}})
+        cmake_fetch_parsed_arg (${PHASE_PARSE_ARGS_KEY} PHASE ALLOW_FAIL)
 
         # Allow fail was defined. Look up this phase, generate a table
         # using the remaining phases and return it
@@ -1155,9 +1022,9 @@ function (_cmake_unit_get_override_table_for_allowed_failures RETURN_TABLE)
             list (LENGTH PHASE_INVOCATION_ORDER PHASE_INVOCATION_LENGTH)
             list (FIND PHASE_INVOCATION_ORDER "${PHASE}" PHASE_INDEX)
 
-            _cmake_unit_spacify (PHASE_INVOCATION_SPACIFIED
-                                 LIST ${PHASE_INVOCATION_ORDER}
-                                 NO_QUOTES)
+            cmake_spacify_list (PHASE_INVOCATION_SPACIFIED
+                                LIST ${PHASE_INVOCATION_ORDER}
+                                NO_QUOTES)
             _cmake_unit_runner_assert (CONDITION NOT PHASE_INDEX EQUAL -1
                                        MESSAGE "PHASE must be in "
                                                "${PHASE_INVOCATION_SPACIFIED}")
@@ -1195,20 +1062,20 @@ function (_cmake_unit_compute_dispatch_table_for_test DISPATCH_TABLE_RETURN)
     set (COMPUTE_DISPATCH_TABLE_SINGLEVAR_ARGS TEST_NAME)
     set (COMPUTE_DISPATCH_TABLE_MULTIVAR_ARGS USER_OPTIONS)
 
-    _cmake_unit_parse_args_key (COMPUTE_DISPATCH_TABLE
-                                ""
-                                "${COMPUTE_DISPATCH_TABLE_SINGLEVAR_ARGS}"
-                                "${COMPUTE_DISPATCH_TABLE_MULTIVAR_ARGS}"
-                                COMPUTE_DISPATCH_TABLE_PARSE_KEY
-                                ${ARGN})
+    cmake_parse_args_key (COMPUTE_DISPATCH_TABLE
+                          ""
+                          "${COMPUTE_DISPATCH_TABLE_SINGLEVAR_ARGS}"
+                          "${COMPUTE_DISPATCH_TABLE_MULTIVAR_ARGS}"
+                          COMPUTE_DISPATCH_TABLE_PARSE_KEY
+                          ${ARGN})
 
     # First look up this test name as part of the
     # _CMAKE_UNIT_DISPATCH_CONFIGURE_DISPATCH_FOR_${TEST_NAME} property. If
     # there's a value, then use that (as a cache) instead of recomputing it here
     # as recomputing the value all the time is quite expensive. The value
     # never changes between runs.
-    _cmake_unit_fetch_parsed_arg (${COMPUTE_DISPATCH_TABLE_PARSE_KEY}
-                                  COMPUTE_DISPATCH_TABLE TEST_NAME)
+    cmake_fetch_parsed_arg (${COMPUTE_DISPATCH_TABLE_PARSE_KEY}
+                            COMPUTE_DISPATCH_TABLE TEST_NAME)
     set (TEST_NAME "${COMPUTE_DISPATCH_TABLE_TEST_NAME}")
     get_property (DISPATCH_TABLE
                   GLOBAL PROPERTY
@@ -1226,8 +1093,8 @@ function (_cmake_unit_compute_dispatch_table_for_test DISPATCH_TABLE_RETURN)
              INVOKE_TEST cmake_unit_invoke_test
              VERIFY _cmake_unit_no_op)
 
-        _cmake_unit_fetch_parsed_arg (${COMPUTE_DISPATCH_TABLE_PARSE_KEY}
-                                      COMPUTE_DISPATCH_TABLE USER_OPTIONS)
+        cmake_fetch_parsed_arg (${COMPUTE_DISPATCH_TABLE_PARSE_KEY}
+                                COMPUTE_DISPATCH_TABLE USER_OPTIONS)
         set (OVERRIDABLE ${_CMAKE_UNIT_OVERRIDABLE_PHASES})
         set (USER_ARGN ${COMPUTE_DISPATCH_TABLE_USER_OPTIONS})
 
@@ -1310,18 +1177,18 @@ function (_cmake_unit_configure_test_internal)
     set (TEST_SOURCE_DIR "${CMAKE_UNIT_CONFIGURE_TEST_SOURCE_DIR}")
     set (TEST_BINARY_DIR "${CMAKE_UNIT_CONFIGURE_TEST_BINARY_DIR}")
 
-    _cmake_unit_forward_arguments (TEST PHASE_FUNCTION_STANDARD_ARGS
-                                   SINGLEVAR_ARGS SOURCE_DIR
-                                                  BINARY_DIR
-                                                  OUTPUT_FILE
-                                                  ERROR_FILE)
+    cmake_forward_arguments (TEST PHASE_FUNCTION_STANDARD_ARGS
+                             SINGLEVAR_ARGS SOURCE_DIR
+                                            BINARY_DIR
+                                            OUTPUT_FILE
+                                            ERROR_FILE)
 
-    _cmake_unit_call_function (${PHASE_FUNCTION} ${PHASE_ARGUMENTS}
-                               TEST_NAME ${TEST_NAME}
-                               SOURCE_DIR "${TEST_SOURCE_DIR}"
-                               BINARY_DIR "${TEST_BINARY_DIR}"
-                               OUTPUT_FILE "${TEST_BINARY_DIR}/${PHASE}.output"
-                               ERROR_FILE "${TEST_BINARY_DIR}/${PHASE}.error")
+    cmake_call_function (${PHASE_FUNCTION} ${PHASE_ARGUMENTS}
+                         TEST_NAME ${TEST_NAME}
+                         SOURCE_DIR "${TEST_SOURCE_DIR}"
+                         BINARY_DIR "${TEST_BINARY_DIR}"
+                         OUTPUT_FILE "${TEST_BINARY_DIR}/${PHASE}.output"
+                         ERROR_FILE "${TEST_BINARY_DIR}/${PHASE}.error")
 
     # Implicitly dereference _CMAKE_UNIT_PHASE_AFTER_${PHASE} and if there's
     # a phase to go to, recursively call this function and enter the next phase.
@@ -1384,9 +1251,9 @@ function (cmake_unit_get_log_for PHASE LOG_TYPE LOG_FILE_RETURN)
 
     set (ACCEPTABLE_PHASES INVOKE_CONFIGURE INVOKE_BUILD INVOKE_TEST)
     list (FIND ACCEPTABLE_PHASES ${PHASE} PHASE_IN_ACCEPTABLE_INDEX)
-    _cmake_unit_spacify (SPACIFIED_ACCEPTABLE_PHASES
-                         LIST ${ACCEPTABLE_PHASES}
-                         NO_QUOTES)
+    cmake_spacify_list (SPACIFIED_ACCEPTABLE_PHASES
+                        LIST ${ACCEPTABLE_PHASES}
+                        NO_QUOTES)
     _cmake_unit_runner_assert (CONDITION
                                NOT PHASE_IN_ACCEPTABLE_INDEX EQUAL -1
                                MESSAGE
