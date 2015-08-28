@@ -556,27 +556,25 @@ function (cmake_unit_generate_source_file_during_build TARGET_RETURN)
     # during the build
     _cmake_unit_get_created_source_file_contents (CONTENTS NAME ${ARGN})
 
-    set (TMP_LOCATION "tmp/${NAME}")
+    string (RANDOM SALT)
+    string (SHA1 TMP_LOCATION "${NAME}-${CONTENTS}-${SALT}")
+
+    # Truncate to ten characters, to keep Windows happy.
+    string (SUBSTRING "${TMP_LOCATION}" 0 10 TMP_LOCATION)
+
     _cmake_unit_write_out_file_without_semicolons ("${TMP_LOCATION}"
                                                    CONTENTS ${CONTENTS})
 
-    get_filename_component (BASENAME "${NAME}" NAME)
-    get_filename_component (DIRECTORY "${NAME}" PATH)
-    string (RANDOM SUFFIX)
-
     set (WRITE_SOURCE_FILE_SCRIPT
-         "${CMAKE_CURRENT_BINARY_DIR}/Write${BASENAME}${SUFFIX}.cmake")
+         "${CMAKE_CURRENT_BINARY_DIR}/Write${TMP_LOCATION}.cmake")
     file (WRITE "${WRITE_SOURCE_FILE_SCRIPT}"
-          "file (COPY \"${CMAKE_CURRENT_SOURCE_DIR}/${TMP_LOCATION}\"\n"
-          "      DESTINATION \"${CMAKE_CURRENT_BINARY_DIR}/${DIRECTORY}\")\n"
-          "file (REMOVE \"${CMAKE_CURRENT_SOURCE_DIR}/${TMP_LOCATION}\")\n")
+          "file (RENAME \"${CMAKE_CURRENT_SOURCE_DIR}/${TMP_LOCATION}\"\n"
+          "      \"${CMAKE_CURRENT_BINARY_DIR}/${NAME}\")\n")
 
 
-    # Generate target name
-    string (REGEX MATCHALL "[a-zA-z0-9]" MATCHED_TARGET_CHARACTERS
-            "${BASENAME}${SUFFIX}")
+    # Generate target name, convert temporary location to lowercase.
     string (REPLACE ";" "" TARGET_NAME_WITH_UPPER_CHARACTERS
-            "${MATCHED_TARGET_CHARACTERS}")
+            "${TMP_LOCATION}")
     string (TOLOWER "${TARGET_NAME_WITH_UPPER_CHARACTERS}" TARGET_NAME)
     set (TARGET_NAME "generate_${TARGET_NAME}")
 
