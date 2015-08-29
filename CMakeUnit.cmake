@@ -557,19 +557,18 @@ function (cmake_unit_generate_source_file_during_build TARGET_RETURN)
     _cmake_unit_get_created_source_file_contents (CONTENTS NAME ${ARGN})
 
     string (RANDOM SALT)
-    string (SHA1 TMP_LOCATION "${NAME}-${CONTENTS}-${SALT}")
-
-    # Truncate to ten characters, to keep Windows happy.
-    string (SUBSTRING "${TMP_LOCATION}" 0 10 TMP_LOCATION)
-
-    _cmake_unit_write_out_file_without_semicolons ("${TMP_LOCATION}"
+    _cmake_unit_write_out_file_without_semicolons ("${NAME}${SALT}"
                                                    CONTENTS ${CONTENTS})
+    file (RENAME "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}${SALT}"
+                 "${CMAKE_CURRENT_BINARY_DIR}/${NAME}${SALT}")
 
     set (WRITE_SOURCE_FILE_SCRIPT
-         "${CMAKE_CURRENT_BINARY_DIR}/Write${TMP_LOCATION}.cmake")
+         "${CMAKE_CURRENT_BINARY_DIR}/Write${NAME}${SALT}.cmake")
     file (WRITE "${WRITE_SOURCE_FILE_SCRIPT}"
-          "file (RENAME \"${CMAKE_CURRENT_SOURCE_DIR}/${TMP_LOCATION}\"\n"
-          "      \"${CMAKE_CURRENT_BINARY_DIR}/${NAME}\")\n")
+          "file (READ \"${CMAKE_CURRENT_BINARY_DIR}/${NAME}${SALT}\"\n"
+          "      GENERATED_FILE_CONTENTS)\n"
+          "file (WRITE \"${CMAKE_CURRENT_BINARY_DIR}/${NAME}\"\n"
+          "      \"\${GENERATED_FILE_CONTENTS}\")\n")
 
 
     # Generate target name, convert temporary location to lowercase.
