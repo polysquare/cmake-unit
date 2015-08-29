@@ -82,6 +82,11 @@ This is the first phase that is run for the test. It cannot be overridden.
 It does some initial setup for the test itself, including writing out
 a special driver script which will be used to invoke this test at CTest time.
 
+Two options are exposed to this unit for this phase, `SKIP_GENERATOR_REGEX`
+and `SKIP_SYSTEM_REGEX`. A list of regular expressions can be provided for
+each option, which will cause the test not to run when the regex matches
+`CMAKE_SYSTEM` and `CMAKE_GENERATOR` respectively.
+
 #### The `CLEAN` phase ####
 
 This phase is responsible for cleaning the build directory of the test. By

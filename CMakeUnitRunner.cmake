@@ -297,8 +297,29 @@ function (_cmake_unit_preconfigure_test)
     cmake_parse_arguments (PRECONFIGURE_TEST
                            ""
                            "TEST_NAME;BINARY_DIR;SOURCE_DIR"
-                           ""
+                           "SKIP_SYSTEM_REGEX;SKIP_GENERATOR_REGEX"
                            ${CALLER_ARGN})
+
+    # If this test should be skipped, return early
+    foreach (REGEX ${PRECONFIGURE_TEST_SKIP_SYSTEM_REGEX})
+
+        if ("${CMAKE_SYSTEM}" MATCHES "${REGEX}")
+
+            return ()
+
+        endif ()
+
+    endforeach ()
+
+    foreach (REGEX ${PRECONFIGURE_TEST_SKIP_GENERATOR_REGEX})
+
+        if ("${CMAKE_GENERATOR}" MATCHES "${REGEX}")
+
+            return ()
+
+        endif ()
+
+    endforeach ()
 
     set (TEST_NAME "${PRECONFIGURE_TEST_TEST_NAME}")
     set (DRIVER_SCRIPT "${PRECONFIGURE_TEST_SOURCE_DIR}/Driver.cmake")

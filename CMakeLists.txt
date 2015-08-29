@@ -40,6 +40,7 @@ include (CMakeUnitRunner)
 function (_cmake_unit_test_gen_configure_no_discover RETURN_AUX_CMAKELISTS)
 
     set (PHASE_TYPES CLEAN
+                     PRECONFIGURE
                      INVOKE_CONFIGURE
                      CONFIGURE
                      INVOKE_BUILD
@@ -189,6 +190,126 @@ function (cmake_unit_test_cmake_test_added_where_setup_script_exists)
 
         _cmake_unit_test_gen_configure (NAMESPACE sample
                                         NAME one)
+
+    endfunction ()
+
+    function (_cmake_unit_verify)
+
+        set (TEST_OUTPUT_REGEX "^.*Start.*sample_test_one.*$")
+
+        cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex "${TEST_OUTPUT_REGEX}")
+
+    endfunction ()
+
+    cmake_unit_configure_test (CONFIGURE COMMAND _cmake_unit_configure
+                               VERIFY COMMAND _cmake_unit_verify)
+
+endfunction ()
+
+# Check that where we call cmake_unit_configure_test and pass
+# the current generator to SKIP_GENERATOR_REGEX that the test is skipped
+function (cmake_unit_test_cmake_test_not_added_where_skipping_generator)
+
+    function (_cmake_unit_configure)
+
+        _cmake_unit_test_gen_configure (NAMESPACE sample
+                                        NAME one
+                                        PRECONFIGURE OPTIONS
+                                                     SKIP_GENERATOR_REGEX
+                                                     "${CMAKE_GENERATOR}"
+                                                     "AnotherGenerator")
+
+    endfunction ()
+
+    function (_cmake_unit_verify)
+
+        set (TEST_OUTPUT_REGEX "^.*Start.*sample_test_one.*$")
+
+        cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
+        cmake_unit_assert_that ("${TEST_OUTPUT}" not file_contents any_line
+                                matches_regex "${TEST_OUTPUT_REGEX}")
+
+    endfunction ()
+
+    cmake_unit_configure_test (CONFIGURE COMMAND _cmake_unit_configure
+                               VERIFY COMMAND _cmake_unit_verify)
+
+endfunction ()
+
+# Check that where we call cmake_unit_configure_test and pass
+# the an unknown generator to SKIP_GENERATOR_REGEX that the test is
+# not skipped.
+function (cmake_unit_test_cmake_test_added_where_not_skipping_generator)
+
+    function (_cmake_unit_configure)
+
+        _cmake_unit_test_gen_configure (NAMESPACE sample
+                                        NAME one
+                                        PRECONFIGURE OPTIONS
+                                                     SKIP_GENERATOR_REGEX
+                                                     "AnotherGenerator")
+
+    endfunction ()
+
+    function (_cmake_unit_verify)
+
+        set (TEST_OUTPUT_REGEX "^.*Start.*sample_test_one.*$")
+
+        cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex "${TEST_OUTPUT_REGEX}")
+
+    endfunction ()
+
+    cmake_unit_configure_test (CONFIGURE COMMAND _cmake_unit_configure
+                               VERIFY COMMAND _cmake_unit_verify)
+
+endfunction ()
+
+# Check that where we call cmake_unit_configure_test and pass
+# the current system to SKIP_GENERATOR_REGEX that the test is skipped
+function (cmake_unit_test_cmake_test_not_added_where_skipping_system)
+
+    function (_cmake_unit_configure)
+
+        _cmake_unit_test_gen_configure (NAMESPACE sample
+                                        NAME one
+                                        PRECONFIGURE OPTIONS
+                                                     SKIP_SYSTEM_REGEX
+                                                     "${CMAKE_SYSTEM}"
+                                                     "AnotherSystem")
+
+    endfunction ()
+
+    function (_cmake_unit_verify)
+
+        set (TEST_OUTPUT_REGEX "^.*Start.*sample_test_one.*$")
+
+        cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
+        cmake_unit_assert_that ("${TEST_OUTPUT}" not file_contents any_line
+                                matches_regex "${TEST_OUTPUT_REGEX}")
+
+    endfunction ()
+
+    cmake_unit_configure_test (CONFIGURE COMMAND _cmake_unit_configure
+                               VERIFY COMMAND _cmake_unit_verify)
+
+endfunction ()
+
+# Check that where we call cmake_unit_configure_test and pass
+# the an unknown system to SKIP_SYSTEM_REGEX that the test is
+# not skipped.
+function (cmake_unit_test_cmake_test_added_where_not_skipping_generator)
+
+    function (_cmake_unit_configure)
+
+        _cmake_unit_test_gen_configure (NAMESPACE sample
+                                        NAME one
+                                        PRECONFIGURE OPTIONS
+                                                     SKIP_SYSTEM_REGEX
+                                                     "AnotherSystem")
 
     endfunction ()
 
