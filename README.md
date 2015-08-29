@@ -4,9 +4,9 @@ A unit testing framework for CMake.
 
 ## Status ##
 
-| Travis-CI (Ubuntu) | AppVeyor (Windows) | Coveralls |
-|--------------------|--------------------|-----------|
-|[![Travis](https://travis-ci.org/polysquare/cmake-unit.svg?branch=master)](https://travis-ci.org/polysquare/cmake-unit)|[![AppVeyor](https://ci.appveyor.com/api/projects/status/7ntnxx783cr627hm/branch/master?svg=true)](https://ci.appveyor.com/project/smspillaz/cmake-unit-724/branch/master)|[![Coveralls](https://coveralls.io/repos/polysquare/cmake-unit/badge.png)](https://coveralls.io/r/polysquare/cmake-unit)|
+| Travis CI (Ubuntu) | AppVeyor (Windows) | Coverage | Biicode | Licence |
+|--------------------|--------------------|----------|---------|---------|
+|[![Travis](https://img.shields.io/travis/polysquare/cmake-unit.svg)](http://travis-ci.org/polysquare/cmake-unit)|[![AppVeyor](https://img.shields.io/appveyor/ci/smspillaz/cmake-unit-724.svg)](https://ci.appveyor.com/project/smspillaz//cmake-unit-724)|[![Coveralls](https://img.shields.io/coveralls/polysquare/cmake-unit.svg)](http://coveralls.io/polysquare/cmake-unit)|[![Biicode](https://webapi.biicode.com/v1/badges/smspillaz/smspillaz/cmake-unit/master)](https://www.biicode.com/smspillaz/cmake-unit)|[![License](https://img.shields.io/github/license/polysquare/cmake-unit.svg)](http://github.com/polysquare/cmake-unit)|
 
 ## Why have a unit-testing framework for CMake ##
 
