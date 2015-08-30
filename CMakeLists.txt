@@ -823,6 +823,34 @@ function (cmake_unit_test_cmake_build_test_no_errors_where_w_error_disabled)
 
 endfunction ()
 
+# Check that we can read files put into the top-level binary directory, above
+# the tests. This is useful in cases where we might want to generate an
+# executable once during the build phase and re-use it during the tests.
+function (cmake_unit_test_can_read_from_invoking_binary_dir)
+
+    function (_cmake_unit_configure)
+
+        set (GENERATED_FILE "Generated.cpp")
+        cmake_unit_generate_source_file_during_build (TARGET
+                                                      NAME "${GENERATED_FILE}"
+                                                      GENERATED_FILE
+                                                      "${_CURRENT_LIST_FILE}")
+        set (VERIFY_SCRIPT
+             "cmake_unit_assert_that ("
+             "\"\${CMAKE_UNIT_INVOKING_BINARY_DIR}/${GENERATED_FILE}\""
+             "exists_as_file)\n")
+
+        _cmake_unit_test_gen_configure (NAMESPACE sample
+                                        NAME one
+                                        VERIFY SCRIPT "${VERIFY_SCRIPT}")
+
+    endfunction ()
+
+    cmake_unit_configure_test (CONFIGURE COMMAND _cmake_unit_configure
+                               INVOKE_CONFIGURE OPTIONS LANGUAGES C CXX)
+
+endfunction ()
+
 # Set up some tests which will include some specified scripts, but not
 # a certain excluded script. Eg
 # First Test:
