@@ -288,6 +288,12 @@ function (_cmake_unit_get_child_invocation_script_header HEADER_RETURN)
          "set (CMAKE_GENERATOR \"${CMAKE_GENERATOR}\")\n"
          "set (CMAKE_UNIT_INVOKING_BINARY_DIR\n"
          "     \"${CMAKE_CURRENT_BINARY_DIR}\")\n"
+         "set (CMAKE_UNIT_INVOKING_RUNTIME_OUTPUT_DIRECTORY\n"
+         "     \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\")\n"
+         "set (CMAKE_UNIT_INVOKING_ARCHIVE_OUTPUT_DIRECTORY\n"
+         "     \"${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}\")\n"
+         "set (CMAKE_UNIT_INVOKING_LIBRARY_OUTPUT_DIRECTORY\n"
+         "     \"${CMAKE_LIBRARY_OUTPUT_DIRECTORY}\")\n"
          ${DISPATCH_TABLE_PROP_LINE}
          ${DISCOVERED_TESTS_PROP_LINE}
          PARENT_SCOPE)
