@@ -348,6 +348,8 @@ function (_cmake_unit_preconfigure_test)
          "     CACHE BOOL \"\" FORCE)\n"
          "set (CMAKE_PROJECT_NAME\n"
          "     \"${CMAKE_PROJECT_NAME}\")\n"
+         "set (CMAKE_UNIT_INVOKING_BINARY_DIR\n"
+         "     \"${CMAKE_CURRENT_BINARY_DIR}\")\n"
          "set_property (GLOBAL PROPERTY\n"
          "              _CMAKE_UNIT_COVERAGE_LOGGING_FILES\n"
          "              ${COVERAGE_FILES})\n"
