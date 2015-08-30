@@ -851,6 +851,47 @@ function (cmake_unit_test_can_read_from_invoking_binary_dir)
 
 endfunction ()
 
+# Check that output directories are forwarded.
+function (cmake_unit_test_forward_output_directories)
+
+    set (RUNTIME_DIR "runtime")
+    set (LIBRARY_DIR "library")
+    set (ARCHIVE_DIR "archive")
+
+    set (CMAKE_RUNTIME_OUTPUT_DIRECTORY # NOLINT:unused/var_in_func
+         "${RUNTIME_DIR}")
+    set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY # NOLINT:unused/var_in_func
+         "${ARCHIVE_DIR}")
+    set (CMAKE_LIBRARY_OUTPUT_DIRECTORY # NOLINT:unused/var_in_func
+         "${LIBRARY_DIR}")
+
+    function (_cmake_unit_configure)
+
+        set (CONFIGURE_SCRIPT
+             "cmake_unit_assert_that ("
+             "CMAKE_UNIT_INVOKING_RUNTIME_OUTPUT_DIRECTORY compare_as "
+             "STRING EQUAL \"${RUNTIME_DIR}\")\n"
+             "cmake_unit_assert_that ("
+             "CMAKE_UNIT_INVOKING_LIBRARY_OUTPUT_DIRECTORY compare_as "
+             "STRING EQUAL \"${LIBRARY_DIR}\")\n"
+             "cmake_unit_assert_that ("
+             "CMAKE_UNIT_INVOKING_ARCHIVE_OUTPUT_DIRECTORY compare_as "
+             "STRING EQUAL \"${ARCHIVE_DIR}\")\n")
+
+        _cmake_unit_test_gen_configure (NAMESPACE sample
+                                        NAME one
+                                        CONFIGURE SCRIPT "${CONFIGURE_SCRIPT}")
+
+    endfunction ()
+
+    cmake_unit_configure_test (CONFIGURE COMMAND _cmake_unit_configure)
+
+    unset (CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+    unset (CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+    unset (CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+
+endfunction ()
+
 # Set up some tests which will include some specified scripts, but not
 # a certain excluded script. Eg
 # First Test:

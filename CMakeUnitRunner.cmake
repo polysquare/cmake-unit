@@ -279,7 +279,7 @@ function (_cmake_unit_get_child_invocation_script_header HEADER_RETURN)
 
     cmake_spacify_list (SPACIFIED_MODULE_PATH LIST "${CMAKE_MODULE_PATH}")
 
-    set (${HEADER_RETURN}
+    set (HEADER_RETURN_CONTENTS
          "set (CMAKE_MODULE_PATH \"${_RUNNER_LIST_DIR}\"\n"
          "     ${SPACIFIED_MODULE_PATH})\n"
          "set (_CMAKE_UNIT_ACTIVE_TEST ${TEST_NAME})\n"
@@ -287,15 +287,40 @@ function (_cmake_unit_get_child_invocation_script_header HEADER_RETURN)
          "     CACHE STRING \"\" FORCE)\n"
          "set (CMAKE_GENERATOR \"${CMAKE_GENERATOR}\")\n"
          "set (CMAKE_UNIT_INVOKING_BINARY_DIR\n"
-         "     \"${CMAKE_CURRENT_BINARY_DIR}\")\n"
-         "set (CMAKE_UNIT_INVOKING_RUNTIME_OUTPUT_DIRECTORY\n"
-         "     \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\")\n"
-         "set (CMAKE_UNIT_INVOKING_ARCHIVE_OUTPUT_DIRECTORY\n"
-         "     \"${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}\")\n"
-         "set (CMAKE_UNIT_INVOKING_LIBRARY_OUTPUT_DIRECTORY\n"
-         "     \"${CMAKE_LIBRARY_OUTPUT_DIRECTORY}\")\n"
+         "     \"${CMAKE_CURRENT_BINARY_DIR}\")\n")
+
+    set (DIRECTORIES_TO_FORWARD
+         RUNTIME_OUTPUT_DIRECTORY
+         ARCHIVE_OUTPUT_DIRECTORY
+         LIBRARY_OUTPUT_DIRECTORY)
+
+    foreach (DIR ${DIRECTORIES_TO_FORWARD})
+
+        if (NOT "${CMAKE_${DIR}}" STREQUAL "")
+
+            set (HEADER_RETURN_CONTENTS
+                 ${HEADER_RETURN_CONTENTS}
+                 "set (CMAKE_UNIT_INVOKING_${DIR}\n"
+                 "     \"${CMAKE_${DIR}}\")\n")
+
+        elseif (NOT "${CMAKE_UNIT_INVOKING_${DIR}}" STREQUAL "")
+
+            set (HEADER_RETURN_CONTENTS
+                 ${HEADER_RETURN_CONTENTS}
+                 "set (CMAKE_UNIT_INVOKING_${DIR}\n"
+                 "     \"${CMAKE_UNIT_INVOKING_${DIR}}\")\n")
+
+        endif ()
+
+    endforeach ()
+
+    set (HEADER_RETURN_CONTENTS
+         ${HEADER_RETURN_CONTENTS}
          ${DISPATCH_TABLE_PROP_LINE}
-         ${DISCOVERED_TESTS_PROP_LINE}
+         ${DISCOVERED_TESTS_PROP_LINE})
+
+    set (${HEADER_RETURN}
+         ${HEADER_RETURN_CONTENTS}
          PARENT_SCOPE)
 
 endfunction ()
