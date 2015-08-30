@@ -286,6 +286,8 @@ function (_cmake_unit_get_child_invocation_script_header HEADER_RETURN)
          "set (CMAKE_UNIT_COVERAGE_FILE \"${CMAKE_UNIT_COVERAGE_FILE}\"\n"
          "     CACHE STRING \"\" FORCE)\n"
          "set (CMAKE_GENERATOR \"${CMAKE_GENERATOR}\")\n"
+         "set (CMAKE_UNIT_INVOKING_BINARY_DIR\n"
+         "     \"${CMAKE_CURRENT_BINARY_DIR}\")\n"
          ${DISPATCH_TABLE_PROP_LINE}
          ${DISCOVERED_TESTS_PROP_LINE}
          PARENT_SCOPE)
@@ -348,8 +350,6 @@ function (_cmake_unit_preconfigure_test)
          "     CACHE BOOL \"\" FORCE)\n"
          "set (CMAKE_PROJECT_NAME\n"
          "     \"${CMAKE_PROJECT_NAME}\")\n"
-         "set (CMAKE_UNIT_INVOKING_BINARY_DIR\n"
-         "     \"${CMAKE_CURRENT_BINARY_DIR}\")\n"
          "set_property (GLOBAL PROPERTY\n"
          "              _CMAKE_UNIT_COVERAGE_LOGGING_FILES\n"
          "              ${COVERAGE_FILES})\n"
