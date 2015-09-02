@@ -1161,6 +1161,34 @@ function (cmake_unit_test_source_file_generated_during_build_exists)
 
 endfunction ()
 
+# Exit with a fatal error if the source file passed to
+# cmake_unit_create_source_file_before_build does not have a valid
+# extension.
+function (cmake_unit_test_source_file_created_before_build_needs_extension)
+
+    cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
+
+    function (_cmake_unit_configure)
+
+        cmake_unit_create_source_file_before_build (NAME "incorrect")
+
+    endfunction ()
+
+    function (_cmake_unit_verify)
+
+        cmake_unit_get_log_for (INVOKE_CONFIGURE ERROR CONFIGURE_ERROR)
+        cmake_unit_assert_that ("${CONFIGURE_ERROR}"
+                                file_contents any_line matches_regex
+                                "^.*current name is incorrect.*$")
+
+    endfunction ()
+
+    cmake_unit_configure_test (CONFIGURE COMMAND _cmake_unit_configure
+                               VERIFY COMMAND _cmake_unit_verify
+                               INVOKE_CONFIGURE OPTIONS ALLOW_FAIL)
+
+endfunction ()
+
 # Check that source files created and generated with the same options
 # are completely equal. The hash of both should be equal.
 function (cmake_unit_test_generated_and_created_source_files_equal)

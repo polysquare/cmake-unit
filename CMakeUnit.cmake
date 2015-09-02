@@ -286,15 +286,18 @@ function (_cmake_unit_get_created_source_file_contents CONTENTS_RETURN
     endif ()
 
     # Detect intended file type from filename
+
     get_filename_component (EXTENSION "${GET_CREATED_NAME}" EXT)
 
-    # Remove leading dot
-    if (EXTENSION)
+    if (NOT EXTENSION)
 
-        string (SUBSTRING "${EXTENSION}" 1 -1 EXTENSION)
+        message (FATAL_ERROR "Need to specify an extension in order to get "
+                             "correct source file contents for this file. The "
+                             "current name is ${GET_CREATED_NAME}.")
 
     endif ()
 
+    string (SUBSTRING "${EXTENSION}" 1 -1 EXTENSION)
     set (SOURCE_EXTENSIONS
          ${CMAKE_C_SOURCE_FILE_EXTENSIONS}
          ${CMAKE_CXX_SOURCE_FILE_EXTENSIONS})
