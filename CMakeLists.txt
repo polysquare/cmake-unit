@@ -1338,6 +1338,46 @@ function (cmake_unit_test_create_simple_library)
 
 endfunction ()
 
+# Creates a simple executable named "executable" by using
+# cmake_unit_create_simple_executable and links to a simple library
+# named "library" created by using cmake_unit_create_simple_library. Note
+# that the library has no functions specified, but the test should still
+# pass.
+function (cmake_unit_test_create_simple_library_without_functions)
+
+    cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
+
+    function (_cmake_unit_configure)
+
+        cmake_unit_create_simple_library (library SHARED
+                                          GENERATING_FILE
+                                          "${_CURRENT_LIST_FILE}")
+        cmake_unit_create_simple_executable (executable
+                                             GENERATING_FILE
+                                             "${_CURRENT_LIST_FILE}")
+        target_link_libraries (executable library)
+
+    endfunction ()
+
+    function (_cmake_unit_verify)
+
+        cmake_unit_get_log_for (INVOKE_BUILD OUTPUT BUILD_OUTPUT)
+
+        cmake_unit_assert_that ("${BUILD_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*library.*$")
+        cmake_unit_assert_that ("${BUILD_OUTPUT}" file_contents any_line
+                                matches_regex
+                                "^.*executable.*$")
+
+    endfunction ()
+
+    cmake_unit_configure_test (INVOKE_CONFIGURE LANGUAGES C CXX
+                               CONFIGURE COMMAND _cmake_unit_configure
+                               VERIFY COMMAND _cmake_unit_verify)
+
+endfunction ()
+
 # Create an external project with an exported library and use
 # cmake_unit_export_cfg_int_dir in that external project to write out
 # CMAKE_CFG_INT_DIR to /CfgIntDirValue.txt in its BINARY_DIR

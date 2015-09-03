@@ -643,12 +643,38 @@ endfunction ()
 # FUNCTIONS: Functions that the library should have.
 function (cmake_unit_create_simple_library NAME TYPE)
 
-    cmake_parse_arguments (CREATE_SIMPLE_LIBRARY "" "GENERATING_FILE" ""
+    set (CREATE_SIMPLE_LIBRARY_OPTION_ARGS
+         ${_CMAKE_UNIT_SOURCE_FILE_OPTION_ARGS})
+    set (CREATE_SIMPLE_LIBRARY_SINGLEVAR_ARGS
+         ${_CMAKE_UNIT_SOURCE_FILE_SINGLEVAR_ARGS})
+    set (CREATE_SIMPLE_LIBRARY_MULTIVAR_ARGS
+         ${_CMAKE_UNIT_SOURCE_FILE_MULTIVAR_ARGS})
+
+    cmake_parse_arguments (CREATE_SIMPLE_LIBRARY
+                           "${CREATE_SIMPLE_LIBRARY_OPTION_ARGS}"
+                           "${CREATE_SIMPLE_LIBRARY_SINGLEVAR_ARGS}"
+                           "${CREATE_SIMPLE_LIBRARY_MULTIVAR_ARGS}"
                            ${ARGN})
 
-    cmake_forward_arguments (CREATE_SIMPLE_LIBRARY GENERATE_FWD
-                             SINGLEVAR_ARGS GENERATING_FILE)
-    _cmake_unit_create_source_for_simple_target (${NAME} LOCATION ${ARGN}
+    # Check if there are any functions - if there are not, then we will
+    # need to add an internal one to ensure that linking the library
+    # is successful. If no functions are added, then certain compilers
+    # will not write a file containing our object code.
+    if (NOT CREATE_SIMPLE_LIBRARY_FUNCTIONS)
+
+        set (CREATE_SIMPLE_LIBRARY_FUNCTIONS internal_cmake_unit_function__)
+
+    endif ()
+
+    cmake_forward_arguments (CREATE_SIMPLE_LIBRARY CREATE_FWD
+                             OPTION_ARGS
+                             ${CREATE_SIMPLE_LIBRARY_OPTION_ARGS}
+                             SINGLEVAR_ARGS
+                             ${CREATE_SIMPLE_LIBRARY_SINGLEVAR_ARGS}
+                             MULTIVAR_ARGS
+                             ${CREATE_SIMPLE_LIBRARY_MULTIVAR_ARGS})
+    _cmake_unit_create_source_for_simple_target (${NAME} LOCATION
+                                                 ${CREATE_FWD}
                                                  FUNCTIONS_EXPORT_TARGET
                                                  ${NAME})
     add_library (${NAME} ${TYPE} "${LOCATION}")
