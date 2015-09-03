@@ -371,8 +371,6 @@ function (_cmake_unit_preconfigure_test)
     set (DRIVER_SCRIPT_CONTENTS
          "set (_CMAKE_UNIT_PHASE CLEAN)\n"
          ${COMMON_PROLOGUE}
-         "set (CMAKE_GENERATOR\n"
-         "     \"${CMAKE_GENERATOR}\")\n"
          "set (CMAKE_UNIT_NO_DEV_WARNINGS\n"
          "     ${CMAKE_UNIT_NO_DEV_WARNINGS}\n"
          "     CACHE BOOL \"\" FORCE)\n"
@@ -765,7 +763,7 @@ function (cmake_unit_invoke_build)
 
     endif ()
 
-    if (CMAKE_MAKE_PROGRAM MATCHES ".*ninja.*")
+    if (CMAKE_GENERATOR MATCHES ".*Ninja.*")
 
         set (BUILD_TOOL_VERBOSE_OPTION "-v")
 
@@ -1228,10 +1226,9 @@ function (_cmake_unit_configure_test_internal)
                                          ${ARGN})
 
     set (PHASE ${_CMAKE_UNIT_PHASE})
-    set (TEST_SOURCE_DIR "${CMAKE_UNIT_CONFIGURE_TEST_SOURCE_DIR}")
-    set (TEST_BINARY_DIR "${CMAKE_UNIT_CONFIGURE_TEST_BINARY_DIR}")
 
-    cmake_forward_arguments (TEST PHASE_FUNCTION_STANDARD_ARGS
+    cmake_forward_arguments (CMAKE_UNIT_CONFIGURE_TEST
+                             PHASE_FUNCTION_STANDARD_ARGS
                              SINGLEVAR_ARGS SOURCE_DIR
                                             BINARY_DIR
                                             OUTPUT_FILE
@@ -1239,10 +1236,9 @@ function (_cmake_unit_configure_test_internal)
 
     cmake_call_function (${PHASE_FUNCTION} ${PHASE_ARGUMENTS}
                          TEST_NAME ${TEST_NAME}
-                         SOURCE_DIR "${TEST_SOURCE_DIR}"
-                         BINARY_DIR "${TEST_BINARY_DIR}"
                          OUTPUT_FILE "${TEST_BINARY_DIR}/${PHASE}.output"
-                         ERROR_FILE "${TEST_BINARY_DIR}/${PHASE}.error")
+                         ERROR_FILE "${TEST_BINARY_DIR}/${PHASE}.error"
+                         ${PHASE_FUNCTION_STANDARD_ARGS})
 
     # Implicitly dereference _CMAKE_UNIT_PHASE_AFTER_${PHASE} and if there's
     # a phase to go to, recursively call this function and enter the next phase.

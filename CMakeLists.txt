@@ -328,6 +328,36 @@ function (cmake_unit_test_cmake_test_added_where_not_skipping_generator)
 
 endfunction ()
 
+# Check that where we use the Ninja generator, the verbose option is
+# passed.
+function (cmake_unit_test_verbose_option_passed_to_ninja_generator)
+
+    function (_cmake_unit_configure)
+
+        set (CMAKE_LAST_GENERATOR "${CMAKE_GENERATOR}")
+        set (CMAKE_GENERATOR "Ninja")
+        _cmake_unit_test_gen_configure (NAMESPACE sample
+                                        NAME one)
+        set (CMAKE_GENERATOR "${CMAKE_LAST_GENERATOR}")
+
+
+    endfunction ()
+
+    function (_cmake_unit_verify)
+
+        set (TEST_OUTPUT_REGEX "^.*cmake.*--build.*--.*-v.*$")
+
+        cmake_unit_get_log_for (INVOKE_TEST OUTPUT TEST_OUTPUT)
+        cmake_unit_assert_that ("${TEST_OUTPUT}" file_contents any_line
+                                matches_regex "${TEST_OUTPUT_REGEX}")
+
+    endfunction ()
+
+    cmake_unit_configure_test (CONFIGURE COMMAND _cmake_unit_configure
+                               VERIFY COMMAND _cmake_unit_verify)
+
+endfunction ()
+
 # Check that where we have a test matching the test pattern in /CMakeLists.txt
 # that calling cmake_unit_configure_test actually adds a test and that the build
 # output indicates that we've built, tested and verified sample too
