@@ -765,7 +765,7 @@ function (cmake_unit_invoke_build)
 
     endif ()
 
-    if (CMAKE_MAKE_PROGRAM MATCHES ".*ninja.*")
+    if (CMAKE_GENERATOR MATCHES ".*Ninja.*")
 
         set (BUILD_TOOL_VERBOSE_OPTION "-v")
 
