@@ -133,7 +133,7 @@ function (_cmake_unit_test_gen_discover_from_contents)
 
     set (CMAKE_MODULE_PATH "${CMAKE_UNIT_DIRECTORY}" "${CMAKE_MODULE_PATH}")
 
-    set (GEN_DISCOVER_SINGLEVAR_ARGS NAMESPACE NAME)
+    set (GEN_DISCOVER_SINGLEVAR_ARGS NAMESPACE NAME COVERAGE_FILE)
     set (GEN_DISCOVER_MULTIVAR_ARGS CONTENTS INIT_OPTIONS)
     cmake_parse_arguments (GEN_DISCOVER
                            ""
@@ -170,6 +170,21 @@ function (_cmake_unit_test_gen_discover_from_contents)
 
     file (WRITE "${AUX_CMAKELISTS_FILE}"
           ${AUX_CMAKELISTS_FILE_CONTENTS})
+
+    # If a coverage file was specified, we want to log coverage for these
+    # inner-tests. Set CMAKE_UNIT_COVERAGE_FILE as such. Otherwise,
+    # must should set CMAKE_UNIT_COVERAGE_FILE to an empty string, such
+    # that it will not be clobbered by running this inner test.
+    if (GEN_DISCOVER_COVERAGE_FILE)
+
+        set (CMAKE_UNIT_COVERAGE_FILE "${GEN_DISCOVER_COVERAGE_FILE}"
+             CACHE STRING "" FORCE)
+
+    else ()
+
+        set (CMAKE_UNIT_COVERAGE_FILE "" CACHE STRING "" FORCE)
+
+    endif ()
 
     include ("${AUX_CMAKELISTS_FILE}")
 
@@ -962,6 +977,7 @@ endfunction ()
 function (cmake_unit_test_cmake_test_files_recorded_in_tracefile_across_tests)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
+    set (COVERAGE_TRACE "${BINARY_DIR}/coverage.trace")
 
     function (_cmake_unit_configure)
 
@@ -1019,8 +1035,6 @@ function (cmake_unit_test_cmake_test_files_recorded_in_tracefile_across_tests)
         set (END "end")
 
         set (CONTENTS_PROLOGUE
-             "set (CMAKE_UNIT_COVERAGE_FILE \"${BINARY_DIR}/coverage.trace\"\n"
-             "     CACHE STRING \"\" FORCE)\n"
              "if (NOT CMAKE_SCRIPT_MODE_FILE)\n"
              "    project (SampleTests NONE)\n"
              "${END}if ()\n")
@@ -1033,13 +1047,14 @@ function (cmake_unit_test_cmake_test_files_recorded_in_tracefile_across_tests)
                                                      "${INCLUDED}"
                                                      "${SECOND_TEST_SPECIFIC}"
                                                      "${FIRST_TEST_SPECIFIC}"
-                                                     NAMESPACE sample)
+                                                     NAMESPACE sample
+                                                     COVERAGE_FILE
+                                                     "${COVERAGE_TRACE}")
 
     endfunction ()
 
     function (_cmake_unit_verify)
 
-        set (COVERAGE_TRACE "${BINARY_DIR}/coverage.trace")
         set (FIRST_TEST_REGEX "^.*FirstTestSpecific.cmake.1.*$")
         set (SECOND_TEST_REGEX "^.*SecondTestSpecific.cmake.1.*$")
         set (EXCLUDED_REGEX "^.*Excluded.cmake.*$")
@@ -2191,16 +2206,16 @@ function (cmake_unit_test_coverage_file_clobbered_on_bootstrap)
 
     function (_cmake_unit_configure)
 
-        set (CMAKE_UNIT_LOG_COVERAGE ON CACHE BOOL "" FORCE)
-        set (CMAKE_UNIT_COVERAGE_FILE "${BINARY_DIR}/coverage.trace"
-             CACHE STRING "" FORCE)
-        file (WRITE "${CMAKE_UNIT_COVERAGE_FILE}" "Non-empty contents")
+        set (COVERAGE_FILE "${BINARY_DIR}/coverage.trace")
+        file (WRITE "${COVERAGE_FILE}" "Non-empty contents")
         _cmake_unit_test_gen_configure (NAMESPACE sample
                                         NAME one
+                                        COVERAGE_FILE
+                                        "${COVERAGE_FILE}"
                                         CONFIGURE SCRIPT
                                         ${CONFIGURE_SCRIPT})
         # At least after the preconfigure step, the tracefile should be empty
-        file (READ "${CMAKE_UNIT_COVERAGE_FILE}" TRACE_FILE_CONTENTS)
+        file (READ "${COVERAGE_FILE}" TRACE_FILE_CONTENTS)
         cmake_unit_assert_that (TRACE_FILE_CONTENTS
                                 compare_as STRING EMPTY "EMPTY")
 
