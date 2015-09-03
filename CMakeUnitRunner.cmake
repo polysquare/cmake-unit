@@ -371,8 +371,6 @@ function (_cmake_unit_preconfigure_test)
     set (DRIVER_SCRIPT_CONTENTS
          "set (_CMAKE_UNIT_PHASE CLEAN)\n"
          ${COMMON_PROLOGUE}
-         "set (CMAKE_GENERATOR\n"
-         "     \"${CMAKE_GENERATOR}\")\n"
          "set (CMAKE_UNIT_NO_DEV_WARNINGS\n"
          "     ${CMAKE_UNIT_NO_DEV_WARNINGS}\n"
          "     CACHE BOOL \"\" FORCE)\n"
