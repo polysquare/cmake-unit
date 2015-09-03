@@ -415,7 +415,7 @@ function (_cmake_unit_get_created_source_file_contents CONTENTS_RETURN
         foreach (FUNCTION ${GET_CREATED_FUNCTIONS})
 
             list (APPEND CONTENTS
-                  "${EXPORT_MACRO} int ${FUNCTION} ()"
+                  "int ${FUNCTION} ()"
                   "{"
                   "    return 0@SEMICOLON@"
                   "}")
