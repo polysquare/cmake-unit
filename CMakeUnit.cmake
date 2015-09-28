@@ -1099,7 +1099,7 @@ function (cmake_unit_compare_as)
 
             endif ()
 
-        elseif ("${${VARIABLE}}" STR${COMPARATOR} VALUE)
+        elseif ("${${VARIABLE}}" STR${COMPARATOR} "${VALUE}")
 
             set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
@@ -1107,7 +1107,7 @@ function (cmake_unit_compare_as)
 
     elseif (TYPE MATCHES "${INTEGER_TYPE}")
 
-        if ("${${VARIABLE}}" ${COMPARATOR} VALUE)
+        if ("${${VARIABLE}}" ${COMPARATOR} "${VALUE}")
 
             set (${RESULT_VARIABLE} TRUE PARENT_SCOPE)
 
