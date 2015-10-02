@@ -24,7 +24,7 @@ if (NOT BIICODE)
          "${CMAKE_CURRENT_LIST_DIR}/bii/deps"
          "${CMAKE_MODULE_PATH}")
 
-endif (NOT BIICODE)
+endif ()
 
 include ("smspillaz/cmake-include-guard/IncludeGuard")
 cmake_include_guard (SET_MODULE_PATH)
