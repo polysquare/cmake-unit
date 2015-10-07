@@ -568,23 +568,26 @@ function (cmake_unit_generate_source_file_during_build TARGET_RETURN)
     string (RANDOM SALT)
     _cmake_unit_write_out_file_without_semicolons ("${NAME}${SALT}"
                                                    CONTENTS ${CONTENTS})
-    file (RENAME "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}${SALT}"
-                 "${CMAKE_CURRENT_BINARY_DIR}/${NAME}${SALT}")
+
+    set (TMP_SOURCE_DIR_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}${SALT}")
+    set (TMP_BINARY_DIR_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}${SALT}")
+    get_filename_component (PARENT_PATH "${BINARY_DIR_LOCATION}" DIRECTORY)
+    file (MAKE_DIRECTORY "${PARENT_PATH}")
+    file (RENAME "${TMP_SOURCE_DIR_LOCATION}"
+                 "${TMP_BINARY_DIR_LOCATION}")
 
     set (WRITE_SOURCE_FILE_SCRIPT
          "${CMAKE_CURRENT_BINARY_DIR}/Write${NAME}${SALT}.cmake")
     file (WRITE "${WRITE_SOURCE_FILE_SCRIPT}"
-          "file (READ \"${CMAKE_CURRENT_BINARY_DIR}/${NAME}${SALT}\"\n"
+          "file (READ \"${TMP_BINARY_DIR_LOCATION}\"\n"
           "      GENERATED_FILE_CONTENTS)\n"
           "file (WRITE \"${CMAKE_CURRENT_BINARY_DIR}/${NAME}\"\n"
           "      \"\${GENERATED_FILE_CONTENTS}\")\n")
 
 
     # Generate target name, convert temporary location to lowercase.
-    string (REPLACE ";" "" TARGET_NAME_WITH_UPPER_CHARACTERS
-            "${TMP_LOCATION}")
-    string (TOLOWER "${TARGET_NAME_WITH_UPPER_CHARACTERS}" TARGET_NAME)
-    set (TARGET_NAME "generate_${TARGET_NAME}")
+    string (MD5 TARGET_NAME_HASH "${TMP_BINARY_DIR_LOCATION}")
+    set (TARGET_NAME "generate_${TARGET_NAME_HASH}")
 
     add_custom_command (OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${NAME}"
                         COMMAND "${CMAKE_COMMAND}" -P
