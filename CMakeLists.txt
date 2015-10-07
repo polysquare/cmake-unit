@@ -1206,6 +1206,38 @@ function (cmake_unit_test_source_file_generated_during_build_exists)
 
 endfunction ()
 
+# Check that a source file by the name Source.cpp was created in
+# /${CMAKE_CURRENT_SOURCE_DIR}/subdirectory when we call
+# cmake_unit_generate_source_file_during_build at the
+# _cmake_unit_configure-stage (it shouldn't exist at the _cmake_unit_configure
+# stage). Note that the subdirectory is automatically created.
+function (cmake_unit_test_source_file_generated_during_build_exists_subdir)
+
+    cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
+
+    function (_cmake_unit_configure)
+
+        cmake_unit_generate_source_file_during_build (GENERATED_DURING_TARGET
+                                                      NAME
+                                                      "subdirectory/Source.cpp")
+
+        cmake_unit_assert_that ("${SOURCE_DIR}/subdirectory/Source.cpp"
+                                not exists_as_file)
+
+    endfunction ()
+
+    function (_cmake_unit_verify)
+
+        cmake_unit_assert_that ("${BINARY_DIR}/subdirectory/Source.cpp"
+                                exists_as_file)
+
+    endfunction ()
+
+    cmake_unit_configure_test (CONFIGURE COMMAND _cmake_unit_configure
+                               VERIFY COMMAND _cmake_unit_verify)
+
+endfunction ()
+
 # Exit with a fatal error if the source file passed to
 # cmake_unit_create_source_file_before_build does not have a valid
 # extension.
