@@ -583,8 +583,7 @@ function (cmake_unit_generate_source_file_during_build TARGET_RETURN)
           "      GENERATED_FILE_CONTENTS)\n"
           "file (WRITE \"${CMAKE_CURRENT_BINARY_DIR}/${NAME}\"\n"
           "      \"\${GENERATED_FILE_CONTENTS}\")\n"
-          "file (REMOVE \"${TMP_BINARY_DIR_LOCATION}\")\n"
-          "file (REMOVE \"${WRITE_SOURCE_FILE_SCRIPT}\")\n")
+          "file (REMOVE \"${TMP_BINARY_DIR_LOCATION}\")\n")
 
 
     # Generate target name, convert temporary location to lowercase.
@@ -594,8 +593,17 @@ function (cmake_unit_generate_source_file_during_build TARGET_RETURN)
     add_custom_command (OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${NAME}"
                         COMMAND "${CMAKE_COMMAND}" -P
                         "${WRITE_SOURCE_FILE_SCRIPT}")
-    add_custom_target (${TARGET_NAME} ALL
+    add_custom_target (${TARGET_NAME}
                        SOURCES "${CMAKE_CURRENT_BINARY_DIR}/${NAME}")
+
+    add_custom_target (${TARGET_NAME}_cleanup ALL
+                       COMMAND
+                       "${CMAKE_COMMAND}"
+                       -E
+                       remove
+                       -f
+                       "${WRITE_SOURCE_FILE_SCRIPT}")
+    add_dependencies (${TARGET_NAME}_cleanup ${TARGET_NAME})
 
     set (${TARGET_RETURN} "${TARGET_NAME}" PARENT_SCOPE)
 
