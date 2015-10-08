@@ -582,7 +582,9 @@ function (cmake_unit_generate_source_file_during_build TARGET_RETURN)
           "file (READ \"${TMP_BINARY_DIR_LOCATION}\"\n"
           "      GENERATED_FILE_CONTENTS)\n"
           "file (WRITE \"${CMAKE_CURRENT_BINARY_DIR}/${NAME}\"\n"
-          "      \"\${GENERATED_FILE_CONTENTS}\")\n")
+          "      \"\${GENERATED_FILE_CONTENTS}\")\n"
+          "file (REMOVE \"${TMP_BINARY_DIR_LOCATION}\")\n"
+          "file (REMOVE \"${WRITE_SOURCE_FILE_SCRIPT}\")\n")
 
 
     # Generate target name, convert temporary location to lowercase.
@@ -649,6 +651,7 @@ function (cmake_unit_create_simple_library NAME TYPE)
     set (CREATE_SIMPLE_LIBRARY_OPTION_ARGS
          ${_CMAKE_UNIT_SOURCE_FILE_OPTION_ARGS})
     set (CREATE_SIMPLE_LIBRARY_SINGLEVAR_ARGS
+         GENERATING_FILE
          ${_CMAKE_UNIT_SOURCE_FILE_SINGLEVAR_ARGS})
     set (CREATE_SIMPLE_LIBRARY_MULTIVAR_ARGS
          ${_CMAKE_UNIT_SOURCE_FILE_MULTIVAR_ARGS})
