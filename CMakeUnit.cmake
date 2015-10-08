@@ -586,8 +586,10 @@ function (cmake_unit_generate_source_file_during_build TARGET_RETURN)
           "file (REMOVE \"${TMP_BINARY_DIR_LOCATION}\")\n")
 
 
-    # Generate target name, convert temporary location to lowercase.
+    # Generate target name, convert temporary location to lowercase, limit to
+    # 10 characters so that we don't hit file name size limits on Windows.
     string (MD5 TARGET_NAME_HASH "${TMP_BINARY_DIR_LOCATION}")
+    string (SUBSTRING "${TARGET_NAME_HASH}" 0 10 TARGET_NAME_HASH)
     set (TARGET_NAME "generate_${TARGET_NAME_HASH}")
 
     add_custom_command (OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${NAME}"
