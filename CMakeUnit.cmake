@@ -570,7 +570,7 @@ function (cmake_unit_generate_source_file_during_build TARGET_RETURN)
                                                    CONTENTS ${CONTENTS})
 
     set (TMP_SOURCE_DIR_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}${SALT}")
-    set (TMP_BINARY_DIR_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}${SALT}")
+    set (TMP_BINARY_DIR_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/${NAME}${SALT}")
     get_filename_component (PARENT_PATH "${BINARY_DIR_LOCATION}" DIRECTORY)
     file (MAKE_DIRECTORY "${PARENT_PATH}")
     file (RENAME "${TMP_SOURCE_DIR_LOCATION}"
