@@ -579,12 +579,13 @@ function (cmake_unit_generate_source_file_during_build TARGET_RETURN)
     set (WRITE_SOURCE_FILE_SCRIPT
          "${CMAKE_CURRENT_BINARY_DIR}/Write${NAME}${SALT}.cmake")
     file (WRITE "${WRITE_SOURCE_FILE_SCRIPT}"
-          "file (READ \"${TMP_BINARY_DIR_LOCATION}\"\n"
-          "      GENERATED_FILE_CONTENTS)\n"
-          "file (WRITE \"${CMAKE_CURRENT_BINARY_DIR}/${NAME}\"\n"
-          "      \"\${GENERATED_FILE_CONTENTS}\")\n"
-          "file (REMOVE \"${TMP_BINARY_DIR_LOCATION}\")\n")
-
+          "if (NOT EXISTS \"${CMAKE_CURRENT_BINARY_DIR}/${NAME}\")\n"
+          "    file (READ \"${TMP_BINARY_DIR_LOCATION}\"\n"
+          "          GENERATED_FILE_CONTENTS)\n"
+          "    file (WRITE \"${CMAKE_CURRENT_BINARY_DIR}/${NAME}\"\n"
+          "          \"\${GENERATED_FILE_CONTENTS}\")\n"
+          "    file (REMOVE \"${TMP_BINARY_DIR_LOCATION}\")\n"
+          "endif ()\n")
 
     # Generate target name, convert temporary location to lowercase, limit to
     # 10 characters so that we don't hit file name size limits on Windows.
