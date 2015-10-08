@@ -881,7 +881,7 @@ endfunction ()
 # NAMESPACE: The namespace to register.
 function (cmake_unit_register_matcher_namespace NAMESPACE)
 
-    set_property (GLOBAL APPEND PROPERTY "_CMAKE_UNIT_MATCHER_NAMEPSPACE"
+    set_property (GLOBAL APPEND PROPERTY "_CMAKE_UNIT_MATCHER_NAMESPACE"
                   "${NAMESPACE}")
 
 endfunction ()
@@ -904,7 +904,7 @@ function (cmake_unit_eval_matcher VARIABLE MATCHER)
                                           ARGN ${ARGN})
 
     get_property (MATCHER_NAMESPACES GLOBAL PROPERTY
-                  "_CMAKE_UNIT_MATCHER_NAMEPSPACE")
+                  "_CMAKE_UNIT_MATCHER_NAMESPACE")
     list (REVERSE MATCHER_NAMESPACES)
 
     foreach (NAMESPACE ${MATCHER_NAMESPACES})
