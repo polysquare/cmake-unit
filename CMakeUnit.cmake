@@ -441,7 +441,7 @@ function (_cmake_unit_write_out_file_without_semicolons NAME)
 
     cmake_parse_arguments (WRITE_OUT_FILE
                            ""
-                           "GENERATING_FILE"
+                           "GENERATING_FILE;DIRECTORY"
                            "CONTENTS"
                            ${ARGN})
 
@@ -458,9 +458,19 @@ function (_cmake_unit_write_out_file_without_semicolons NAME)
 
     endif ()
 
+    if (NOT WRITE_OUT_FILE_DIRECTORY)
+
+        set (WRITE_OUT_FILE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+
+    endif ()
+
     if (SHOULD_WRITE)
 
-        file (WRITE "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}"
+        get_filename_component (PARENT_PATH
+                                "${TMP_BINARY_DIR_LOCATION}"
+                                DIRECTORY)
+        file (MAKE_DIRECTORY "${PARENT_PATH}")
+        file (WRITE "${WRITE_OUT_FILE_DIRECTORY}/${NAME}"
               "${CONTENTS}\n")
 
     endif ()
@@ -567,14 +577,11 @@ function (cmake_unit_generate_source_file_during_build TARGET_RETURN)
 
     string (RANDOM SALT)
     _cmake_unit_write_out_file_without_semicolons ("${NAME}${SALT}"
+                                                   DIRECTORY
+                                                   "${CMAKE_CURRENT_BINARY_DIR}"
                                                    CONTENTS ${CONTENTS})
 
-    set (TMP_SOURCE_DIR_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}${SALT}")
     set (TMP_BINARY_DIR_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/${NAME}${SALT}")
-    get_filename_component (PARENT_PATH "${BINARY_DIR_LOCATION}" DIRECTORY)
-    file (MAKE_DIRECTORY "${PARENT_PATH}")
-    file (RENAME "${TMP_SOURCE_DIR_LOCATION}"
-                 "${TMP_BINARY_DIR_LOCATION}")
 
     set (WRITE_SOURCE_FILE_SCRIPT
          "${CMAKE_CURRENT_BINARY_DIR}/Write${NAME}${SALT}.cmake")
