@@ -289,6 +289,8 @@ function (_cmake_unit_get_child_invocation_script_header HEADER_RETURN)
          "set (CMAKE_GENERATOR \"${CMAKE_GENERATOR}\")\n"
          "set (CMAKE_C_COMPILER_ID \"${CMAKE_C_COMPILER_ID}\")\n"
          "set (CMAKE_CXX_COMPILER_ID \"${CMAKE_CXX_COMPILER_ID}\")\n"
+         "set (CMAKE_C_COMPILER \"${CMAKE_C_COMPILER}\")\n"
+         "set (CMAKE_CXX_COMPILER \"${CMAKE_CXX_COMPILER}\")\n"
          "set (CMAKE_C_COMPILER_VERSION \"${CMAKE_C_COMPILER_VERSION}\")\n"
          "set (CMAKE_CXX_COMPILER_VERSION \"${CMAKE_CXX_COMPILER_VERSION}\")\n"
          "set (CMAKE_UNIT_INVOKING_BINARY_DIR\n"
