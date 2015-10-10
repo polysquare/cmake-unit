@@ -704,6 +704,10 @@ function (cmake_unit_invoke_configure)
 
     endif ()
 
+    set (CMAKE_COMPILER_CHOICE_DEFINITIONS
+         "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+         "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+
     cmake_forward_arguments (INVOKE_CONFIGURE INVOKE_COMMAND_ARGUMENTS
                              OPTION_ARGS ALLOW_FAIL
                              SINGLEVAR_ARGS OUTPUT_FILE ERROR_FILE)
@@ -715,6 +719,7 @@ function (cmake_unit_invoke_configure)
                                         "${DEVELOPER_WARNINGS_OPTION}"
                                         "${PARENT_BINARY_DIR_OPTION}"
                                         ${CMAKE_POLICY_CACHE_DEFINITIONS}
+                                        ${CMAKE_COMPILER_CHOICE_DEFINITIONS}
                                         -DCMAKE_VERBOSE_MAKEFILE=ON
                                         "-G${CMAKE_GENERATOR}"
                                 WORKING_DIRECTORY
