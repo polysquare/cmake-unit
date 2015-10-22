@@ -40,6 +40,7 @@ CMakeUnitRunner
 cmake
 cmkae
 cmake_unit_export_cfg_int_dir
+cmake_unit_generate_source_file_during_build
 cmake_unit_invoke_clean
 CMP0054
 CUSTOM_DEFINE
@@ -78,6 +79,7 @@ matches_regex
 matcher
 matchers
 matcher's
+MSBuild
 MULTIVAR_ARGS
 MY_VARIABLE
 my_namespace

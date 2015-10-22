@@ -39,6 +39,8 @@ include ("smspillaz/cmake-forward-arguments/ForwardArguments")
 include ("smspillaz/cmake-opt-arg-parsing/OptimizedParseArguments")
 include ("smspillaz/cmake-spacify-list/SpacifyList")
 
+set (_CMAKE_UNIT_LIST_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
 # _cmake_unit_get_hash_for_file
 #
 # Lazy-compute a hash for the specified file
@@ -598,11 +600,15 @@ function (cmake_unit_generate_source_file_during_build TARGET_RETURN)
     # 10 characters so that we don't hit file name size limits on Windows.
     string (MD5 TARGET_NAME_HASH "${TMP_BINARY_DIR_LOCATION}")
     string (SUBSTRING "${TARGET_NAME_HASH}" 0 10 TARGET_NAME_HASH)
+    set (INVOKE_IF_EXISTS_SCRIPT
+         "${_CMAKE_UNIT_LIST_DIR}/util/InvokeIfExists.cmake")
     set (TARGET_NAME "generate_${TARGET_NAME_HASH}")
 
     add_custom_command (OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${NAME}"
-                        COMMAND "${CMAKE_COMMAND}" -P
-                        "${WRITE_SOURCE_FILE_SCRIPT}")
+                        COMMAND "${CMAKE_COMMAND}"
+                                "-DSCRIPT=${WRITE_SOURCE_FILE_SCRIPT}"
+                                -P
+                                "${INVOKE_IF_EXISTS_SCRIPT}")
     add_custom_target (${TARGET_NAME}
                        SOURCES "${CMAKE_CURRENT_BINARY_DIR}/${NAME}")
 
