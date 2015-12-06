@@ -35,6 +35,7 @@ include ("smspillaz/cmake-call-function/CallFunction")
 include ("smspillaz/cmake-forward-arguments/ForwardArguments")
 include ("smspillaz/cmake-opt-arg-parsing/OptimizedParseArguments")
 include ("smspillaz/cmake-spacify-list/SpacifyList")
+include ("smspillaz/cmake-forward-cache/ForwardCacheVariables")
 
 # Phase not set, begin PRECONFIGURE phase
 if (NOT _CMAKE_UNIT_PHASE)
@@ -334,10 +335,17 @@ endfunction ()
 
 function (_cmake_unit_preconfigure_test)
 
+    set (CMAKE_UNIT_PRECONFIGURE_TEST_SINGLEVAR_ARGS TEST_NAME
+                                                     BINARY_DIR
+                                                     SOURCE_DIR)
+    set (CMAKE_UNIT_PRECONFIGURE_TEST_MULTIVAR_ARGS SKIP_SYSTEM_REGEX
+                                                    SKIP_GENERATOR_REGEX
+                                                    FORWARD_CACHE_VARIABLES)
+
     cmake_parse_arguments (PRECONFIGURE_TEST
                            ""
-                           "TEST_NAME;BINARY_DIR;SOURCE_DIR"
-                           "SKIP_SYSTEM_REGEX;SKIP_GENERATOR_REGEX"
+                           "${CMAKE_UNIT_PRECONFIGURE_TEST_SINGLEVAR_ARGS}"
+                           "${CMAKE_UNIT_PRECONFIGURE_TEST_MULTIVAR_ARGS}"
                            ${CALLER_ARGN})
 
     # If this test should be skipped, return early
@@ -364,6 +372,7 @@ function (_cmake_unit_preconfigure_test)
     set (TEST_NAME "${PRECONFIGURE_TEST_TEST_NAME}")
     set (DRIVER_SCRIPT "${PRECONFIGURE_TEST_SOURCE_DIR}/Driver.cmake")
     set (COVERAGE_SCRIPT "${PRECONFIGURE_TEST_SOURCE_DIR}/Coverage.cmake")
+    set (CACHE_LINES_FILE "${PRECONFIGURE_TEST_SOURCE_DIR}/initial_cache.cmake")
 
     file (MAKE_DIRECTORY "${PRECONFIGURE_TEST_SOURCE_DIR}")
     file (MAKE_DIRECTORY "${PRECONFIGURE_TEST_BINARY_DIR}")
@@ -372,6 +381,20 @@ function (_cmake_unit_preconfigure_test)
                   GLOBAL PROPERTY _CMAKE_UNIT_COVERAGE_LOGGING_FILES)
 
     cmake_spacify_list (COVERAGE_FILES LIST ${COVERAGE_FILES_LIST})
+
+    # Write out a cache file which contains the variables that we
+    # want to forward.
+    set (CACHE_LINES_CONTENTS "")
+    foreach (VARIABLE ${PRECONFIGURE_TEST_FORWARD_CACHE_VARIABLES})
+
+        psq_append_typed_cache_definition ("${VARIABLE}"
+                                           "${${VARIABLE}}"
+                                           string
+                                           CACHE_LINES_CONTENTS)
+    endforeach ()
+
+    cmake_unit_write_if_newer ("${CACHE_LINES_FILE}" "${_RUNNER_LIST_FILE}"
+                               "${CACHE_LINES_CONTENTS}")
 
     _cmake_unit_get_child_invocation_script_header (COMMON_PROLOGUE)
 
@@ -389,6 +412,8 @@ function (_cmake_unit_preconfigure_test)
          "set_property (GLOBAL PROPERTY\n"
          "              _CMAKE_UNIT_COVERAGE_LOGGING_FILES\n"
          "              ${COVERAGE_FILES})\n"
+         "set (CMAKE_UNIT_CURRENT_TEST_CACHE_LINES_FILE\n"
+         "     \"${CACHE_LINES_FILE}\")\n"
          "include (\"${CMAKE_CURRENT_LIST_FILE}\")\n")
 
     # /Driver.cmake writs some initial variable definitions
@@ -448,6 +473,7 @@ function (_cmake_unit_preconfigure_test)
     add_test ("${TEST_NAME}"
               "${CMAKE_COMMAND}"
               ${CMAKE_POLICY_CACHE_DEFINITIONS}
+              "-C${CACHE_LINES_FILE}"
               -P
               "${COVERAGE_SCRIPT}"
               WORKING_DIRECTORY
@@ -635,8 +661,7 @@ function (cmake_unit_invoke_configure)
 
     set (INVOKE_CONFIGURE_OPTION_ARGS ${_CMAKE_UNIT_ALL_INVOKE_OPTION_ARGS}
                                       ALLOW_WARNINGS)
-    set (INVOKE_CONFIGURE_MULTIVAR_ARGS FORWARD_CACHE_VALUES
-                                        LANGUAGES)
+    set (INVOKE_CONFIGURE_MULTIVAR_ARGS LANGUAGES)
 
     cmake_parse_arguments (INVOKE_CONFIGURE
                            "${INVOKE_CONFIGURE_OPTION_ARGS}"
@@ -707,6 +732,8 @@ function (cmake_unit_invoke_configure)
     set (CMAKE_COMPILER_CHOICE_DEFINITIONS
          "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
          "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+    set (CURRENT_CACHE_LINES_FILE
+         "${CMAKE_UNIT_CURRENT_TEST_CACHE_LINES_FILE}")
 
     cmake_forward_arguments (INVOKE_CONFIGURE INVOKE_COMMAND_ARGUMENTS
                              OPTION_ARGS ALLOW_FAIL
@@ -722,6 +749,7 @@ function (cmake_unit_invoke_configure)
                                         ${CMAKE_COMPILER_CHOICE_DEFINITIONS}
                                         -DCMAKE_VERBOSE_MAKEFILE=ON
                                         "-G${CMAKE_GENERATOR}"
+                                        "-C${CURRENT_CACHE_LINES_FILE}"
                                 WORKING_DIRECTORY
                                 "${INVOKE_CONFIGURE_BINARY_DIR}"
                                 ${INVOKE_COMMAND_ARGUMENTS}
