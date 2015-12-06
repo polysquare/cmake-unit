@@ -937,6 +937,33 @@ function (cmake_unit_test_forward_output_directories)
 
 endfunction ()
 
+# Check that output directories are forwarded.
+function (cmake_unit_test_custom_cache_variables)
+
+    set (CACHE_VARIABLE_VALUE "value")
+
+    function (_cmake_unit_configure)
+
+        set (CACHE_VARIABLE "${CACHE_VARIABLE_VALUE}")
+
+        set (CONFIGURE_SCRIPT
+             "cmake_unit_assert_that ("
+             "CACHE_VARIABLE compare_as "
+             "STRING EQUAL \"${CACHE_VARIABLE_VALUE}\")\n")
+
+        _cmake_unit_test_gen_configure (NAMESPACE sample
+                                        NAME one
+                                        CONFIGURE SCRIPT "${CONFIGURE_SCRIPT}"
+                                        PRECONFIGURE OPTIONS
+                                                     FORWARD_CACHE_VARIABLES
+                                                     CACHE_VARIABLE)
+
+    endfunction ()
+
+    cmake_unit_configure_test (CONFIGURE COMMAND _cmake_unit_configure)
+
+endfunction ()
+
 # Set up some tests which will include some specified scripts, but not
 # a certain excluded script. Eg
 # First Test:
