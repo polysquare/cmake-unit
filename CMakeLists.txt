@@ -938,7 +938,7 @@ function (cmake_unit_test_forward_output_directories)
 endfunction ()
 
 # Check that output directories are forwarded.
-function (cmake_unit_test_custom_cache_variables)
+function (cmake_unit_test_custom_cache_variables_configure)
 
     set (CACHE_VARIABLE_VALUE "value")
 
@@ -954,6 +954,32 @@ function (cmake_unit_test_custom_cache_variables)
         _cmake_unit_test_gen_configure (NAMESPACE sample
                                         NAME one
                                         CONFIGURE SCRIPT "${CONFIGURE_SCRIPT}"
+                                        PRECONFIGURE OPTIONS
+                                                     FORWARD_CACHE_VARIABLES
+                                                     CACHE_VARIABLE)
+
+    endfunction ()
+
+    cmake_unit_configure_test (CONFIGURE COMMAND _cmake_unit_configure)
+
+endfunction ()
+
+function (cmake_unit_test_custom_cache_variables_verify)
+
+    set (CACHE_VARIABLE_VALUE "value")
+
+    function (_cmake_unit_configure)
+
+        set (CACHE_VARIABLE "${CACHE_VARIABLE_VALUE}")
+
+        set (VERIFY_SCRIPT
+             "cmake_unit_assert_that ("
+             "CACHE_VARIABLE compare_as "
+             "STRING EQUAL \"${CACHE_VARIABLE_VALUE}\")\n")
+
+        _cmake_unit_test_gen_configure (NAMESPACE sample
+                                        NAME one
+                                        VERIFY SCRIPT "${VERIFY_SCRIPT}"
                                         PRECONFIGURE OPTIONS
                                                      FORWARD_CACHE_VARIABLES
                                                      CACHE_VARIABLE)
