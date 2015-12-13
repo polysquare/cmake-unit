@@ -448,7 +448,7 @@ function (_cmake_unit_preconfigure_test)
          "include (\"${_RUNNER_LIST_FILE}\")\n"
          "_cmake_unit_invoke_command (COMMAND \"${CMAKE_COMMAND}\"\n"
          "                                    ${POLICY_CACHE_DEFS_SPACIFIED}\n"
-         "                                    -C${CACHE_LINES_FILE}\n"
+         "                                    \"-C${CACHE_LINES_FILE}\"\n"
          "                                    -P \"${DRIVER_SCRIPT}\"\n"
          "                                    ${TRACE_OPTION}\n"
          "                            OUTPUT_FILE \"${DRIVER_OUTPUT_LOG}\"\n"
