@@ -21,23 +21,15 @@
 # libraries and executables at verify-time.
 #
 # See /LICENCE.md for Copyright information
-if (NOT BIICODE)
-
-    set (CMAKE_MODULE_PATH
-         "${CMAKE_CURRENT_LIST_DIR}/bii/deps"
-         "${CMAKE_MODULE_PATH}")
-
-endif ()
-
-include ("smspillaz/cmake-include-guard/IncludeGuard")
+include ("cmake/cmake-include-guard/IncludeGuard")
 cmake_include_guard (SET_MODULE_PATH)
 
 include (CMakeParseArguments)
 include (GenerateExportHeader)
-include ("smspillaz/cmake-call-function/CallFunction")
-include ("smspillaz/cmake-forward-arguments/ForwardArguments")
-include ("smspillaz/cmake-opt-arg-parsing/OptimizedParseArguments")
-include ("smspillaz/cmake-spacify-list/SpacifyList")
+include ("cmake/cmake-call-function/CallFunction")
+include ("cmake/cmake-forward-arguments/ForwardArguments")
+include ("cmake/cmake-opt-arg-parsing/OptimizedParseArguments")
+include ("cmake/cmake-spacify-list/SpacifyList")
 
 set (_CMAKE_UNIT_LIST_DIR "${CMAKE_CURRENT_LIST_DIR}")
 

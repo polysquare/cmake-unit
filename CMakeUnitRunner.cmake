@@ -18,24 +18,41 @@
 # much longer to execute and should be used sparingly.
 #
 # See /LICENCE.md for Copyright information
-if (NOT BIICODE)
-
-    set (CMAKE_MODULE_PATH
-         "${CMAKE_CURRENT_LIST_DIR}/bii/deps"
-         "${CMAKE_MODULE_PATH}")
-
-endif ()
-
-include ("smspillaz/cmake-include-guard/IncludeGuard")
+include ("cmake/cmake-include-guard/IncludeGuard")
 cmake_include_guard (SET_MODULE_PATH)
 
 include (CMakeParseArguments)
 include (CMakeUnit)
-include ("smspillaz/cmake-call-function/CallFunction")
-include ("smspillaz/cmake-forward-arguments/ForwardArguments")
-include ("smspillaz/cmake-opt-arg-parsing/OptimizedParseArguments")
-include ("smspillaz/cmake-spacify-list/SpacifyList")
-include ("smspillaz/cmake-forward-cache/ForwardCacheVariables")
+include ("cmake/cmake-call-function/CallFunction")
+include ("cmake/cmake-forward-arguments/ForwardArguments")
+include ("cmake/cmake-opt-arg-parsing/OptimizedParseArguments")
+include ("cmake/cmake-spacify-list/SpacifyList")
+include ("cmake/cmake-forward-cache/ForwardCacheVariables")
+
+if (NOT CMAKE_SCRIPT_MODE_FILE AND NOT CMAKE_UNIT_DONT_GENERATE_BOILERPLATE)
+
+    set (LANGUAGES C CXX)
+
+    if (DEFINED _CMAKE_UNIT_PHASE)
+
+        set (LANGUAGES NONE)
+
+    endif ()
+
+    project (CMakeUnitTest ${LANGUAGES})
+    set (NEW_POLICIES CMP0025 CMP0056)
+
+    foreach (POLICY ${NEW_POLICIES})
+
+        if (POLICY ${POLICY})
+
+            cmake_policy (SET ${POLICY} NEW)
+
+        endif ()
+
+    endforeach ()
+
+endif ()
 
 # Phase not set, begin PRECONFIGURE phase
 if (NOT _CMAKE_UNIT_PHASE)
