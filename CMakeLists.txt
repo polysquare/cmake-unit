@@ -4,22 +4,10 @@
 #
 # See /LICENCE.md for Copyright information
 
-if (NOT CMAKE_SCRIPT_MODE_FILE)
-
-    project (CMakeUnitTest NONE)
-    set (NEW_POLICIES CMP0025 CMP0056)
-
-    foreach (POLICY ${NEW_POLICIES})
-
-        if (POLICY ${POLICY})
-
-            cmake_policy (SET ${POLICY} NEW)
-
-        endif ()
-
-    endforeach ()
-
-endif ()
+include ("${CMAKE_CURRENT_LIST_DIR}/conanbuildinfo.cmake")
+set (CMAKE_MODULE_PATH
+     ${CONAN_CMAKE_MODULE_PATH}  # NOLINT:correctness/quotes
+     ${CMAKE_MODULE_PATH})  # NOLINT:correctness/quotes
 
 cmake_minimum_required (VERSION 2.8)
 
@@ -2966,9 +2954,3 @@ cmake_unit_init (NAMESPACE "cmake_unit"
                  "${CMAKE_CURRENT_LIST_DIR}/CMakeUnitRunner.cmake"
                  "${CMAKE_CURRENT_LIST_DIR}/CMakeTraceToLCov.cmake"
                  "${CMAKE_CURRENT_LIST_DIR}/CMakeUnit.cmake")
-
-if (BIICODE)
-
-    add_bii_targets ()
-
-endif ()
