@@ -14,6 +14,12 @@ env:
   - secure: IH1xxQKcZW/0wW/G7kT9gGvLXvp38mX5mRrB0L2+AXNMO13/tejfnk/5IESMfqcBmj0cM5+8mm5Wg2eLoYWRXUA2bGFLIBABmCH0Nf1pZHacSTd7OtKgJkvYn+M5gZRdcWjsoo24kw4CWR2q+vUozmJTvKU/X0h35s9Bmvbwmtg=
   - secure: WOAONoUJfBh3TR2bylKn0OcqR2ZSPZ3vpSV48CeVTRx33buQTSjETsoNIgK1Nby/cl+27ltsNRq2zjbMs/To3Ny5Xj7hx+tSDfb7znCIH/s4PIdv6A8DlwNX284HGcQ/wrcIUuWmlX0qh9IsycDdWcVUQ21lqPfgjhUR+DD6VTY=
   - secure: OyUzSY/sVHOEsi9Vg4gglt02RRon6bFnR49RithVoX8Xp9uDzZsqjPU5rv1P1B+PnxpadX8VqU9l0mpMOFwD1XlmfNauN0xpMWBEDCUNvjMklDY+vXV0P5DuKd2SgGzhzmjPxBPWwHDxTayFJq/2+ySvaksNxOffGWVb+dOTiXo=
+addons:
+  apt:
+    sources:
+    - deadsnakes
+    packages:
+    - python3.4-dev
 install:
 - eval $(curl -LSs --retry 100 --connect-timeout 3 public-travis-scripts.polysquare.org/bootstrap.py
   | python /dev/stdin -d container -s setup/conan/setup.py -e bash -p /dev/stdout
