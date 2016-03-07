@@ -31,5 +31,5 @@ class CMakeUnitConan(ConanFile):
     def package(self):
         self.copy(pattern="*.cmake",
                   dst="cmake/cmake-unit",
-                  src=".",
+                  src="cmake-unit-" + VERSION,
                   keep_path=True)
