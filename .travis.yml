@@ -32,7 +32,7 @@ before_cache:
 after_success:
 - polysquare_run coverage/cmake/coverage.py
 before_deploy:
-- polysquare_run deploy/conan/before_deploy.py --package="smspillaz/cmake-unit"
+- polysquare_run deploy/conan/before_deploy.py --package="cmake-unit"
 deploy:
   provider: script
   skip_cleanup: true
