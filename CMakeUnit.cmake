@@ -233,14 +233,18 @@ function (add_custom_command) # NOLINT:structure/namespace
     _cmake_unit_append_command_being_accumulated ()
 
     # Now loop over ADD_CUSTOM_COMMAND_PRINT_STRINGS to build the
-    # ADD_CUSTOM_COMMAND_APPEND_ARGUMENTS list
-    set (ADD_CUSTOM_COMMAND_APPEND_ARGUMENTS)
-    foreach (STRING ${ADD_CUSTOM_COMMAND_PRINT_STRINGS})
+    # ADD_CUSTOM_COMMAND_APPEND_ARGUMENTS list, but only if
+    # we are actually in a test
+    set (PHASE "${_CMAKE_UNIT_PHASE}") # NOLINT:access/private_var
+    if (PHASE STREQUAL "CONFIGURE")
+        set (ADD_CUSTOM_COMMAND_APPEND_ARGUMENTS)
+        foreach (STRING ${ADD_CUSTOM_COMMAND_PRINT_STRINGS})
 
-        list (APPEND ADD_CUSTOM_COMMAND_APPEND_ARGUMENTS
-              COMMAND "${CMAKE_COMMAND}" -E echo "${STRING}")
+            list (APPEND ADD_CUSTOM_COMMAND_APPEND_ARGUMENTS
+                  COMMAND "${CMAKE_COMMAND}" -E echo "${STRING}")
 
-    endforeach ()
+        endforeach ()
+    endif ()
 
     # Obviously, the private function must be accessed
     _add_custom_command (${ARGN} # NOLINT:access/other_private
