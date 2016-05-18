@@ -23,6 +23,7 @@ set (UNEXECUTED_FILE_FOR_COVERAGE_PATH
 
 set (_CURRENT_LIST_FILE "${CMAKE_CURRENT_LIST_FILE}")
 
+include ("cmake/cmake-module-common/Common")
 include (CMakeUnitRunner)
 
 function (_cmake_unit_test_gen_configure_no_discover RETURN_AUX_CMAKELISTS)
@@ -2949,8 +2950,15 @@ function (cmake_unit_test_missed_lines_have_non_zero_d_a_counter)
 
 endfunction ()
 
-cmake_unit_init (NAMESPACE "cmake_unit"
-                 COVERAGE_FILES
-                 "${CMAKE_CURRENT_LIST_DIR}/CMakeUnitRunner.cmake"
-                 "${CMAKE_CURRENT_LIST_DIR}/CMakeTraceToLCov.cmake"
-                 "${CMAKE_CURRENT_LIST_DIR}/CMakeUnit.cmake")
+set (CMAKE_FILES
+     "${CMAKE_CURRENT_LIST_DIR}/CMakeUnitRunner.cmake"
+     "${CMAKE_CURRENT_LIST_DIR}/CMakeTraceToLCov.cmake"
+     "${CMAKE_CURRENT_LIST_DIR}/CMakeUnit.cmake"
+     "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt")
+set (MARKDOWN_FILES
+     "${CMAKE_CURRENT_LIST_DIR}/LICENSE.md"
+     "${CMAKE_CURRENT_LIST_DIR}/README.md")
+
+cmake_module_add_common_targets (NAMESPACE "cmake_unit"
+                                 CMAKE_FILES ${CMAKE_FILES}
+                                 DOCUMENTATION_FILES ${MARKDOWN_FILES})
