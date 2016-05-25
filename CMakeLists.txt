@@ -23,7 +23,7 @@ set (UNEXECUTED_FILE_FOR_COVERAGE_PATH
 
 set (_CURRENT_LIST_FILE "${CMAKE_CURRENT_LIST_FILE}")
 
-include ("cmake/cmake-module-common/Common")
+include ("cmake/cmake-module-common/Common" OPTIONAL)
 include (CMakeUnitRunner)
 
 function (_cmake_unit_test_gen_configure_no_discover RETURN_AUX_CMAKELISTS)
@@ -2959,6 +2959,10 @@ set (MARKDOWN_FILES
      "${CMAKE_CURRENT_LIST_DIR}/LICENCE.md"
      "${CMAKE_CURRENT_LIST_DIR}/README.md")
 
-cmake_module_add_common_targets (NAMESPACE "cmake_unit"
-                                 CMAKE_FILES ${CMAKE_FILES}
-                                 DOCUMENTATION_FILES ${MARKDOWN_FILES})
+if (COMMAND cmake_module_add_common_targets)
+
+    cmake_module_add_common_targets (NAMESPACE "cmake_unit"
+                                     CMAKE_FILES ${CMAKE_FILES}
+                                     DOCUMENTATION_FILES ${MARKDOWN_FILES})
+
+endif ()
