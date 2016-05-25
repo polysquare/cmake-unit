@@ -2273,7 +2273,7 @@ function (cmake_unit_test_list_contains_value_empty)
 endfunction ()
 
 # Check that /${CMAKE_PROJECT_NAME}.trace (in this case, /coverage.trace)
-# is overwritten with nothing when cmake_unit_init is called
+# is overwritten with nothing when cmake-unit is initialized
 function (cmake_unit_test_coverage_file_clobbered_on_bootstrap)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
