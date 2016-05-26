@@ -14,10 +14,17 @@ class CMakeUnitConan(ConanFile):
                 "cmake-opt-arg-parsing/master@smspillaz/cmake-opt-arg-parsing",
                 "cmake-forward-cache/master@smspillaz/cmake-forward-cache",
                 "cmake-spacify-list/master@smspillaz/cmake-spacify-list",
-                "cmake-forward-arguments/master"
-                "@smspillaz/cmake-forward-arguments")
+                "cmake-forward-arguments/master@smspillaz/cmake-forward-arguments")
     url = "http://github.com/polysquare/cmake-unit"
     license = "MIT"
+    options = {
+        "dev": [True, False]
+    }
+    default_options = "dev=False"
+
+    def requirements(self):
+        if self.options.dev:
+            self.requires("cmake-module-common/master@smspillaz/cmake-module-common")
 
     def source(self):
         zip_name = "cmake-unit.zip"

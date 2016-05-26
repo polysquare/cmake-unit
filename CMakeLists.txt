@@ -23,6 +23,7 @@ set (UNEXECUTED_FILE_FOR_COVERAGE_PATH
 
 set (_CURRENT_LIST_FILE "${CMAKE_CURRENT_LIST_FILE}")
 
+include ("cmake/cmake-module-common/Common" OPTIONAL)
 include (CMakeUnitRunner)
 
 function (_cmake_unit_test_gen_configure_no_discover RETURN_AUX_CMAKELISTS)
@@ -2272,7 +2273,7 @@ function (cmake_unit_test_list_contains_value_empty)
 endfunction ()
 
 # Check that /${CMAKE_PROJECT_NAME}.trace (in this case, /coverage.trace)
-# is overwritten with nothing when cmake_unit_init is called
+# is overwritten with nothing when cmake-unit is initialized
 function (cmake_unit_test_coverage_file_clobbered_on_bootstrap)
 
     cmake_unit_get_dirs (BINARY_DIR SOURCE_DIR)
@@ -2949,8 +2950,19 @@ function (cmake_unit_test_missed_lines_have_non_zero_d_a_counter)
 
 endfunction ()
 
-cmake_unit_init (NAMESPACE "cmake_unit"
-                 COVERAGE_FILES
-                 "${CMAKE_CURRENT_LIST_DIR}/CMakeUnitRunner.cmake"
-                 "${CMAKE_CURRENT_LIST_DIR}/CMakeTraceToLCov.cmake"
-                 "${CMAKE_CURRENT_LIST_DIR}/CMakeUnit.cmake")
+set (CMAKE_FILES
+     "${CMAKE_CURRENT_LIST_DIR}/CMakeUnitRunner.cmake"
+     "${CMAKE_CURRENT_LIST_DIR}/CMakeTraceToLCov.cmake"
+     "${CMAKE_CURRENT_LIST_DIR}/CMakeUnit.cmake"
+     "${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt")
+set (MARKDOWN_FILES
+     "${CMAKE_CURRENT_LIST_DIR}/LICENCE.md"
+     "${CMAKE_CURRENT_LIST_DIR}/README.md")
+
+if (COMMAND cmake_module_add_common_targets)
+
+    cmake_module_add_common_targets (NAMESPACE "cmake_unit"
+                                     CMAKE_FILES ${CMAKE_FILES}
+                                     DOCUMENTATION_FILES ${MARKDOWN_FILES})
+
+endif ()
