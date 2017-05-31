@@ -2,7 +2,7 @@ from conans import ConanFile
 from conans.tools import download, unzip
 import os
 
-VERSION = "0.0.6"
+VERSION = "0.0.7"
 
 
 class CMakeUnitConan(ConanFile):
